@@ -24,7 +24,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 COPY . /app
 # 安装项目及运行依赖（显式包含 uvicorn/fastapi 避免运行时缺失）
 RUN pip install --no-cache-dir . && \
-    pip install --no-cache-dir uvicorn fastapi
+    pip install --no-cache-dir \
+      uvicorn \
+      fastapi \
+      sqlalchemy \
+      passlib[bcrypt] \
+      python-jose \
+      pyotp \
+      apscheduler
 
 # 前端静态文件放在 /web，由 FastAPI StaticFiles 托管
 RUN mkdir -p /web

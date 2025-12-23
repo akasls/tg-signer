@@ -19,7 +19,7 @@ classifiers = [
 dependencies = [
     "kurigram<=2.2.7",
     "click",
-    "pydantic",
+    "pydantic<2",
     "openai",
     "croniter",
     "json_repair",

@@ -1,0 +1,36 @@
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /frontend
+
+COPY frontend/package.json frontend/package-lock.json* ./ 2>/dev/null || true
+COPY frontend/ ./
+
+RUN npm install && npm run build
+
+
+FROM python:3.12-slim AS app
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=3000
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . /app
+RUN pip install --no-cache-dir .
+
+# 前端静态文件放在 /web，由 FastAPI StaticFiles 托管
+RUN mkdir -p /web
+COPY --from=frontend-builder /frontend/out /web
+
+# 数据目录（通过 docker volume 映射到宿主机）
+RUN mkdir -p /data
+
+EXPOSE 3000
+
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "3000"]
+
+

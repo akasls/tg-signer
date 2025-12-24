@@ -3,7 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "tg-signer 控制台",
-  description: "Docker First 的 tg-signer 可视化面板",
+  description: "Telegram 自动化签到工具 - 现代化 Web 管理界面",
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

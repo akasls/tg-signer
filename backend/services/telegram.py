@@ -200,7 +200,7 @@ class TelegramService:
                 "port": parsed.port,
             }
         
-        # 创建客户端
+        # 创建客户端 - 使用相同的 session 路径
         session_path = str(self.session_dir / account_name)
         client = Client(
             name=session_path,
@@ -215,14 +215,19 @@ class TelegramService:
             
             # 尝试使用验证码登录
             try:
+                # 移除验证码中的空格
+                phone_code = phone_code.strip().replace(" ", "").replace("-", "")
+                
                 signed_in = await client.sign_in(
                     phone_number,
                     phone_code_hash,
                     phone_code
                 )
                 
-                # 登录成功
+                # 登录成功，获取用户信息
                 me = await client.get_me()
+                
+                # 保存 session 并断开连接
                 await client.disconnect()
                 
                 return {
@@ -242,6 +247,8 @@ class TelegramService:
                 try:
                     await client.check_password(password)
                     me = await client.get_me()
+                    
+                    # 保存 session 并断开连接
                     await client.disconnect()
                     
                     return {
@@ -255,14 +262,40 @@ class TelegramService:
                     raise ValueError("2FA 密码错误")
                     
         except PhoneCodeInvalid:
-            await client.disconnect()
-            raise ValueError("验证码错误")
+            try:
+                await client.disconnect()
+            except:
+                pass
+            raise ValueError("验证码错误，请检查验证码是否正确")
         except PhoneCodeExpired:
-            await client.disconnect()
+            try:
+                await client.disconnect()
+            except:
+                pass
             raise ValueError("验证码已过期，请重新获取")
+        except ValueError as e:
+            # 重新抛出我们自己的错误
+            try:
+                await client.disconnect()
+            except:
+                pass
+            raise e
         except Exception as e:
-            await client.disconnect()
-            raise ValueError(f"登录失败: {str(e)}")
+            try:
+                await client.disconnect()
+            except:
+                pass
+            # 更详细的错误信息
+            error_msg = str(e)
+            if "PHONE_CODE_INVALID" in error_msg:
+                raise ValueError("验证码错误，请检查验证码是否正确")
+            elif "PHONE_CODE_EXPIRED" in error_msg:
+                raise ValueError("验证码已过期，请重新获取")
+            elif "SESSION_PASSWORD_NEEDED" in error_msg:
+                raise ValueError("此账号启用了两步验证，请输入 2FA 密码")
+            else:
+                raise ValueError(f"登录失败: {error_msg}")
+
 
     def login_sync(
         self,

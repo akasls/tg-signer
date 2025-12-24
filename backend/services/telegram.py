@@ -105,15 +105,9 @@ class TelegramService:
         from pyrogram.errors import PhoneNumberInvalid, FloodWait
         
         # 从环境变量获取 API credentials
-        # 这些应该在部署时设置，不应该让用户输入
-        api_id = os.getenv("TG_API_ID")
-        api_hash = os.getenv("TG_API_HASH")
-        
-        if not api_id or not api_hash:
-            raise ValueError(
-                "TG_API_ID 和 TG_API_HASH 环境变量未设置。"
-                "请在 Zeabur 或 Docker 中设置这些环境变量。"
-            )
+        # 如果未设置，使用默认的公共 API 凭证
+        api_id = os.getenv("TG_API_ID", "611335")
+        api_hash = os.getenv("TG_API_HASH", "d524b414d21f4d37f08684c1df41ac9c")
         
         # 解析代理
         proxy_dict = None
@@ -192,11 +186,8 @@ class TelegramService:
             PasswordHashInvalid,
         )
         
-        api_id = os.getenv("TG_API_ID")
-        api_hash = os.getenv("TG_API_HASH")
-        
-        if not api_id or not api_hash:
-            raise ValueError("TG_API_ID 和 TG_API_HASH 环境变量未设置")
+        api_id = os.getenv("TG_API_ID", "611335")
+        api_hash = os.getenv("TG_API_HASH", "d524b414d21f4d37f08684c1df41ac9c")
         
         # 解析代理
         proxy_dict = None

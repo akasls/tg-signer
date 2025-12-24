@@ -15,4 +15,11 @@ export const clearToken = () => {
   localStorage.removeItem(TOKEN_KEY);
 };
 
+export const logout = () => {
+  clearToken();
+  if (typeof window !== "undefined") {
+    // 强制刷新到登录页
+    window.location.href = "/";
+  }
+};
 

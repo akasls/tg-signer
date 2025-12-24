@@ -12,7 +12,7 @@ echo.
 REM 配置
 set IMAGE_NAME=tg-signer-test
 set CONTAINER_NAME=tg-signer-test-container
-set PORT=3000
+set PORT=8080
 set DATA_DIR=.\data
 
 REM 检查 Docker 是否安装

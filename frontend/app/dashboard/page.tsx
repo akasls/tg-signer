@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getToken, setToken, clearToken } from "../../lib/auth";
+import { getToken, logout } from "../../lib/auth";
 import {
   fetchAccounts,
   createAccount,
@@ -139,8 +139,7 @@ export default function Dashboard() {
   };
 
   const handleLogout = () => {
-    clearToken();
-    router.replace("/");
+    logout();
   };
 
   return (

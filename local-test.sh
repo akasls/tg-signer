@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 # 配置
 IMAGE_NAME="tg-signer-test"
 CONTAINER_NAME="tg-signer-test-container"
-PORT=3000
+PORT=8080
 DATA_DIR="./data"
 
 # 检查 Docker 是否安装

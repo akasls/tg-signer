@@ -14,7 +14,7 @@ FROM python:3.12-slim AS app
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PORT=3000
+    PORT=8080
 
 WORKDIR /app
 
@@ -40,6 +40,7 @@ RUN pip install --no-cache-dir . && \
       "passlib[bcrypt]==1.7.4" \
       "python-jose[cryptography]" \
       pyotp \
+      qrcode[pil] \
       apscheduler \
       python-multipart
 
@@ -50,12 +51,13 @@ COPY --from=frontend-builder /frontend/out /web
 # 数据目录（通过 docker volume 映射到宿主机）
 RUN mkdir -p /data
 
-EXPOSE 3000
+EXPOSE 8080
 
-# 健康检查
+# 健康检查 - 使用环境变量 PORT
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:3000/health').read()"
+  CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.getenv(\"PORT\", \"8080\")}/health').read()"
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "3000"]
+# 使用环境变量 PORT 启动，Zeabur 会自动设置此变量
+CMD sh -c "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}"
 
 

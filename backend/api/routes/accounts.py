@@ -1,114 +1,214 @@
+"""
+账号管理 API 路由（重构版）
+基于原项目逻辑，使用手机号登录
+"""
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from backend.core.auth import get_current_user
-from backend.core.database import get_db
-from backend.models.account import Account
-from backend.schemas.account import (
-    AccountCreate,
-    AccountLoginVerify,
-    AccountOut,
-    AccountUpdate,
-)
-from backend.services import accounts as account_service
+from backend.models.user import User
+from backend.services.telegram import telegram_service
 
 router = APIRouter()
 
 
-@router.get("", response_model=list[AccountOut])
-def list_accounts(
-    db: Session = Depends(get_db), current_user=Depends(get_current_user)
+# ============ Schemas ============
+
+class LoginStartRequest(BaseModel):
+    """开始登录请求"""
+    account_name: str
+    phone_number: str
+    proxy: Optional[str] = None
+
+
+class LoginStartResponse(BaseModel):
+    """开始登录响应"""
+    phone_code_hash: str
+    phone_number: str
+    account_name: str
+    message: str = "验证码已发送到您的手机"
+
+
+class LoginVerifyRequest(BaseModel):
+    """验证登录请求"""
+    account_name: str
+    phone_number: str
+    phone_code: str
+    phone_code_hash: str
+    password: Optional[str] = None  # 2FA 密码
+    proxy: Optional[str] = None
+
+
+class LoginVerifyResponse(BaseModel):
+    """验证登录响应"""
+    success: bool
+    user_id: Optional[int] = None
+    first_name: Optional[str] = None
+    username: Optional[str] = None
+    message: str
+
+
+class AccountInfo(BaseModel):
+    """账号信息"""
+    name: str
+    session_file: str
+    exists: bool
+    size: int
+
+
+class AccountListResponse(BaseModel):
+    """账号列表响应"""
+    accounts: list[AccountInfo]
+    total: int
+
+
+class DeleteAccountResponse(BaseModel):
+    """删除账号响应"""
+    success: bool
+    message: str
+
+
+# ============ API Routes ============
+
+@router.post("/login/start", response_model=LoginStartResponse)
+def start_account_login(
+    request: LoginStartRequest,
+    current_user: User = Depends(get_current_user)
 ):
-    return account_service.list_accounts(db)
+    """
+    开始账号登录流程（发送验证码）
+    
+    1. 用户输入账号名和手机号
+    2. 系统发送验证码到手机
+    3. 返回 phone_code_hash 用于后续验证
+    """
+    try:
+        result = telegram_service.login_sync(
+            account_name=request.account_name,
+            phone_number=request.phone_number,
+            proxy=request.proxy
+        )
+        
+        return LoginStartResponse(**result)
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"发送验证码失败: {str(e)}"
+        )
 
 
-@router.post("", response_model=AccountOut, status_code=status.HTTP_201_CREATED)
-def create_account(
-    payload: AccountCreate,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+@router.post("/login/verify", response_model=LoginVerifyResponse)
+def verify_account_login(
+    request: LoginVerifyRequest,
+    current_user: User = Depends(get_current_user)
 ):
-    return account_service.create_account(
-        db,
-        account_name=payload.account_name,
-        api_id=payload.api_id,
-        api_hash=payload.api_hash,
-        proxy=payload.proxy,
-    )
+    """
+    验证账号登录（输入验证码和可选的2FA密码）
+    
+    1. 用户输入验证码
+    2. 如果启用了2FA，还需要输入2FA密码
+    3. 验证成功后，生成 session 文件
+    """
+    try:
+        result = telegram_service.login_sync(
+            account_name=request.account_name,
+            phone_number=request.phone_number,
+            phone_code=request.phone_code,
+            phone_code_hash=request.phone_code_hash,
+            password=request.password,
+            proxy=request.proxy
+        )
+        
+        return LoginVerifyResponse(
+            success=True,
+            user_id=result.get("user_id"),
+            first_name=result.get("first_name"),
+            username=result.get("username"),
+            message="登录成功"
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"登录验证失败: {str(e)}"
+        )
 
 
-@router.get("/{account_id}", response_model=AccountOut)
-def get_account(
-    account_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
-    account = account_service.get_account(db, account_id)
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    return account
+@router.get("", response_model=AccountListResponse)
+def list_accounts(current_user: User = Depends(get_current_user)):
+    """
+    获取所有账号列表
+    
+    返回所有 session 文件对应的账号
+    """
+    try:
+        accounts = telegram_service.list_accounts()
+        
+        return AccountListResponse(
+            accounts=[AccountInfo(**acc) for acc in accounts],
+            total=len(accounts)
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取账号列表失败: {str(e)}"
+        )
 
 
-@router.put("/{account_id}", response_model=AccountOut)
-def update_account(
-    account_id: int,
-    payload: AccountUpdate,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
-    account = account_service.get_account(db, account_id)
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    return account_service.update_account(
-        db,
-        account=account,
-        api_id=payload.api_id,
-        api_hash=payload.api_hash,
-        proxy=payload.proxy,
-        status=payload.status,
-    )
-
-
-@router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{account_name}", response_model=DeleteAccountResponse)
 def delete_account(
-    account_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    account_name: str,
+    current_user: User = Depends(get_current_user)
 ):
-    account = account_service.get_account(db, account_id)
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    account_service.delete_account(db, account)
-    return {"ok": True}
+    """
+    删除账号（删除 session 文件）
+    
+    注意：删除后无法恢复，需要重新登录
+    """
+    try:
+        success = telegram_service.delete_account(account_name)
+        
+        if success:
+            return DeleteAccountResponse(
+                success=True,
+                message=f"账号 {account_name} 已删除"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"账号 {account_name} 不存在"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"删除账号失败: {str(e)}"
+        )
 
 
-@router.post("/{account_id}/login/start")
-def login_start(
-    account_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+@router.get("/{account_name}/exists")
+def check_account_exists(
+    account_name: str,
+    current_user: User = Depends(get_current_user)
 ):
-    account = account_service.get_account(db, account_id)
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    result = account_service.start_login(db, account)
-    return result
-
-
-@router.post("/{account_id}/login/verify")
-def login_verify(
-    account_id: int,
-    payload: AccountLoginVerify,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
-    account = account_service.get_account(db, account_id)
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-    code = payload.code
-    password = payload.password
-    result = account_service.verify_login(db, account, code=code, password=password)
-    return result
-
+    """检查账号是否存在"""
+    exists = telegram_service.account_exists(account_name)
+    return {"exists": exists, "account_name": account_name}

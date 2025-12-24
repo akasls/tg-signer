@@ -13,7 +13,7 @@ def test_health_check():
     """测试健康检查端点"""
     print("测试健康检查端点...")
     try:
-        response = urllib.request.urlopen("http://localhost:3000/health")
+        response = urllib.request.urlopen("http://localhost:8080/health")
         data = json.loads(response.read().decode())
         if data.get("status") == "ok":
             print("✓ 健康检查通过")
@@ -36,7 +36,7 @@ def test_api_login():
         }).encode()
         
         req = urllib.request.Request(
-            "http://localhost:3000/api/auth/login",
+            "http://localhost:8080/api/auth/login",
             data=data,
             headers={"Content-Type": "application/json"}
         )
@@ -64,7 +64,7 @@ def test_api_accounts(token):
     print("\n测试账号列表 API...")
     try:
         req = urllib.request.Request(
-            "http://localhost:3000/api/accounts",
+            "http://localhost:8080/api/accounts",
             headers={
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json"
@@ -89,7 +89,7 @@ def test_frontend():
     """测试前端静态文件"""
     print("\n测试前端静态文件...")
     try:
-        response = urllib.request.urlopen("http://localhost:3000/")
+        response = urllib.request.urlopen("http://localhost:8080/")
         content = response.read().decode()
         
         if "tg-signer" in content or "<!DOCTYPE html>" in content:
@@ -107,7 +107,7 @@ def main():
     print("=" * 60)
     print("tg-signer 后端 API 测试")
     print("=" * 60)
-    print("\n请确保应用已在 http://localhost:3000 运行")
+    print("\n请确保应用已在 http://localhost:8080 运行")
     print("等待 3 秒后开始测试...\n")
     time.sleep(3)
     

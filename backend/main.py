@@ -23,9 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router)
+# API 路由必须在静态文件挂载之前注册，并使用 /api 前缀
+app.include_router(api_router, prefix="/api")
 
 # 静态前端托管（Mode A: 单容器，FastAPI 提供静态文件）
+# 必须放在最后，避免覆盖 API 路由
 app.mount(
     "/",
     StaticFiles(directory="/web", html=True),

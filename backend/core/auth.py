@@ -14,7 +14,7 @@ from backend.core.database import get_db
 from backend.core.security import verify_password
 from backend.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 settings = get_settings()
 

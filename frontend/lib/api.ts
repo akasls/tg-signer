@@ -1,6 +1,6 @@
 import { Account, Task, TaskLog, TokenResponse } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "/api";
 
 const toRecord = (headers?: HeadersInit): Record<string, string> => {
   if (!headers) return {};

@@ -21,21 +21,25 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-COPY . /app
-# 安装项目及运行依赖（显式包含 uvicorn/fastapi 避免运行时缺失）
-# 先安装核心依赖，固定 pydantic<2 且 fastapi 使用 v1 兼容版本
+# 先复制 pyproject.toml 和相关配置文件
+COPY pyproject.toml ./
+COPY tg_signer/__init__.py ./tg_signer/__init__.py
+
+# 安装核心依赖，固定 pydantic<2 且 fastapi 使用 v1 兼容版本
 RUN pip install --no-cache-dir "pydantic<2" "fastapi==0.109.2"
 
 # 安装项目及其余运行依赖
+COPY . /app
 RUN pip install --no-cache-dir . && \
     pip install --no-cache-dir \
-      uvicorn \
+      uvicorn[standard] \
       sqlalchemy \
       bcrypt \
       passlib[bcrypt] \
-      python-jose \
+      python-jose[cryptography] \
       pyotp \
-      apscheduler
+      apscheduler \
+      python-multipart
 
 # 前端静态文件放在 /web，由 FastAPI StaticFiles 托管
 RUN mkdir -p /web
@@ -45,6 +49,10 @@ COPY --from=frontend-builder /frontend/out /web
 RUN mkdir -p /data
 
 EXPOSE 3000
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:3000/health').read()"
 
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "3000"]
 

@@ -42,6 +42,7 @@ export default function AccountTasksContent() {
         actions: [{ action: 1, text: "" }],
         delete_after: undefined as number | undefined,
         action_interval: 1,
+        sign_interval: 1,
         random_seconds: 0,
     });
 
@@ -183,7 +184,7 @@ export default function AccountTasksContent() {
                     action_interval: newTask.action_interval,
                 }],
                 random_seconds: newTask.random_seconds,
-                sign_interval: 1,
+                sign_interval: newTask.sign_interval,
             };
 
             await createSignTask(token, request);
@@ -198,6 +199,7 @@ export default function AccountTasksContent() {
                 actions: [{ action: 1, text: "" }],
                 delete_after: undefined,
                 action_interval: 1,
+                sign_interval: 1,
                 random_seconds: 0,
             });
             await loadData(token);
@@ -435,6 +437,36 @@ export default function AccountTasksContent() {
                                                     chat_id: 0,
                                                 })}
                                             />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="actionInterval">动作间隔（秒）</Label>
+                                            <Input
+                                                id="actionInterval"
+                                                type="number"
+                                                value={newTask.action_interval}
+                                                onChange={(e) => setNewTask({
+                                                    ...newTask,
+                                                    action_interval: parseInt(e.target.value) || 1,
+                                                })}
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">同一 Chat 中动作之间的间隔</p>
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="signInterval">签到间隔（秒）</Label>
+                                            <Input
+                                                id="signInterval"
+                                                type="number"
+                                                value={newTask.sign_interval}
+                                                onChange={(e) => setNewTask({
+                                                    ...newTask,
+                                                    sign_interval: parseInt(e.target.value) || 1,
+                                                })}
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">不同 Chat 之间的间隔</p>
                                         </div>
                                     </div>
 

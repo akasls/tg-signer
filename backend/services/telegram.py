@@ -312,13 +312,12 @@ class TelegramService:
         如果只提供 phone_number，则发送验证码
         如果提供了 phone_code，则验证登录
         """
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        import asyncio
         
         try:
             if phone_code is None:
                 # 发送验证码
-                result = loop.run_until_complete(
+                result = asyncio.run(
                     self.start_login(account_name, phone_number, proxy)
                 )
             else:
@@ -326,7 +325,7 @@ class TelegramService:
                 if not phone_code_hash:
                     raise ValueError("缺少 phone_code_hash")
                 
-                result = loop.run_until_complete(
+                result = asyncio.run(
                     self.verify_login(
                         account_name,
                         phone_number,
@@ -338,8 +337,9 @@ class TelegramService:
                 )
             
             return result
-        finally:
-            loop.close()
+        except Exception as e:
+            # 重新抛出异常，保留原始错误信息
+            raise e
 
 
 # 创建全局实例

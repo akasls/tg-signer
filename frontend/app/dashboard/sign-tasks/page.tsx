@@ -42,6 +42,7 @@ export default function SignTasksPage() {
                 listAccounts(t),
             ]);
             setTasks(tasksData);
+            console.log("Sign Tasks Data:", tasksData);
             setAccounts(accountsData.accounts);
         } catch (err: any) {
             setError(err.message || "加载数据失败");

@@ -70,6 +70,8 @@ class SignTaskService:
             traceback.print_exc()
         
         print(f"DEBUG: 扫描结束，共找到 {len(tasks)} 个任务")
+        if len(tasks) > 0:
+            print(f"DEBUG: 任务数据示例: {tasks[0]}")
         return sorted(tasks, key=lambda x: x["name"])
 
     def get_task(self, task_name: str) -> Optional[Dict[str, Any]]:

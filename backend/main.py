@@ -26,6 +26,12 @@ app.add_middleware(
 # API 路由必须在静态文件挂载之前注册，并使用 /api 前缀
 app.include_router(api_router, prefix="/api")
 
+
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    return {"status": "ok"}
+
+
 # 静态前端托管（Mode A: 单容器，FastAPI 提供静态文件）
 # 必须放在最后，避免覆盖 API 路由
 app.mount(
@@ -42,11 +48,6 @@ def on_startup() -> None:
     with SessionLocal() as db:
         ensure_admin(db)
     init_scheduler()
-
-
-@app.get("/health")
-def health_check() -> dict[str, str]:
-    return {"status": "ok"}
 
 
 @app.on_event("shutdown")

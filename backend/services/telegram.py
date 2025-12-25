@@ -317,24 +317,34 @@ class TelegramService:
         try:
             if phone_code is None:
                 # 发送验证码
-                result = asyncio.run(
-                    self.start_login(account_name, phone_number, proxy)
-                )
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(
+                        self.start_login(account_name, phone_number, proxy)
+                    )
+                finally:
+                    loop.close()
             else:
                 # 验证登录
                 if not phone_code_hash:
                     raise ValueError("缺少 phone_code_hash")
                 
-                result = asyncio.run(
-                    self.verify_login(
-                        account_name,
-                        phone_number,
-                        phone_code,
-                        phone_code_hash,
-                        password,
-                        proxy
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(
+                        self.verify_login(
+                            account_name,
+                            phone_number,
+                            phone_code,
+                            phone_code_hash,
+                            password,
+                            proxy
+                        )
                     )
-                )
+                finally:
+                    loop.close()
             
             return result
         except Exception as e:

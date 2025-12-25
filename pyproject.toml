@@ -29,7 +29,6 @@ dependencies = [
     "passlib",
     "bcrypt==4.0.1",
     "pyjwt",
-    "pydantic-settings",
 ]
 
 [dependency-groups]

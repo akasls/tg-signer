@@ -17,8 +17,12 @@ router = APIRouter()
 
 
 @router.get("", response_model=list[TaskOut])
-def list_tasks(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    return task_service.list_tasks(db)
+def list_tasks(
+    account_id: int | None = None,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return task_service.list_tasks(db, account_id=account_id)
 
 
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)

@@ -13,13 +13,19 @@ RUN npm run build
 FROM python:3.12-slim AS app
 
 ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PORT=8080
+  PIP_NO_CACHE_DIR=1 \
+  PORT=8080
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential \
+  libssl-dev \
+  libffi-dev \
+  python3-dev \
+  cargo \
+  pkg-config && \
+  rm -rf /var/lib/apt/lists/*
 
 # 先复制 pyproject.toml 和相关配置文件
 COPY pyproject.toml ./
@@ -36,16 +42,15 @@ RUN pip install --no-cache-dir "bcrypt==4.0.1"
 
 # 安装项目及其余运行依赖
 COPY . /app
+# Remove redundant args that are already in pyproject.toml
 RUN pip install --no-cache-dir . && \
-    pip install --no-cache-dir \
-      uvicorn[standard] \
-      sqlalchemy \
-      "passlib[bcrypt]==1.7.4" \
-      "python-jose[cryptography]" \
-      pyotp \
-      qrcode[pil] \
-      apscheduler \
-      python-multipart
+  pip install --no-cache-dir \
+  uvicorn[standard] \
+  "python-jose[cryptography]" \
+  pyotp \
+  qrcode[pil] \
+  apscheduler \
+  python-multipart
 
 # 前端静态文件放在 /web，由 FastAPI StaticFiles 托管
 RUN mkdir -p /web

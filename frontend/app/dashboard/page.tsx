@@ -248,7 +248,12 @@ export default function Dashboard() {
           {/* 任务列表 */}
           <Card>
             <CardHeader>
-              <CardTitle>⚡ 任务管理</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>⚡ 任务管理</CardTitle>
+                <Link href="/dashboard/sign-tasks">
+                  <Button size="sm">管理任务</Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {loading && tasks.length === 0 ? (

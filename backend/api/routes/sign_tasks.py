@@ -1,0 +1,207 @@
+"""
+签到任务 API 路由
+提供签到任务的 REST API
+"""
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+
+from backend.core.auth import get_current_user
+from backend.services.sign_tasks import sign_task_service
+
+router = APIRouter()
+
+
+# Pydantic 模型定义
+
+class ActionBase(BaseModel):
+    """动作基类"""
+    action: int = Field(..., description="动作类型")
+
+
+class SendTextAction(ActionBase):
+    """发送文本动作"""
+    action: int = Field(1, description="动作类型：1=发送文本")
+    text: str = Field(..., description="要发送的文本")
+
+
+class SendDiceAction(ActionBase):
+    """发送骰子动作"""
+    action: int = Field(2, description="动作类型：2=发送骰子")
+    dice: str = Field(..., description="骰子表情")
+
+
+class ClickKeyboardAction(ActionBase):
+    """点击键盘按钮动作"""
+    action: int = Field(3, description="动作类型：3=点击按钮")
+    text: str = Field(..., description="按钮文本")
+
+
+class ChooseOptionByImageAction(ActionBase):
+    """AI 图片识别动作"""
+    action: int = Field(4, description="动作类型：4=AI 图片识别")
+
+
+class ReplyByCalculationAction(ActionBase):
+    """AI 计算题动作"""
+    action: int = Field(5, description="动作类型：5=AI 计算题")
+
+
+class ChatConfig(BaseModel):
+    """Chat 配置"""
+    chat_id: int = Field(..., description="Chat ID")
+    name: str = Field("", description="Chat 名称")
+    actions: List[Dict[str, Any]] = Field(..., description="动作列表")
+    delete_after: Optional[int] = Field(None, description="删除延迟（秒）")
+    action_interval: int = Field(1, description="动作间隔（秒）")
+
+
+class SignTaskCreate(BaseModel):
+    """创建签到任务请求"""
+    name: str = Field(..., description="任务名称")
+    sign_at: str = Field(..., description="签到时间（CRON 表达式）")
+    chats: List[ChatConfig] = Field(..., description="Chat 配置列表")
+    random_seconds: int = Field(0, description="随机延迟秒数")
+    sign_interval: int = Field(1, description="签到间隔秒数")
+
+
+class SignTaskUpdate(BaseModel):
+    """更新签到任务请求"""
+    sign_at: Optional[str] = Field(None, description="签到时间（CRON 表达式）")
+    chats: Optional[List[ChatConfig]] = Field(None, description="Chat 配置列表")
+    random_seconds: Optional[int] = Field(None, description="随机延迟秒数")
+    sign_interval: Optional[int] = Field(None, description="签到间隔秒数")
+
+
+class SignTaskOut(BaseModel):
+    """签到任务输出"""
+    name: str
+    sign_at: str
+    chats: List[Dict[str, Any]]
+    random_seconds: int
+    sign_interval: int
+    enabled: bool
+
+
+class ChatOut(BaseModel):
+    """Chat 输出"""
+    id: int
+    title: Optional[str] = None
+    username: Optional[str] = None
+    type: str
+    first_name: Optional[str] = None
+
+
+class RunTaskResult(BaseModel):
+    """运行任务结果"""
+    success: bool
+    output: str
+    error: str
+
+
+# API 路由
+
+@router.get("", response_model=List[SignTaskOut])
+def list_sign_tasks(current_user=Depends(get_current_user)):
+    """获取所有签到任务列表"""
+    tasks = sign_task_service.list_tasks()
+    return tasks
+
+
+@router.post("", response_model=SignTaskOut, status_code=status.HTTP_201_CREATED)
+def create_sign_task(
+    payload: SignTaskCreate,
+    current_user=Depends(get_current_user),
+):
+    """创建新的签到任务"""
+    # 转换 chats 为字典列表
+    chats_dict = [chat.model_dump() for chat in payload.chats]
+    
+    task = sign_task_service.create_task(
+        task_name=payload.name,
+        sign_at=payload.sign_at,
+        chats=chats_dict,
+        random_seconds=payload.random_seconds,
+        sign_interval=payload.sign_interval,
+    )
+    return task
+
+
+@router.get("/{task_name}", response_model=SignTaskOut)
+def get_sign_task(
+    task_name: str,
+    current_user=Depends(get_current_user),
+):
+    """获取单个签到任务的详细信息"""
+    task = sign_task_service.get_task(task_name)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
+    return task
+
+
+@router.put("/{task_name}", response_model=SignTaskOut)
+def update_sign_task(
+    task_name: str,
+    payload: SignTaskUpdate,
+    current_user=Depends(get_current_user),
+):
+    """更新签到任务"""
+    # 检查任务是否存在
+    existing = sign_task_service.get_task(task_name)
+    if not existing:
+        raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
+    
+    # 转换 chats 为字典列表
+    chats_dict = None
+    if payload.chats is not None:
+        chats_dict = [chat.model_dump() for chat in payload.chats]
+    
+    task = sign_task_service.update_task(
+        task_name=task_name,
+        sign_at=payload.sign_at,
+        chats=chats_dict,
+        random_seconds=payload.random_seconds,
+        sign_interval=payload.sign_interval,
+    )
+    return task
+
+
+@router.delete("/{task_name}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_sign_task(
+    task_name: str,
+    current_user=Depends(get_current_user),
+):
+    """删除签到任务"""
+    success = sign_task_service.delete_task(task_name)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
+    return {"ok": True}
+
+
+@router.post("/{task_name}/run", response_model=RunTaskResult)
+def run_sign_task(
+    task_name: str,
+    account_name: str,
+    current_user=Depends(get_current_user),
+):
+    """手动运行签到任务"""
+    # 检查任务是否存在
+    task = sign_task_service.get_task(task_name)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
+    
+    result = sign_task_service.run_task(account_name, task_name)
+    return result
+
+
+@router.get("/chats/{account_name}", response_model=List[ChatOut])
+def get_account_chats(
+    account_name: str,
+    current_user=Depends(get_current_user),
+):
+    """获取账号的 Chat 列表"""
+    chats = sign_task_service.get_account_chats(account_name)
+    return chats

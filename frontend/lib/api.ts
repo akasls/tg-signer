@@ -223,3 +223,77 @@ export const disableTOTP = (token: string, totpCode: string) =>
     method: "POST",
     body: JSON.stringify({ totp_code: totpCode }),
   }, token);
+
+// ============ 签到任务管理 ============
+
+export interface SignTaskChat {
+  chat_id: number;
+  name: string;
+  actions: any[];
+  delete_after?: number;
+  action_interval: number;
+}
+
+export interface SignTask {
+  name: string;
+  sign_at: string;
+  chats: SignTaskChat[];
+  random_seconds: number;
+  sign_interval: number;
+  enabled: boolean;
+}
+
+export interface CreateSignTaskRequest {
+  name: string;
+  sign_at: string;
+  chats: SignTaskChat[];
+  random_seconds?: number;
+  sign_interval?: number;
+}
+
+export interface UpdateSignTaskRequest {
+  sign_at?: string;
+  chats?: SignTaskChat[];
+  random_seconds?: number;
+  sign_interval?: number;
+}
+
+export interface ChatInfo {
+  id: number;
+  title?: string;
+  username?: string;
+  type: string;
+  first_name?: string;
+}
+
+export const listSignTasks = (token: string) =>
+  request<SignTask[]>("/sign-tasks", {}, token);
+
+export const getSignTask = (token: string, name: string) =>
+  request<SignTask>(`/sign-tasks/${name}`, {}, token);
+
+export const createSignTask = (token: string, data: CreateSignTaskRequest) =>
+  request<SignTask>("/sign-tasks", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }, token);
+
+export const updateSignTask = (token: string, name: string, data: UpdateSignTaskRequest) =>
+  request<SignTask>(`/sign-tasks/${name}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  }, token);
+
+export const deleteSignTask = (token: string, name: string) =>
+  request<{ ok: boolean }>(`/sign-tasks/${name}`, {
+    method: "DELETE",
+  }, token);
+
+export const runSignTask = (token: string, name: string, accountName: string) =>
+  request<{ success: boolean; output: string; error: string }>(`/sign-tasks/${name}/run?account_name=${accountName}`, {
+    method: "POST",
+  }, token);
+
+export const getAccountChats = (token: string, accountName: string) =>
+  request<ChatInfo[]>(`/sign-tasks/chats/${accountName}`, {}, token);
+

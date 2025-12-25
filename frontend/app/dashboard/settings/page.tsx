@@ -239,227 +239,246 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="p-6">
-            <div className="max-w-4xl mx-auto space-y-6">
-                <h1 className="text-2xl font-bold">设置</h1>
-
-                {/* 错误和成功提示 */}
-                {error && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
-                        {error}
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            {/* 导航栏 */}
+            <nav className="bg-white shadow-sm border-b">
+                <div className="max-w-7xl mx-auto px-6 py-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => router.push("/dashboard")}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="返回主页"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </button>
+                        <h1 className="text-xl font-bold text-gray-900">系统设置</h1>
                     </div>
-                )}
-                {success && (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700">
-                        {success}
-                    </div>
-                )}
+                </div>
+            </nav>
 
-                {/* 修改密码 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>修改密码</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <Label htmlFor="oldPassword">旧密码</Label>
-                            <Input
-                                id="oldPassword"
-                                type="password"
-                                value={passwordForm.oldPassword}
-                                onChange={(e) =>
-                                    setPasswordForm({ ...passwordForm, oldPassword: e.target.value })
-                                }
-                            />
+            <div className="p-6">
+                <div className="max-w-4xl mx-auto space-y-6">
+
+                    {/* 错误和成功提示 */}
+                    {error && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
+                            {error}
                         </div>
-
-                        <div>
-                            <Label htmlFor="newPassword">新密码</Label>
-                            <Input
-                                id="newPassword"
-                                type="password"
-                                value={passwordForm.newPassword}
-                                onChange={(e) =>
-                                    setPasswordForm({ ...passwordForm, newPassword: e.target.value })
-                                }
-                            />
+                    )}
+                    {success && (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700">
+                            {success}
                         </div>
+                    )}
 
-                        <div>
-                            <Label htmlFor="confirmPassword">确认新密码</Label>
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                value={passwordForm.confirmPassword}
-                                onChange={(e) =>
-                                    setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
-                                }
-                            />
-                        </div>
-
-                        <Button onClick={handleChangePassword} disabled={loading}>
-                            {loading ? "修改中..." : "修改密码"}
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                {/* 两步验证 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>两步验证 (2FA)</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
+                    {/* 修改密码 */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>修改密码</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
                             <div>
-                                <p className="font-medium">状态</p>
-                                <p className="text-sm text-gray-500">
-                                    {totpEnabled ? "✅ 已启用" : "❌ 未启用"}
-                                </p>
+                                <Label htmlFor="oldPassword">旧密码</Label>
+                                <Input
+                                    id="oldPassword"
+                                    type="password"
+                                    value={passwordForm.oldPassword}
+                                    onChange={(e) =>
+                                        setPasswordForm({ ...passwordForm, oldPassword: e.target.value })
+                                    }
+                                />
                             </div>
-                            {!totpEnabled && !showTotpSetup && (
-                                <Button onClick={handleSetupTOTP} disabled={loading}>
-                                    启用 2FA
-                                </Button>
-                            )}
-                        </div>
 
-                        {showTotpSetup && totpSecret && (
-                            <div className="space-y-4 p-4 bg-gray-50 rounded">
-                                <div>
-                                    <p className="font-medium mb-2">1. 扫描二维码</p>
-                                    <img
-                                        src={getTOTPQRCode(token)}
-                                        alt="2FA QR Code"
-                                        className="w-48 h-48 border rounded"
-                                    />
-                                </div>
-
-                                <div>
-                                    <p className="font-medium mb-2">2. 或手动输入密钥</p>
-                                    <code className="block p-2 bg-white border rounded text-sm break-all">
-                                        {totpSecret}
-                                    </code>
-                                </div>
-
-                                <div>
-                                    <Label htmlFor="totpCode">3. 输入验证码</Label>
-                                    <Input
-                                        id="totpCode"
-                                        placeholder="输入 6 位验证码"
-                                        value={totpCode}
-                                        onChange={(e) => setTotpCode(e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => {
-                                            setShowTotpSetup(false);
-                                            setTotpSecret("");
-                                            setTotpCode("");
-                                        }}
-                                    >
-                                        取消
-                                    </Button>
-                                    <Button onClick={handleEnableTOTP} disabled={loading}>
-                                        {loading ? "验证中..." : "确认启用"}
-                                    </Button>
-                                </div>
+                            <div>
+                                <Label htmlFor="newPassword">新密码</Label>
+                                <Input
+                                    id="newPassword"
+                                    type="password"
+                                    value={passwordForm.newPassword}
+                                    onChange={(e) =>
+                                        setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                                    }
+                                />
                             </div>
-                        )}
 
-                        {totpEnabled && (
-                            <div className="space-y-4 p-4 bg-gray-50 rounded">
-                                <p className="text-sm text-gray-600">
-                                    如需禁用两步验证，请输入验证码确认
-                                </p>
-                                <div>
-                                    <Label htmlFor="disableTotpCode">验证码</Label>
-                                    <Input
-                                        id="disableTotpCode"
-                                        placeholder="输入 6 位验证码"
-                                        value={totpCode}
-                                        onChange={(e) => setTotpCode(e.target.value)}
-                                    />
-                                </div>
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleDisableTOTP}
-                                    disabled={loading}
-                                >
-                                    {loading ? "禁用中..." : "禁用 2FA"}
-                                </Button>
+                            <div>
+                                <Label htmlFor="confirmPassword">确认新密码</Label>
+                                <Input
+                                    id="confirmPassword"
+                                    type="password"
+                                    value={passwordForm.confirmPassword}
+                                    onChange={(e) =>
+                                        setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                                    }
+                                />
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
 
-                {/* 配置管理 */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>配置管理</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <p className="font-medium mb-2">导出配置</p>
-                            <p className="text-sm text-gray-500 mb-3">
-                                导出所有任务配置，用于备份或迁移
-                            </p>
-                            <Button onClick={handleExportConfig} disabled={loading}>
-                                {loading ? "导出中..." : "导出所有配置"}
+                            <Button onClick={handleChangePassword} disabled={loading}>
+                                {loading ? "修改中..." : "修改密码"}
                             </Button>
-                        </div>
+                        </CardContent>
+                    </Card>
 
-                        <hr />
-
-                        <div>
-                            <p className="font-medium mb-2">导入配置</p>
-                            <p className="text-sm text-gray-500 mb-3">
-                                从备份文件恢复配置
-                            </p>
-
-                            <div className="space-y-3">
+                    {/* 两步验证 */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>两步验证 (2FA)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
                                 <div>
-                                    <Label htmlFor="importFile">选择配置文件</Label>
-                                    <Input
-                                        id="importFile"
-                                        type="file"
-                                        accept=".json"
-                                        onChange={handleImportFile}
-                                    />
+                                    <p className="font-medium">状态</p>
+                                    <p className="text-sm text-gray-500">
+                                        {totpEnabled ? "✅ 已启用" : "❌ 未启用"}
+                                    </p>
                                 </div>
+                                {!totpEnabled && !showTotpSetup && (
+                                    <Button onClick={handleSetupTOTP} disabled={loading}>
+                                        启用 2FA
+                                    </Button>
+                                )}
+                            </div>
 
-                                <div>
-                                    <Label htmlFor="importConfig">或粘贴配置 JSON</Label>
-                                    <textarea
-                                        id="importConfig"
-                                        className="w-full h-32 p-2 border rounded font-mono text-sm"
-                                        placeholder='{"signs": {...}, "monitors": {...}}'
-                                        value={importConfig}
-                                        onChange={(e) => setImportConfig(e.target.value)}
-                                    />
+                            {showTotpSetup && totpSecret && (
+                                <div className="space-y-4 p-4 bg-gray-50 rounded">
+                                    <div>
+                                        <p className="font-medium mb-2">1. 扫描二维码</p>
+                                        <img
+                                            src={getTOTPQRCode(token)}
+                                            alt="2FA QR Code"
+                                            className="w-48 h-48 border rounded"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <p className="font-medium mb-2">2. 或手动输入密钥</p>
+                                        <code className="block p-2 bg-white border rounded text-sm break-all">
+                                            {totpSecret}
+                                        </code>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="totpCode">3. 输入验证码</Label>
+                                        <Input
+                                            id="totpCode"
+                                            placeholder="输入 6 位验证码"
+                                            value={totpCode}
+                                            onChange={(e) => setTotpCode(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() => {
+                                                setShowTotpSetup(false);
+                                                setTotpSecret("");
+                                                setTotpCode("");
+                                            }}
+                                        >
+                                            取消
+                                        </Button>
+                                        <Button onClick={handleEnableTOTP} disabled={loading}>
+                                            {loading ? "验证中..." : "确认启用"}
+                                        </Button>
+                                    </div>
                                 </div>
+                            )}
 
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        id="overwrite"
-                                        checked={overwriteConfig}
-                                        onChange={(e) => setOverwriteConfig(e.target.checked)}
-                                    />
-                                    <Label htmlFor="overwrite" className="cursor-pointer">
-                                        覆盖已存在的配置
-                                    </Label>
+                            {totpEnabled && (
+                                <div className="space-y-4 p-4 bg-gray-50 rounded">
+                                    <p className="text-sm text-gray-600">
+                                        如需禁用两步验证，请输入验证码确认
+                                    </p>
+                                    <div>
+                                        <Label htmlFor="disableTotpCode">验证码</Label>
+                                        <Input
+                                            id="disableTotpCode"
+                                            placeholder="输入 6 位验证码"
+                                            value={totpCode}
+                                            onChange={(e) => setTotpCode(e.target.value)}
+                                        />
+                                    </div>
+                                    <Button
+                                        variant="destructive"
+                                        onClick={handleDisableTOTP}
+                                        disabled={loading}
+                                    >
+                                        {loading ? "禁用中..." : "禁用 2FA"}
+                                    </Button>
                                 </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                                <Button onClick={handleImportConfig} disabled={loading}>
-                                    {loading ? "导入中..." : "导入配置"}
+                    {/* 配置管理 */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>配置管理</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <p className="font-medium mb-2">导出配置</p>
+                                <p className="text-sm text-gray-500 mb-3">
+                                    导出所有任务配置，用于备份或迁移
+                                </p>
+                                <Button onClick={handleExportConfig} disabled={loading}>
+                                    {loading ? "导出中..." : "导出所有配置"}
                                 </Button>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+
+                            <hr />
+
+                            <div>
+                                <p className="font-medium mb-2">导入配置</p>
+                                <p className="text-sm text-gray-500 mb-3">
+                                    从备份文件恢复配置
+                                </p>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <Label htmlFor="importFile">选择配置文件</Label>
+                                        <Input
+                                            id="importFile"
+                                            type="file"
+                                            accept=".json"
+                                            onChange={handleImportFile}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="importConfig">或粘贴配置 JSON</Label>
+                                        <textarea
+                                            id="importConfig"
+                                            className="w-full h-32 p-2 border rounded font-mono text-sm"
+                                            placeholder='{"signs": {...}, "monitors": {...}}'
+                                            value={importConfig}
+                                            onChange={(e) => setImportConfig(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="overwrite"
+                                            checked={overwriteConfig}
+                                            onChange={(e) => setOverwriteConfig(e.target.checked)}
+                                        />
+                                        <Label htmlFor="overwrite" className="cursor-pointer">
+                                            覆盖已存在的配置
+                                        </Label>
+                                    </div>
+
+                                    <Button onClick={handleImportConfig} disabled={loading}>
+                                        {loading ? "导入中..." : "导入配置"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

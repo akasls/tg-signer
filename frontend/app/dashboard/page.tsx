@@ -185,7 +185,7 @@ export default function Dashboard() {
             {/* 左侧：网站名称 */}
             <div className="flex items-center gap-3">
               <div className="text-2xl">⚡</div>
-              <h1 className="text-xl font-bold gradient-bg bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold text-gray-900">
                 TG-Signer
               </h1>
             </div>

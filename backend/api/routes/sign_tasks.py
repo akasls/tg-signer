@@ -198,10 +198,79 @@ def run_sign_task(
 
 
 @router.get("/chats/{account_name}", response_model=List[ChatOut])
-def get_account_chats(
+async def get_account_chats(
     account_name: str,
     current_user=Depends(get_current_user),
 ):
     """获取账号的 Chat 列表"""
-    chats = sign_task_service.get_account_chats(account_name)
-    return chats
+    from pyrogram import Client
+    from pyrogram.enums import ChatType
+    from pathlib import Path
+    from backend.core.config import get_settings
+    import os
+    
+    settings = get_settings()
+    
+    # 获取 session 文件路径
+    session_dir = Path(settings.data_dir) / "sessions"
+    session_path = str(session_dir / account_name)
+    
+    # 检查 session 文件是否存在
+    if not (session_dir / f"{account_name}.session").exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"账号 {account_name} 不存在或未登录"
+        )
+    
+    # 从环境变量获取 API credentials
+    api_id = os.getenv("TG_API_ID", "611335")
+    api_hash = os.getenv("TG_API_HASH", "d524b414d21f4d37f08684c1df41ac9c")
+    
+    # 创建客户端
+    client = Client(
+        name=session_path,
+        api_id=int(api_id),
+        api_hash=api_hash,
+        in_memory=False,
+    )
+    
+    chats = []
+    
+    try:
+        await client.start()
+        
+        # 获取所有对话
+        async for dialog in client.get_dialogs():
+            chat = dialog.chat
+            
+            # 只返回群组和频道
+            if chat.type in [ChatType.GROUP, ChatType.SUPERGROUP, ChatType.CHANNEL]:
+                chats.append({
+                    "id": chat.id,
+                    "title": chat.title,
+                    "username": chat.username,
+                    "type": chat.type.name.lower(),
+                    "first_name": None,
+                })
+            # 也包括私聊
+            elif chat.type == ChatType.PRIVATE:
+                chats.append({
+                    "id": chat.id,
+                    "title": None,
+                    "username": chat.username,
+                    "type": "private",
+                    "first_name": chat.first_name,
+                })
+        
+        await client.stop()
+        return chats
+        
+    except Exception as e:
+        try:
+            await client.stop()
+        except:
+            pass
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取 Chat 列表失败: {str(e)}"
+        )

@@ -68,10 +68,8 @@ export default function AccountTasksContent() {
                 getAccountChats(t, accountName),
             ]);
 
-            // 只显示该账号的任务
-            const accountTasks = tasksData.filter(task =>
-                task.name.includes(accountName) || task.chats.some(chat => chat.name.includes(accountName))
-            );
+            // 显示所有任务，因为任何账号都可以运行任何任务
+            const accountTasks = tasksData;
 
             setTasks(accountTasks);
             setChats(chatsData);

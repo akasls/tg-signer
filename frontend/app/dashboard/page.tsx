@@ -192,6 +192,13 @@ export default function Dashboard() {
 
             {/* 右侧：GitHub + 设置 */}
             <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard/sign-tasks"
+                className="text-gray-600 hover:text-blue-600 font-medium mr-2"
+              >
+                任务管理
+              </Link>
+
               <a
                 href="https://github.com/akasls/tg-signer"
                 target="_blank"

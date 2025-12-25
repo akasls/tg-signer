@@ -25,7 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 COPY pyproject.toml ./
 COPY tg_signer/__init__.py ./tg_signer/__init__.py
 
-# 安装核心依赖，固定 pydantic<2 且 fastapi 使用 v1 兼容版本
+# 安装核心依赖
+# fix: pin setuptools<70.0.0 to avoid "AttributeError: cython_sources" in pyrogram/tgcrypto builds
+RUN pip install --no-cache-dir "setuptools<70.0.0" "wheel"
+# 固定 pydantic<2 且 fastapi 使用 v1 兼容版本
 RUN pip install --no-cache-dir "pydantic<2" "fastapi==0.109.2"
 
 # 先安装 bcrypt，确保使用正确的后端

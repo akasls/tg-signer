@@ -81,6 +81,20 @@ export default function AccountTasksContent() {
         }
     };
 
+    const refreshChats = async () => {
+        if (!token) return;
+        try {
+            setLoading(true);
+            const chatsData = await getAccountChats(token, accountName);
+            setChats(chatsData);
+            setSuccess("Chat 列表已刷新");
+        } catch (err: any) {
+            setError(err.message || "刷新失败");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleDeleteTask = async (taskName: string) => {
         if (!token) return;
 
@@ -366,9 +380,20 @@ export default function AccountTasksContent() {
                                 <div className="border-t pt-4">
                                     <h3 className="font-medium mb-3">Chat 配置</h3>
 
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="space-y-4 mb-4">
                                         <div>
-                                            <Label htmlFor="chatSelect">选择 Chat</Label>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <Label htmlFor="chatSelect">选择 Chat</Label>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={refreshChats}
+                                                    disabled={loading}
+                                                >
+                                                    🔄 刷新
+                                                </Button>
+                                            </div>
                                             <select
                                                 id="chatSelect"
                                                 className="w-full p-2 border rounded"
@@ -408,7 +433,7 @@ export default function AccountTasksContent() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <Label htmlFor="deleteAfter">删除延迟（秒）</Label>
                                             <Input
@@ -419,19 +444,6 @@ export default function AccountTasksContent() {
                                                 onChange={(e) => setNewTask({
                                                     ...newTask,
                                                     delete_after: e.target.value ? parseInt(e.target.value) : undefined,
-                                                })}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="actionInterval">动作间隔（秒）</Label>
-                                            <Input
-                                                id="actionInterval"
-                                                type="number"
-                                                value={newTask.action_interval}
-                                                onChange={(e) => setNewTask({
-                                                    ...newTask,
-                                                    action_interval: parseInt(e.target.value) || 1,
                                                 })}
                                             />
                                         </div>

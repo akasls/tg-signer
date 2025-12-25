@@ -75,7 +75,7 @@ class DeleteAccountResponse(BaseModel):
 # ============ API Routes ============
 
 @router.post("/login/start", response_model=LoginStartResponse)
-def start_account_login(
+async def start_account_login(
     request: LoginStartRequest,
     current_user: User = Depends(get_current_user)
 ):
@@ -87,7 +87,7 @@ def start_account_login(
     3. 返回 phone_code_hash 用于后续验证
     """
     try:
-        result = telegram_service.login_sync(
+        result = await telegram_service.start_login(
             account_name=request.account_name,
             phone_number=request.phone_number,
             proxy=request.proxy
@@ -108,7 +108,7 @@ def start_account_login(
 
 
 @router.post("/login/verify", response_model=LoginVerifyResponse)
-def verify_account_login(
+async def verify_account_login(
     request: LoginVerifyRequest,
     current_user: User = Depends(get_current_user)
 ):
@@ -120,7 +120,7 @@ def verify_account_login(
     3. 验证成功后，生成 session 文件
     """
     try:
-        result = telegram_service.login_sync(
+        result = await telegram_service.verify_login(
             account_name=request.account_name,
             phone_number=request.phone_number,
             phone_code=request.phone_code,

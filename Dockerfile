@@ -66,6 +66,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.getenv(\"PORT\", \"8080\")}/health').read()"
 
 # 使用环境变量 PORT 启动，Zeabur 会自动设置此变量
-CMD sh -c "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}"
+CMD sh -c "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080} --loop asyncio"
 
 

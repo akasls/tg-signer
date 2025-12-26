@@ -271,49 +271,52 @@ export default function Dashboard() {
                   key={account.name}
                   href={`/dashboard/account-tasks?name=${encodeURIComponent(account.name)}`}
                 >
-                  <Card className="card-hover h-full cursor-pointer relative group">
-                    <CardContent className="p-6">
+                  <Card className="card-hover h-full cursor-pointer relative">
+                    <CardContent className="p-6 pb-14">
                       {/* 左上角：账号名称 */}
-                      <div className="font-bold text-lg mb-8">{account.name}</div>
+                      <div className="font-bold text-lg mb-4">{account.name}</div>
 
                       {/* 右上角：任务数量 */}
                       <div className="absolute top-6 right-6 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
                         {getAccountTaskCount(account.name)} 个任务
                       </div>
 
-                      {/* 左下角：添加时间 */}
-                      <div className="text-xs text-gray-500">
-                        {new Date().toLocaleDateString()}
-                      </div>
+                      {/* 底部：时间和操作按钮对齐 */}
+                      <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between">
+                        {/* 左下角：添加时间 */}
+                        <div className="text-xs text-gray-500">
+                          {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/')}
+                        </div>
 
-                      {/* 右下角：日志和删除按钮 */}
-                      <div className="absolute bottom-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {/* 日志按钮 */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleShowLogs(account.name);
-                          }}
-                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="查看日志"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </button>
-                        {/* 删除按钮 */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleDeleteAccount(account.name);
-                          }}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          title="删除账号"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {/* 右下角：日志和删除按钮 - 始终显示 */}
+                        <div className="flex gap-1">
+                          {/* 日志按钮 */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleShowLogs(account.name);
+                            }}
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="查看日志"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </button>
+                          {/* 删除按钮 */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleDeleteAccount(account.name);
+                            }}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="删除账号"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -470,8 +473,8 @@ export default function Dashboard() {
                       <div
                         key={log.id}
                         className={`p-3 rounded-lg border ${log.success
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-red-50 border-red-200'
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-red-50 border-red-200'
                           }`}
                       >
                         <div className="flex items-center justify-between mb-1">

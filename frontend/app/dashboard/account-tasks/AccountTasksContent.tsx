@@ -388,18 +388,20 @@ export default function AccountTasksContent() {
                         {tasks.map((task) => (
                             <Card key={task.name} className="card-hover">
                                 <CardContent className="p-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex-1 grid grid-cols-4 gap-4">
+                                    {/* 移动端：垂直布局，桌面端：水平布局 */}
+                                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                        {/* 任务信息网格 - 移动端 2 列，桌面端 4 列 */}
+                                        <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                                             {/* 任务名称 */}
                                             <div>
                                                 <div className="text-xs text-gray-500 mb-1">任务名称</div>
-                                                <div className="font-medium">{task.name}</div>
+                                                <div className="font-medium truncate">{task.name}</div>
                                             </div>
 
                                             {/* Chat ID */}
                                             <div>
                                                 <div className="text-xs text-gray-500 mb-1">Chat ID</div>
-                                                <div className="font-mono text-sm">
+                                                <div className="font-mono text-sm truncate">
                                                     {task.chats[0]?.chat_id || "-"}
                                                 </div>
                                             </div>
@@ -436,8 +438,8 @@ export default function AccountTasksContent() {
                                             </div>
                                         </div>
 
-                                        {/* 操作按钮 */}
-                                        <div className="flex gap-2 ml-4">
+                                        {/* 操作按钮 - 移动端：水平排列居中，桌面端：右侧 */}
+                                        <div className="flex gap-2 justify-center lg:justify-end lg:ml-4 flex-shrink-0">
                                             <Button
                                                 variant="secondary"
                                                 size="sm"
@@ -472,7 +474,7 @@ export default function AccountTasksContent() {
                 }
             </div >
 
-            {/* 创建任务对话框 - 与之前相同的代码 */}
+            {/* 创建任务对话框 */}
             {
                 showCreateDialog && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -481,7 +483,7 @@ export default function AccountTasksContent() {
                                 <h2 className="text-xl font-bold mb-4">创建签到任务</h2>
 
                                 <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
-                                    {/* 基本信息 */}
+                                    {/* 基本信息 - 与编辑对话框一致的布局 */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <Label htmlFor="taskName">任务名称</Label>
@@ -504,28 +506,26 @@ export default function AccountTasksContent() {
                                         </div>
                                     </div>
 
-                                    {/* 随机延迟 - 放在签到时间下面 */}
-                                    <div>
-                                        <Label htmlFor="randomMinutes">随机延迟（分钟）</Label>
-                                        <Input
-                                            id="randomMinutes"
-                                            type="number"
-                                            placeholder="0"
-                                            value={newTask.random_minutes}
-                                            onChange={(e) => setNewTask({
-                                                ...newTask,
-                                                random_minutes: parseInt(e.target.value) || 0,
-                                            })}
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">在签到时间基础上增加随机延迟，更自然</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="randomMinutes">随机延迟（分钟）</Label>
+                                            <Input
+                                                id="randomMinutes"
+                                                type="number"
+                                                placeholder="0"
+                                                value={newTask.random_minutes}
+                                                onChange={(e) => setNewTask({
+                                                    ...newTask,
+                                                    random_minutes: parseInt(e.target.value) || 0,
+                                                })}
+                                            />
+                                        </div>
+                                        <div></div>
                                     </div>
 
-                                    {/* Chat 配置 */}
-                                    <div className="border-t pt-4">
-                                        <h3 className="font-medium mb-3">Chat 配置</h3>
-
-                                        {/* 选择 Chat 和 手动输入 - 同一行 */}
-                                        <div className="flex gap-4 mb-4">
+                                    {/* Chat 设置 */}
+                                    <div className="space-y-3">
+                                        <div className="flex gap-4">
                                             <div className="flex-1">
                                                 <Label className="mb-2 block">选择 Chat</Label>
                                                 <select
@@ -565,7 +565,6 @@ export default function AccountTasksContent() {
                                             </div>
                                         </div>
 
-                                        {/* 删除延迟和动作间隔 - 同一行 */}
                                         <div className="flex gap-4">
                                             <div className="flex-1">
                                                 <Label htmlFor="actionInterval">动作间隔（秒）</Label>
@@ -578,7 +577,6 @@ export default function AccountTasksContent() {
                                                         action_interval: parseInt(e.target.value) || 1,
                                                     })}
                                                 />
-                                                <p className="text-xs text-gray-500 mt-1">动作之间的间隔</p>
                                             </div>
                                             <div className="flex-1">
                                                 <Label htmlFor="deleteAfter">删除延迟（秒）</Label>
@@ -592,74 +590,79 @@ export default function AccountTasksContent() {
                                                         delete_after: e.target.value ? parseInt(e.target.value) : undefined,
                                                     })}
                                                 />
-                                                <p className="text-xs text-gray-500 mt-1">发送后删除，留空不删除</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* 动作配置 */}
-                                    <div className="border-t pt-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h3 className="font-medium">动作序列</h3>
-                                            <button
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <Label>签到动作</Label>
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
                                                 onClick={handleAddAction}
-                                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-blue-600"
-                                                title="添加动作"
                                             >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                </svg>
-                                            </button>
+                                                添加动作
+                                            </Button>
                                         </div>
 
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                             {newTask.actions.map((action, index) => (
-                                                <div key={index} className="p-3 bg-gray-50 rounded flex items-start gap-3">
-                                                    <div className="flex-1 space-y-2">
-                                                        <select
-                                                            className="w-full p-2 border rounded text-sm"
-                                                            value={action.action}
-                                                            onChange={(e) => handleUpdateAction(index, "action", parseInt(e.target.value))}
-                                                        >
-                                                            <option value={1}>发送文本</option>
-                                                            <option value={2}>发送骰子</option>
-                                                            <option value={3}>点击按钮</option>
-                                                            <option value={4}>AI 图片识别</option>
-                                                            <option value={5}>AI 计算题</option>
-                                                        </select>
-
-                                                        {(action.action === 1 || action.action === 3) && (
-                                                            <Input
-                                                                placeholder={action.action === 1 ? "输入要发送的文本" : "输入按钮文本"}
-                                                                value={action.text || ""}
-                                                                onChange={(e) => handleUpdateAction(index, "text", e.target.value)}
-                                                            />
-                                                        )}
-
-                                                        {action.action === 2 && (
-                                                            <Input
-                                                                placeholder="输入骰子表情（如 🎲）"
-                                                                value={(action as any).dice || ""}
-                                                                onChange={(e) => handleUpdateAction(index, "dice", e.target.value)}
-                                                            />
-                                                        )}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => handleRemoveAction(index)}
-                                                        className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600"
-                                                        title="删除动作"
+                                                <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded">
+                                                    <select
+                                                        className="p-2 border rounded min-w-[140px]"
+                                                        value={action.action}
+                                                        onChange={(e) => handleUpdateAction(index, "action", parseInt(e.target.value))}
                                                     >
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
+                                                        <option value={1}>发送文本</option>
+                                                        <option value={2}>发送骰子</option>
+                                                        <option value={3}>点击按钮</option>
+                                                        <option value={4}>AI 图片识别</option>
+                                                        <option value={5}>AI 计算题</option>
+                                                    </select>
+
+                                                    {(action.action === 1 || action.action === 3) && (
+                                                        <Input
+                                                            className="flex-1"
+                                                            placeholder={action.action === 1 ? "发送的文本" : "按钮文本"}
+                                                            value={action.text || ""}
+                                                            onChange={(e) => handleUpdateAction(index, "text", e.target.value)}
+                                                        />
+                                                    )}
+
+                                                    {action.action === 2 && (
+                                                        <Input
+                                                            className="flex-1"
+                                                            placeholder="骰子表情 (🎲🎯🏀⚽🎰🎳)"
+                                                            value={(action as any).dice || ""}
+                                                            onChange={(e) => handleUpdateAction(index, "dice", e.target.value)}
+                                                        />
+                                                    )}
+
+                                                    {(action.action === 4 || action.action === 5) && (
+                                                        <div className="flex-1 text-sm text-gray-500 py-2">
+                                                            {action.action === 4 ? "AI 将自动识别图片选项" : "AI 将自动计算答案"}
+                                                        </div>
+                                                    )}
+
+                                                    {newTask.actions.length > 1 && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveAction(index)}
+                                                        >
+                                                            删除
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* 按钮 */}
                                 <div className="flex gap-2 pt-4 mt-4 border-t">
                                     <Button
                                         variant="secondary"

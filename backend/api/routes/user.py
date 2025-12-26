@@ -112,6 +112,11 @@ def get_totp_status(current_user: User = Depends(get_current_user)):
     )
 
 
+# 临时存储待验证的 TOTP secrets (用户ID -> secret)
+# 注意：在生产环境中应该使用 Redis 或其他持久化缓存
+_pending_totp_secrets: dict[int, str] = {}
+
+
 @router.post("/totp/setup", response_model=TOTPStatusResponse)
 def setup_totp(
     current_user: User = Depends(get_current_user),
@@ -121,6 +126,7 @@ def setup_totp(
     设置2FA（生成密钥）
     
     返回 secret，用户需要用此 secret 生成二维码
+    注意：此时 TOTP 尚未启用，需要调用 /totp/enable 验证后才会启用
     """
     if current_user.totp_secret:
         raise HTTPException(
@@ -131,10 +137,8 @@ def setup_totp(
     # 生成新的 TOTP secret
     secret = pyotp.random_base32()
     
-    # 暂存到数据库（但标记为未验证）
-    # 我们在用户验证后才真正启用
-    current_user.totp_secret = secret
-    db.commit()
+    # 暂存到内存缓存（不保存到数据库），等待用户验证
+    _pending_totp_secrets[current_user.id] = secret
     
     return TOTPStatusResponse(
         enabled=False,
@@ -149,14 +153,17 @@ def get_totp_qrcode(current_user: User = Depends(get_current_user)):
     
     返回二维码图片（PNG 格式）
     """
-    if not current_user.totp_secret:
+    # 优先使用待验证的 secret，否则使用已启用的 secret
+    secret = _pending_totp_secrets.get(current_user.id) or current_user.totp_secret
+    
+    if not secret:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="请先调用 /totp/setup 设置2FA"
         )
     
     # 生成 TOTP URI
-    totp = pyotp.TOTP(current_user.totp_secret)
+    totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(
         name=current_user.username,
         issuer_name="tg-signer"
@@ -188,26 +195,49 @@ def enable_totp(
     
     需要提供验证码以确认设置正确
     """
-    if not current_user.totp_secret:
+    # 获取待验证的 secret
+    pending_secret = _pending_totp_secrets.get(current_user.id)
+    
+    if not pending_secret:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="请先调用 /totp/setup 设置2FA"
         )
     
     # 验证 TOTP 码
-    totp = pyotp.TOTP(current_user.totp_secret)
+    totp = pyotp.TOTP(pending_secret)
     if not totp.verify(request.totp_code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="验证码错误"
         )
     
-    # 2FA 已经在 setup 时设置了 secret，这里只需要确认
+    # 验证通过，将 secret 保存到数据库
+    current_user.totp_secret = pending_secret
     db.commit()
+    
+    # 清除临时缓存
+    del _pending_totp_secrets[current_user.id]
     
     return EnableTOTPResponse(
         success=True,
         message="两步验证已启用"
+    )
+
+
+@router.post("/totp/cancel", response_model=DisableTOTPResponse)
+def cancel_totp_setup(current_user: User = Depends(get_current_user)):
+    """
+    取消 TOTP 设置
+    
+    如果用户在 setup 后不想继续，可以调用此接口取消
+    """
+    if current_user.id in _pending_totp_secrets:
+        del _pending_totp_secrets[current_user.id]
+    
+    return DisableTOTPResponse(
+        success=True,
+        message="2FA 设置已取消"
     )
 
 
@@ -243,4 +273,29 @@ def disable_totp(
     return DisableTOTPResponse(
         success=True,
         message="两步验证已禁用"
+    )
+
+
+@router.post("/totp/reset", response_model=DisableTOTPResponse)
+def reset_totp(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    强制重置 TOTP（不需要验证码）
+    
+    用于解决用户无法登录的问题
+    注意：此接口只有在用户已登录时才能调用
+    """
+    # 清除数据库中的 TOTP secret
+    current_user.totp_secret = None
+    db.commit()
+    
+    # 清除待验证的 secret
+    if current_user.id in _pending_totp_secrets:
+        del _pending_totp_secrets[current_user.id]
+    
+    return DisableTOTPResponse(
+        success=True,
+        message="两步验证已重置"
     )

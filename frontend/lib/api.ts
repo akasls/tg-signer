@@ -44,7 +44,7 @@ async function request<T>(
         // 忽略
       }
     }
-    
+
     // 如果是认证失败 (401)，清除 token 并跳转到登录页
     if (res.status === 401) {
       if (typeof window !== "undefined") {
@@ -52,7 +52,7 @@ async function request<T>(
         window.location.href = "/";
       }
     }
-    
+
     throw new Error(errorMessage);
   }
   return res.json();
@@ -72,6 +72,13 @@ export const login = (payload: {
 
 export const getMe = (token: string) =>
   request("/auth/me", {}, token);
+
+export const resetTOTP = (payload: { username: string; password: string }) =>
+  request<{ success: boolean; message: string }>("/auth/reset-totp", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
 
 // ============ 账号管理（重构版）============
 

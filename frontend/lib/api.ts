@@ -301,6 +301,7 @@ export const deleteAIConfig = (token: string) =>
 
 export interface GlobalSettings {
   sign_interval?: number | null;  // null 表示随机 1-120 秒
+  log_retention_days?: number;    // 日志保留天数，默认 7
 }
 
 export const getGlobalSettings = (token: string) =>
@@ -311,6 +312,20 @@ export const saveGlobalSettings = (token: string, settings: GlobalSettings) =>
     method: "POST",
     body: JSON.stringify(settings),
   }, token);
+
+// ============ 账号日志 ============
+
+export interface AccountLog {
+  id: number;
+  account_name: string;
+  task_name: string;
+  message: string;
+  success: boolean;
+  created_at: string;
+}
+
+export const getAccountLogs = (token: string, accountName: string, limit: number = 50) =>
+  request<AccountLog[]>(`/accounts/${accountName}/logs?limit=${limit}`, {}, token);
 
 // ============ 签到任务管理 ============
 

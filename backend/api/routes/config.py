@@ -393,11 +393,13 @@ def delete_ai_config(current_user: User = Depends(get_current_user)):
 class GlobalSettingsRequest(BaseModel):
     """全局设置请求"""
     sign_interval: Optional[int] = None  # None 表示随机 1-120 秒
+    log_retention_days: int = 7  # 日志保留天数，默认 7
 
 
 class GlobalSettingsResponse(BaseModel):
     """全局设置响应"""
     sign_interval: Optional[int] = None
+    log_retention_days: int = 7
 
 
 @router.get("/settings", response_model=GlobalSettingsResponse)
@@ -426,7 +428,8 @@ def save_global_settings(
     """
     try:
         settings = {
-            "sign_interval": request.sign_interval
+            "sign_interval": request.sign_interval,
+            "log_retention_days": request.log_retention_days
         }
         config_service.save_global_settings(settings)
         
@@ -440,5 +443,4 @@ def save_global_settings(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"保存全局设置失败: {str(e)}"
         )
-
 

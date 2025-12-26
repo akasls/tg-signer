@@ -10,7 +10,9 @@ import {
   verifyAccountLogin,
   deleteAccount,
   listSignTasks,
+  getAccountLogs,
   AccountInfo,
+  AccountLog,
   LoginStartRequest,
   LoginVerifyRequest,
   SignTask,
@@ -32,6 +34,12 @@ export default function Dashboard() {
   // 设置菜单
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
+  // 日志弹窗
+  const [showLogsDialog, setShowLogsDialog] = useState(false);
+  const [logsAccountName, setLogsAccountName] = useState("");
+  const [accountLogs, setAccountLogs] = useState<AccountLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
   // 添加账号对话框
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [loginStep, setLoginStep] = useState<"input" | "verify">("input");
@@ -43,6 +51,7 @@ export default function Dashboard() {
     password: "",
     phone_code_hash: "",
   });
+
 
   useEffect(() => {
     const t = getToken();
@@ -165,6 +174,21 @@ export default function Dashboard() {
     }
   };
 
+  const handleShowLogs = async (accountName: string) => {
+    if (!token) return;
+    setLogsAccountName(accountName);
+    setShowLogsDialog(true);
+    setLogsLoading(true);
+    try {
+      const logs = await getAccountLogs(token, accountName, 50);
+      setAccountLogs(logs);
+    } catch (err: any) {
+      setError(err.message || "获取日志失败");
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     if (confirm("确定要退出登录吗？")) {
       logout();
@@ -262,19 +286,35 @@ export default function Dashboard() {
                         {new Date().toLocaleDateString()}
                       </div>
 
-                      {/* 右下角：删除按钮 */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleDeleteAccount(account.name);
-                        }}
-                        className="absolute bottom-6 right-6 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                        title="删除账号"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {/* 右下角：日志和删除按钮 */}
+                      <div className="absolute bottom-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* 日志按钮 */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleShowLogs(account.name);
+                          }}
+                          className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="查看日志"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </button>
+                        {/* 删除按钮 */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDeleteAccount(account.name);
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="删除账号"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>
@@ -397,6 +437,67 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 日志弹窗 */}
+      {showLogsDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+            <CardContent className="p-6 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">账号日志 - {logsAccountName}</h2>
+                <button
+                  onClick={() => setShowLogsDialog(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                {logsLoading ? (
+                  <div className="text-center py-8 text-gray-500">加载中...</div>
+                ) : accountLogs.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">暂无日志记录</div>
+                ) : (
+                  <div className="space-y-2">
+                    {accountLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className={`p-3 rounded-lg border ${log.success
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-red-50 border-red-200'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-sm">{log.task_name}</span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(log.created_at).toLocaleString('zh-CN')}
+                          </span>
+                        </div>
+                        <div className={`text-sm ${log.success ? 'text-green-700' : 'text-red-700'}`}>
+                          {log.success ? '✓' : '✗'} {log.message}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 pt-4 border-t">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowLogsDialog(false)}
+                  className="w-full"
+                >
+                  关闭
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

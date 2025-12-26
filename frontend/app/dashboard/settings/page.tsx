@@ -68,7 +68,7 @@ export default function SettingsPage() {
     const [aiTesting, setAITesting] = useState(false);
 
     // 全局设置
-    const [globalSettings, setGlobalSettings] = useState<GlobalSettings>({ sign_interval: null });
+    const [globalSettings, setGlobalSettings] = useState<GlobalSettings>({ sign_interval: null, log_retention_days: 7 });
 
 
     useEffect(() => {
@@ -817,6 +817,34 @@ export default function SettingsPage() {
                                             </Button>
                                         </div>
                                     )}
+                                </CardContent>
+                            </Card>
+
+                            {/* 日志保留天数 */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>日志设置</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="logRetentionDays">日志保留天数</Label>
+                                        <Input
+                                            id="logRetentionDays"
+                                            type="number"
+                                            value={globalSettings.log_retention_days ?? 7}
+                                            onChange={(e) => setGlobalSettings({
+                                                ...globalSettings,
+                                                log_retention_days: parseInt(e.target.value) || 7
+                                            })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            超过保留天数的日志将被自动清理，默认保留 7 天
+                                        </p>
+                                    </div>
+
+                                    <Button onClick={handleSaveGlobalSettings} disabled={loading}>
+                                        {loading ? "保存中..." : "保存日志设置"}
+                                    </Button>
                                 </CardContent>
                             </Card>
 

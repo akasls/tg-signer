@@ -52,7 +52,12 @@ export default function AccountTasksContent() {
     const [editTask, setEditTask] = useState({
         sign_at: "0 6 * * *",
         random_minutes: 0,
-        chats: [] as any[],
+        chat_id: 0,
+        chat_id_manual: "",
+        chat_name: "",
+        actions: [{ action: 1, text: "" }] as any[],
+        delete_after: undefined as number | undefined,
+        action_interval: 1,
     });
 
     useEffect(() => {
@@ -235,10 +240,16 @@ export default function AccountTasksContent() {
 
     const handleEditTask = (task: SignTask) => {
         setEditingTaskName(task.name);
+        const chat = task.chats[0];
         setEditTask({
             sign_at: task.sign_at,
             random_minutes: Math.round(task.random_seconds / 60),
-            chats: task.chats,
+            chat_id: chat?.chat_id || 0,
+            chat_id_manual: chat?.chat_id?.toString() || "",
+            chat_name: chat?.name || "",
+            actions: chat?.actions || [{ action: 1, text: "" }],
+            delete_after: chat?.delete_after,
+            action_interval: chat?.action_interval || 1,
         });
         setShowEditDialog(true);
     };
@@ -246,14 +257,32 @@ export default function AccountTasksContent() {
     const handleSaveEdit = async () => {
         if (!token) return;
 
+        // 验证 Chat ID
+        const chatId = editTask.chat_id || parseInt(editTask.chat_id_manual) || 0;
+        if (!chatId) {
+            setError("请选择或输入 Chat ID");
+            return;
+        }
+
+        if (editTask.actions.length === 0 || !editTask.actions[0].text) {
+            setError("请至少添加一个动作");
+            return;
+        }
+
         try {
             setLoading(true);
             setError("");
 
             await updateSignTask(token, editingTaskName, {
                 sign_at: editTask.sign_at,
-                random_seconds: editTask.random_minutes * 60,  // 转换回秒
-                chats: editTask.chats,
+                random_seconds: editTask.random_minutes * 60,
+                chats: [{
+                    chat_id: chatId,
+                    name: editTask.chat_name || `Chat ${chatId}`,
+                    actions: editTask.actions,
+                    delete_after: editTask.delete_after,
+                    action_interval: editTask.action_interval,
+                }],
             });
 
             setSuccess("任务更新成功！");
@@ -264,6 +293,21 @@ export default function AccountTasksContent() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleEditAddAction = () => {
+        setEditTask({
+            ...editTask,
+            actions: [...editTask.actions, { action: 1, text: "" }],
+        });
+    };
+
+    const handleEditRemoveAction = (index: number) => {
+        if (editTask.actions.length <= 1) return;
+        setEditTask({
+            ...editTask,
+            actions: editTask.actions.filter((_, i) => i !== index),
+        });
     };
 
     if (!token) {
@@ -345,7 +389,7 @@ export default function AccountTasksContent() {
                             <Card key={task.name} className="card-hover">
                                 <CardContent className="p-4">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex-1 grid grid-cols-5 gap-4">
+                                        <div className="flex-1 grid grid-cols-4 gap-4">
                                             {/* 任务名称 */}
                                             <div>
                                                 <div className="text-xs text-gray-500 mb-1">任务名称</div>
@@ -389,12 +433,6 @@ export default function AccountTasksContent() {
                                                 ) : (
                                                     <div className="text-sm text-gray-400">从未执行</div>
                                                 )}
-                                            </div>
-
-                                            {/* 状态 */}
-                                            <div>
-                                                <div className="text-xs text-gray-500 mb-1">状态</div>
-                                                <div className="text-sm text-green-600">已启用</div>
                                             </div>
                                         </div>
 
@@ -647,53 +685,206 @@ export default function AccountTasksContent() {
             {/* 编辑任务对话框 */}
             {
                 showEditDialog && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <Card className="w-full max-w-md">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                        <Card className="w-full max-w-2xl my-8">
                             <CardContent className="p-6">
                                 <h2 className="text-xl font-bold mb-4">编辑任务: {editingTaskName}</h2>
 
-                                <div className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="editSignAt">签到时间（CRON）</Label>
-                                        <Input
-                                            id="editSignAt"
-                                            placeholder="0 6 * * *"
-                                            value={editTask.sign_at}
-                                            onChange={(e) => setEditTask({ ...editTask, sign_at: e.target.value })}
-                                        />
+                                <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                                    {/* 基本信息 */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="editSignAt">签到时间（CRON）</Label>
+                                            <Input
+                                                id="editSignAt"
+                                                placeholder="0 6 * * *"
+                                                value={editTask.sign_at}
+                                                onChange={(e) => setEditTask({ ...editTask, sign_at: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="editRandomMinutes">随机延迟（分钟）</Label>
+                                            <Input
+                                                id="editRandomMinutes"
+                                                type="number"
+                                                placeholder="0"
+                                                value={editTask.random_minutes}
+                                                onChange={(e) => setEditTask({
+                                                    ...editTask,
+                                                    random_minutes: parseInt(e.target.value) || 0,
+                                                })}
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <Label htmlFor="editRandomMinutes">随机延迟（分钟）</Label>
-                                        <Input
-                                            id="editRandomMinutes"
-                                            type="number"
-                                            placeholder="0"
-                                            value={editTask.random_minutes}
-                                            onChange={(e) => setEditTask({
-                                                ...editTask,
-                                                random_minutes: parseInt(e.target.value) || 0,
-                                            })}
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">在签到时间基础上增加随机延迟</p>
+                                    {/* Chat 设置 */}
+                                    <div className="space-y-3">
+                                        <div className="flex gap-4">
+                                            <div className="flex-1">
+                                                <Label className="mb-2 block">选择 Chat</Label>
+                                                <select
+                                                    className="w-full p-2 border rounded"
+                                                    value={editTask.chat_id}
+                                                    onChange={(e) => {
+                                                        const id = parseInt(e.target.value);
+                                                        const chat = chats.find(c => c.id === id);
+                                                        setEditTask({
+                                                            ...editTask,
+                                                            chat_id: id,
+                                                            chat_id_manual: "",
+                                                            chat_name: chat?.title || "",
+                                                        });
+                                                    }}
+                                                >
+                                                    <option value={0}>选择 Chat...</option>
+                                                    {chats.map(chat => (
+                                                        <option key={chat.id} value={chat.id}>
+                                                            {chat.title || chat.username || chat.id}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <Label className="mb-2 block">或手动输入 Chat ID</Label>
+                                                <Input
+                                                    placeholder="输入 Chat ID"
+                                                    value={editTask.chat_id_manual}
+                                                    onChange={(e) => setEditTask({
+                                                        ...editTask,
+                                                        chat_id_manual: e.target.value,
+                                                        chat_id: 0,
+                                                    })}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-4">
+                                            <div className="flex-1">
+                                                <Label htmlFor="editActionInterval">动作间隔（秒）</Label>
+                                                <Input
+                                                    id="editActionInterval"
+                                                    type="number"
+                                                    value={editTask.action_interval}
+                                                    onChange={(e) => setEditTask({
+                                                        ...editTask,
+                                                        action_interval: parseInt(e.target.value) || 1,
+                                                    })}
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <Label htmlFor="editDeleteAfter">删除延迟（秒）</Label>
+                                                <Input
+                                                    id="editDeleteAfter"
+                                                    type="number"
+                                                    placeholder="不删除"
+                                                    value={editTask.delete_after || ""}
+                                                    onChange={(e) => setEditTask({
+                                                        ...editTask,
+                                                        delete_after: e.target.value ? parseInt(e.target.value) : undefined,
+                                                    })}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="flex gap-2 pt-4">
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => setShowEditDialog(false)}
-                                            className="flex-1"
-                                        >
-                                            取消
-                                        </Button>
-                                        <Button
-                                            onClick={handleSaveEdit}
-                                            disabled={loading}
-                                            className="flex-1"
-                                        >
-                                            {loading ? "保存中..." : "保存"}
-                                        </Button>
+                                    {/* 动作配置 */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <Label>签到动作</Label>
+                                            <Button
+                                                type="button"
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={handleEditAddAction}
+                                            >
+                                                添加动作
+                                            </Button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {editTask.actions.map((action, index) => (
+                                                <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded">
+                                                    <select
+                                                        className="p-2 border rounded min-w-[140px]"
+                                                        value={action.action}
+                                                        onChange={(e) => {
+                                                            const newActions = [...editTask.actions];
+                                                            newActions[index] = { action: parseInt(e.target.value), text: action.text || "" };
+                                                            setEditTask({ ...editTask, actions: newActions });
+                                                        }}
+                                                    >
+                                                        <option value={1}>发送文本</option>
+                                                        <option value={2}>发送骰子</option>
+                                                        <option value={3}>点击按钮</option>
+                                                        <option value={4}>AI 图片识别</option>
+                                                        <option value={5}>AI 计算题</option>
+                                                    </select>
+
+                                                    {(action.action === 1 || action.action === 3) && (
+                                                        <Input
+                                                            className="flex-1"
+                                                            placeholder={action.action === 1 ? "发送的文本" : "按钮文本"}
+                                                            value={action.text || ""}
+                                                            onChange={(e) => {
+                                                                const newActions = [...editTask.actions];
+                                                                newActions[index] = { ...action, text: e.target.value };
+                                                                setEditTask({ ...editTask, actions: newActions });
+                                                            }}
+                                                        />
+                                                    )}
+
+                                                    {action.action === 2 && (
+                                                        <Input
+                                                            className="flex-1"
+                                                            placeholder="骰子表情 (🎲🎯🏀⚽🎰🎳)"
+                                                            value={action.dice || action.text || ""}
+                                                            onChange={(e) => {
+                                                                const newActions = [...editTask.actions];
+                                                                newActions[index] = { ...action, dice: e.target.value, text: e.target.value };
+                                                                setEditTask({ ...editTask, actions: newActions });
+                                                            }}
+                                                        />
+                                                    )}
+
+                                                    {(action.action === 4 || action.action === 5) && (
+                                                        <div className="flex-1 text-sm text-gray-500 py-2">
+                                                            {action.action === 4 ? "AI 将自动识别图片选项" : "AI 将自动计算答案"}
+                                                        </div>
+                                                    )}
+
+                                                    {editTask.actions.length > 1 && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => handleEditRemoveAction(index)}
+                                                        >
+                                                            删除
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
+                                </div>
+
+                                <div className="flex gap-2 pt-4 mt-4 border-t">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => setShowEditDialog(false)}
+                                        className="flex-1"
+                                    >
+                                        取消
+                                    </Button>
+                                    <Button
+                                        onClick={handleSaveEdit}
+                                        disabled={loading}
+                                        className="flex-1"
+                                    >
+                                        {loading ? "保存中..." : "保存"}
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>

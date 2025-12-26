@@ -212,3 +212,51 @@ def check_account_exists(
     """检查账号是否存在"""
     exists = telegram_service.account_exists(account_name)
     return {"exists": exists, "account_name": account_name}
+
+
+class AccountLogItem(BaseModel):
+    """账号日志项"""
+    id: int
+    account_name: str
+    task_name: str
+    message: str
+    success: bool
+    created_at: str
+
+
+@router.get("/{account_name}/logs", response_model=list[AccountLogItem])
+def get_account_logs(
+    account_name: str,
+    limit: int = 50,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    获取账号的任务执行日志
+    基于签到任务的 last_run 信息
+    """
+    from backend.services.sign_tasks import sign_task_service
+    
+    # 获取该账号的所有任务
+    all_tasks = sign_task_service.list_tasks()
+    account_tasks = [t for t in all_tasks if t.get("account_name") == account_name]
+    
+    logs = []
+    log_id = 1
+    
+    for task in account_tasks:
+        last_run = task.get("last_run")
+        if last_run:
+            logs.append(AccountLogItem(
+                id=log_id,
+                account_name=account_name,
+                task_name=task.get("name", "未知任务"),
+                message=last_run.get("message", "执行完成" if last_run.get("success") else "执行失败"),
+                success=last_run.get("success", False),
+                created_at=last_run.get("time", "")
+            ))
+            log_id += 1
+    
+    # 按时间倒序排列
+    logs.sort(key=lambda x: x.created_at, reverse=True)
+    
+    return logs[:limit]

@@ -26,10 +26,13 @@ class SignTaskService:
     def list_tasks(self, account_name: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         获取所有签到任务列表
+        
+        Args:
+            account_name: 可选，按账号名筛选任务
         """
         tasks = []
         
-        print(f"DEBUG: 开始扫描任务目录: {self.signs_dir}")
+        print(f"DEBUG: 开始扫描任务目录: {self.signs_dir}, account_name={account_name}")
         try:
             # 扫描 signs 目录
             for task_dir in self.signs_dir.iterdir():
@@ -46,9 +49,15 @@ class SignTaskService:
                     with open(config_file, "r", encoding="utf-8") as f:
                         config = json.load(f)
                     
+                    # 如果指定了账号，只返回该账号的任务
+                    task_account = config.get("account_name", "")
+                    if account_name and task_account != account_name:
+                        continue
+                    
                     # 基本信息
                     task_info = {
                         "name": task_dir.name,
+                        "account_name": task_account,
                         "sign_at": config.get("sign_at", ""),
                         "random_seconds": config.get("random_seconds", 0),
                         "sign_interval": config.get("sign_interval", 1),
@@ -96,6 +105,7 @@ class SignTaskService:
             
             return {
                 "name": task_name,
+                "account_name": config.get("account_name", ""),
                 "sign_at": config.get("sign_at", ""),
                 "random_seconds": config.get("random_seconds", 0),
                 "sign_interval": config.get("sign_interval", 1),
@@ -112,6 +122,7 @@ class SignTaskService:
         chats: List[Dict[str, Any]],
         random_seconds: int = 0,
         sign_interval: int = 1,
+        account_name: str = "",
     ) -> Dict[str, Any]:
         """
         创建新的签到任务
@@ -121,6 +132,7 @@ class SignTaskService:
         
         config = {
             "_version": 3,
+            "account_name": account_name,
             "sign_at": sign_at,
             "random_seconds": random_seconds,
             "sign_interval": sign_interval,
@@ -129,7 +141,7 @@ class SignTaskService:
         
         config_file = task_dir / "config.json"
         
-        print(f"DEBUG: 正在创建任务, file={config_file}")
+        print(f"DEBUG: 正在创建任务, file={config_file}, account={account_name}")
         try:
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
@@ -140,6 +152,7 @@ class SignTaskService:
         
         return {
             "name": task_name,
+            "account_name": account_name,
             "sign_at": sign_at,
             "random_seconds": random_seconds,
             "sign_interval": sign_interval,

@@ -303,6 +303,7 @@ export interface SignTaskChat {
 
 export interface SignTask {
   name: string;
+  account_name: string;
   sign_at: string;
   chats: SignTaskChat[];
   random_seconds: number;
@@ -312,6 +313,7 @@ export interface SignTask {
 
 export interface CreateSignTaskRequest {
   name: string;
+  account_name: string;
   sign_at: string;
   chats: SignTaskChat[];
   random_seconds?: number;
@@ -333,8 +335,10 @@ export interface ChatInfo {
   first_name?: string;
 }
 
-export const listSignTasks = (token: string) =>
-  request<SignTask[]>("/sign-tasks", {}, token);
+export const listSignTasks = (token: string, accountName?: string) => {
+  const params = accountName ? `?account_name=${encodeURIComponent(accountName)}` : "";
+  return request<SignTask[]>(`/sign-tasks${params}`, {}, token);
+};
 
 export const getSignTask = (token: string, name: string) =>
   request<SignTask>(`/sign-tasks/${name}`, {}, token);

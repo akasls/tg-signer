@@ -64,14 +64,11 @@ export default function AccountTasksContent() {
         try {
             setLoading(true);
             const [tasksData, chatsData] = await Promise.all([
-                listSignTasks(t),
+                listSignTasks(t, accountName),  // 按账号名筛选任务
                 getAccountChats(t, accountName),
             ]);
 
-            // 显示所有任务，因为任何账号都可以运行任何任务
-            const accountTasks = tasksData;
-
-            setTasks(accountTasks);
+            setTasks(tasksData);
             setChats(chatsData);
         } catch (err: any) {
             setError(err.message || "加载数据失败");
@@ -173,6 +170,7 @@ export default function AccountTasksContent() {
 
             const request: CreateSignTaskRequest = {
                 name: newTask.name,
+                account_name: accountName,  // 关联当前账号
                 sign_at: newTask.sign_at,
                 chats: [{
                     chat_id: chatId,

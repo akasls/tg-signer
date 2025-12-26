@@ -71,9 +71,8 @@ export default function Dashboard() {
   };
 
   const getAccountTaskCount = (accountName: string) => {
-    // 任务与账号关联：查找签到任务总数（因为任务是全局配置，显示总任务数）
-    // 每个账号显示它可以执行的任务数量
-    return tasks.length;
+    // 根据任务的 account_name 筛选属于该账号的任务
+    return tasks.filter(task => task.account_name === accountName).length;
   };
 
   const handleStartLogin = async () => {

@@ -186,6 +186,7 @@ export default function CreateSignTaskPage() {
 
             await createSignTask(token, {
                 name: taskName,
+                account_name: selectedAccount,  // 关联选中的账号
                 sign_at: signAt,
                 chats: chats,
                 random_seconds: randomSeconds,

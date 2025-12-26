@@ -62,6 +62,7 @@ class ChatConfig(BaseModel):
 class SignTaskCreate(BaseModel):
     """创建签到任务请求"""
     name: str = Field(..., description="任务名称")
+    account_name: str = Field(..., description="关联的账号名称")
     sign_at: str = Field(..., description="签到时间（CRON 表达式）")
     chats: List[ChatConfig] = Field(..., description="Chat 配置列表")
     random_seconds: int = Field(0, description="随机延迟秒数")
@@ -90,6 +91,7 @@ class SignTaskUpdate(BaseModel):
 class SignTaskOut(BaseModel):
     """签到任务输出"""
     name: str
+    account_name: str = ""
     sign_at: str
     chats: List[Dict[str, Any]]
     random_seconds: int
@@ -116,9 +118,17 @@ class RunTaskResult(BaseModel):
 # API 路由
 
 @router.get("", response_model=List[SignTaskOut])
-def list_sign_tasks(current_user=Depends(get_current_user)):
-    """获取所有签到任务列表"""
-    tasks = sign_task_service.list_tasks()
+def list_sign_tasks(
+    account_name: Optional[str] = None,
+    current_user=Depends(get_current_user)
+):
+    """
+    获取所有签到任务列表
+    
+    Args:
+        account_name: 可选，按账号名筛选任务
+    """
+    tasks = sign_task_service.list_tasks(account_name=account_name)
     return tasks
 
 
@@ -135,6 +145,7 @@ def create_sign_task(
         
         task = sign_task_service.create_task(
             task_name=payload.name,
+            account_name=payload.account_name,
             sign_at=payload.sign_at,
             chats=chats_dict,
             random_seconds=payload.random_seconds,

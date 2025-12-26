@@ -59,13 +59,13 @@ class BaseJSONConfig(BaseModel):
     @classmethod
     def valid(cls, d):
         try:
-            instance = cls.model_validate(d)
+            instance = cls.parse_obj(d)
         except (ValidationError, TypeError):
             return None
         return instance
 
     def to_jsonable(self):
-        return self.model_dump(mode="json")
+        return self.dict()
 
     @classmethod
     def to_current(cls, obj: Self):

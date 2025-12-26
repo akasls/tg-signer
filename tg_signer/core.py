@@ -649,7 +649,7 @@ class UserSigner(BaseUserWorker[SignConfigV3]):
             "delete_after": delete_after,
             "actions": actions,
         }
-        return SignChatV3.model_validate(cfgs)
+        return SignChatV3.parse_obj(cfgs)
 
     def ask_for_config(self) -> "SignConfigV3":
         chats = []
@@ -678,7 +678,7 @@ class UserSigner(BaseUserWorker[SignConfigV3]):
 
         random_seconds_str = input("签到时间误差随机秒数（默认为0）: ") or "0"
         random_seconds = int(float(random_seconds_str))
-        config = SignConfigV3.model_validate(
+        config = SignConfigV3.parse_obj(
             {
                 "chats": chats,
                 "sign_at": sign_at,
@@ -1128,7 +1128,7 @@ class UserMonitor(BaseUserWorker[MonitorConfig]):
                     }
                 )
 
-        return MatchConfig.model_validate(
+        return MatchConfig.parse_obj(
             {
                 "chat_id": chat_id,
                 "rule": rule,

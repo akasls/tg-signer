@@ -263,6 +263,143 @@ class ConfigService:
         
         return result
 
+    # ============ AI 配置 ============
+    
+    def _get_ai_config_file(self) -> Path:
+        """获取 AI 配置文件路径"""
+        return self.workdir / ".openai_config.json"
+    
+    def get_ai_config(self) -> Optional[Dict]:
+        """
+        获取 AI 配置
+        
+        Returns:
+            配置字典，如果不存在则返回 None
+        """
+        config_file = self._get_ai_config_file()
+        
+        if not config_file.exists():
+            return None
+        
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return None
+    
+    def save_ai_config(
+        self, 
+        api_key: str, 
+        base_url: Optional[str] = None, 
+        model: Optional[str] = None
+    ) -> bool:
+        """
+        保存 AI 配置
+        
+        Args:
+            api_key: OpenAI API Key
+            base_url: API Base URL（可选）
+            model: 模型名称（可选）
+            
+        Returns:
+            是否成功保存
+        """
+        config = {
+            "api_key": api_key,
+        }
+        
+        if base_url:
+            config["base_url"] = base_url
+        if model:
+            config["model"] = model
+        
+        config_file = self._get_ai_config_file()
+        
+        try:
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+            return True
+        except OSError:
+            return False
+    
+    def delete_ai_config(self) -> bool:
+        """
+        删除 AI 配置
+        
+        Returns:
+            是否成功删除
+        """
+        config_file = self._get_ai_config_file()
+        
+        if not config_file.exists():
+            return True
+        
+        try:
+            config_file.unlink()
+            return True
+        except OSError:
+            return False
+    
+    async def test_ai_connection(self) -> Dict:
+        """
+        测试 AI 连接
+        
+        Returns:
+            测试结果
+        """
+        config = self.get_ai_config()
+        
+        if not config:
+            return {
+                "success": False,
+                "message": "未配置 AI API Key"
+            }
+        
+        api_key = config.get("api_key")
+        base_url = config.get("base_url")
+        model = config.get("model", "gpt-4o")
+        
+        if not api_key:
+            return {
+                "success": False,
+                "message": "API Key 为空"
+            }
+        
+        try:
+            from openai import AsyncOpenAI
+            
+            client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=base_url
+            )
+            
+            # 发送一个简单的测试请求
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "user", "content": "Say 'test ok' in 2 words"}
+                ],
+                max_tokens=10,
+            )
+            
+            return {
+                "success": True,
+                "message": f"连接成功！模型响应: {response.choices[0].message.content}",
+                "model_used": model
+            }
+            
+        except ImportError:
+            return {
+                "success": False,
+                "message": "未安装 openai 库，请运行: pip install openai"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"连接失败: {str(e)}"
+            }
+
 
 # 创建全局实例
 config_service = ConfigService()
+

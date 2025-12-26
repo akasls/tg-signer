@@ -254,7 +254,44 @@ export const disableTOTP = (token: string, totpCode: string) =>
     body: JSON.stringify({ totp_code: totpCode }),
   }, token);
 
-// ============ 签到任务管理 ============
+// ============ AI 配置 ============
+
+export interface AIConfig {
+  has_config: boolean;
+  base_url?: string;
+  model?: string;
+  api_key_masked?: string;
+}
+
+export interface AITestResult {
+  success: boolean;
+  message: string;
+  model_used?: string;
+}
+
+export const getAIConfig = (token: string) =>
+  request<AIConfig>("/config/ai", {}, token);
+
+export const saveAIConfig = (
+  token: string,
+  config: { api_key: string; base_url?: string; model?: string }
+) =>
+  request<{ success: boolean; message: string }>("/config/ai", {
+    method: "POST",
+    body: JSON.stringify(config),
+  }, token);
+
+export const testAIConnection = (token: string) =>
+  request<AITestResult>("/config/ai/test", {
+    method: "POST",
+  }, token);
+
+export const deleteAIConfig = (token: string) =>
+  request<{ success: boolean; message: string }>("/config/ai", {
+    method: "DELETE",
+  }, token);
+
+
 
 export interface SignTaskChat {
   chat_id: number;

@@ -12,6 +12,11 @@ import {
     disableTOTP,
     exportAllConfigs,
     importAllConfigs,
+    getAIConfig,
+    saveAIConfig,
+    testAIConnection,
+    deleteAIConfig,
+    AIConfig,
 } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -42,6 +47,16 @@ export default function SettingsPage() {
     const [importConfig, setImportConfig] = useState("");
     const [overwriteConfig, setOverwriteConfig] = useState(false);
 
+    // AI 配置
+    const [aiConfig, setAIConfig] = useState<AIConfig | null>(null);
+    const [aiForm, setAIForm] = useState({
+        api_key: "",
+        base_url: "",
+        model: "gpt-4o",
+    });
+    const [aiTestResult, setAITestResult] = useState<string | null>(null);
+    const [aiTesting, setAITesting] = useState(false);
+
     useEffect(() => {
         const t = getToken();
         if (!t) {
@@ -50,6 +65,7 @@ export default function SettingsPage() {
         }
         setLocalToken(t);
         loadTOTPStatus(t);
+        loadAIConfig(t);
     }, [router]);
 
     const loadTOTPStatus = async (t: string) => {
@@ -58,6 +74,22 @@ export default function SettingsPage() {
             setTotpEnabled(status.enabled);
         } catch (err: any) {
             console.error("加载2FA状态失败:", err);
+        }
+    };
+
+    const loadAIConfig = async (t: string) => {
+        try {
+            const config = await getAIConfig(t);
+            setAIConfig(config);
+            if (config.has_config) {
+                setAIForm({
+                    api_key: "",  // 不回填密钥
+                    base_url: config.base_url || "",
+                    model: config.model || "gpt-4o",
+                });
+            }
+        } catch (err: any) {
+            console.error("加载AI配置失败:", err);
         }
     };
 
@@ -232,6 +264,84 @@ export default function SettingsPage() {
             setImportConfig(content);
         };
         reader.readAsText(file);
+    };
+
+    // AI 配置处理函数
+    const handleSaveAIConfig = async () => {
+        if (!token) return;
+
+        if (!aiForm.api_key) {
+            setError("请输入 API Key");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError("");
+
+            await saveAIConfig(token, {
+                api_key: aiForm.api_key,
+                base_url: aiForm.base_url || undefined,
+                model: aiForm.model || undefined,
+            });
+
+            setSuccess("AI 配置已保存");
+            loadAIConfig(token);
+            setAIForm({ ...aiForm, api_key: "" });  // 清空密钥输入
+        } catch (err: any) {
+            setError(err.message || "保存 AI 配置失败");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleTestAIConnection = async () => {
+        if (!token) return;
+
+        try {
+            setAITesting(true);
+            setAITestResult(null);
+            setError("");
+
+            const result = await testAIConnection(token);
+
+            if (result.success) {
+                setAITestResult(`✅ ${result.message}`);
+            } else {
+                setAITestResult(`❌ ${result.message}`);
+            }
+        } catch (err: any) {
+            setAITestResult(`❌ 测试失败: ${err.message}`);
+        } finally {
+            setAITesting(false);
+        }
+    };
+
+    const handleDeleteAIConfig = async () => {
+        if (!token) return;
+
+        if (!confirm("确定要删除 AI 配置吗？")) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError("");
+
+            await deleteAIConfig(token);
+            setSuccess("AI 配置已删除");
+            setAIConfig(null);
+            setAIForm({
+                api_key: "",
+                base_url: "",
+                model: "gpt-4o",
+            });
+            setAITestResult(null);
+        } catch (err: any) {
+            setError(err.message || "删除 AI 配置失败");
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (!token) {
@@ -410,6 +520,114 @@ export default function SettingsPage() {
                                     </Button>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+
+                    {/* AI 配置 */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>AI 配置</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium">配置状态</p>
+                                    <p className="text-sm text-gray-500">
+                                        {aiConfig?.has_config ? "✅ 已配置" : "❌ 未配置"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {aiConfig?.has_config && (
+                                <div className="p-3 bg-gray-50 rounded text-sm">
+                                    <p><span className="text-gray-500">API Key:</span> {aiConfig.api_key_masked}</p>
+                                    {aiConfig.base_url && (
+                                        <p><span className="text-gray-500">Base URL:</span> {aiConfig.base_url}</p>
+                                    )}
+                                    {aiConfig.model && (
+                                        <p><span className="text-gray-500">Model:</span> {aiConfig.model}</p>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="space-y-3 p-4 bg-gray-50 rounded">
+                                <p className="font-medium text-sm">
+                                    {aiConfig?.has_config ? "更新配置" : "添加配置"}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    用于 AI 图片识别和 AI 计算题功能，需要 OpenAI 兼容的 API
+                                </p>
+
+                                <div>
+                                    <Label htmlFor="aiApiKey">API Key *</Label>
+                                    <Input
+                                        id="aiApiKey"
+                                        type="password"
+                                        placeholder="sk-..."
+                                        value={aiForm.api_key}
+                                        onChange={(e) => setAIForm({ ...aiForm, api_key: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="aiBaseUrl">Base URL（可选）</Label>
+                                    <Input
+                                        id="aiBaseUrl"
+                                        placeholder="https://api.openai.com/v1"
+                                        value={aiForm.base_url}
+                                        onChange={(e) => setAIForm({ ...aiForm, base_url: e.target.value })}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        留空使用 OpenAI 官方地址，可填写兼容 API 地址
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="aiModel">Model（可选）</Label>
+                                    <Input
+                                        id="aiModel"
+                                        placeholder="gpt-4o"
+                                        value={aiForm.model}
+                                        onChange={(e) => setAIForm({ ...aiForm, model: e.target.value })}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        默认 gpt-4o，图片识别需要支持 vision 的模型
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <Button onClick={handleSaveAIConfig} disabled={loading}>
+                                        {loading ? "保存中..." : "保存配置"}
+                                    </Button>
+                                    {aiConfig?.has_config && (
+                                        <>
+                                            <Button
+                                                variant="secondary"
+                                                onClick={handleTestAIConnection}
+                                                disabled={aiTesting}
+                                            >
+                                                {aiTesting ? "测试中..." : "测试连接"}
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                onClick={handleDeleteAIConfig}
+                                                disabled={loading}
+                                            >
+                                                删除配置
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+
+                                {aiTestResult && (
+                                    <div className={`p-3 rounded text-sm ${aiTestResult.startsWith("✅")
+                                            ? "bg-green-50 text-green-700 border border-green-200"
+                                            : "bg-red-50 text-red-700 border border-red-200"
+                                        }`}>
+                                        {aiTestResult}
+                                    </div>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
 

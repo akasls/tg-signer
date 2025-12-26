@@ -260,3 +260,130 @@ def delete_sign_task(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"删除任务失败: {str(e)}"
         )
+
+
+# ============ AI 配置 ============
+
+class AIConfigRequest(BaseModel):
+    """AI 配置请求"""
+    api_key: str
+    base_url: Optional[str] = None
+    model: Optional[str] = None
+
+
+class AIConfigResponse(BaseModel):
+    """AI 配置响应"""
+    has_config: bool
+    base_url: Optional[str] = None
+    model: Optional[str] = None
+    # 不返回 api_key，只返回部分遮蔽的版本
+    api_key_masked: Optional[str] = None
+
+
+class AIConfigSaveResponse(BaseModel):
+    """保存 AI 配置响应"""
+    success: bool
+    message: str
+
+
+class AITestResponse(BaseModel):
+    """测试 AI 连接响应"""
+    success: bool
+    message: str
+    model_used: Optional[str] = None
+
+
+@router.get("/ai", response_model=AIConfigResponse)
+def get_ai_config(current_user: User = Depends(get_current_user)):
+    """
+    获取 AI 配置（不返回完整的 API Key）
+    """
+    try:
+        config = config_service.get_ai_config()
+        
+        if not config:
+            return AIConfigResponse(has_config=False)
+        
+        # 遮蔽 API Key
+        api_key = config.get("api_key", "")
+        if api_key:
+            masked = api_key[:4] + "*" * (len(api_key) - 8) + api_key[-4:] if len(api_key) > 8 else "****"
+        else:
+            masked = None
+        
+        return AIConfigResponse(
+            has_config=True,
+            base_url=config.get("base_url"),
+            model=config.get("model"),
+            api_key_masked=masked
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取 AI 配置失败: {str(e)}"
+        )
+
+
+@router.post("/ai", response_model=AIConfigSaveResponse)
+def save_ai_config(
+    request: AIConfigRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    保存 AI 配置
+    """
+    try:
+        config_service.save_ai_config(
+            api_key=request.api_key,
+            base_url=request.base_url,
+            model=request.model
+        )
+        
+        return AIConfigSaveResponse(
+            success=True,
+            message="AI 配置已保存"
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"保存 AI 配置失败: {str(e)}"
+        )
+
+
+@router.post("/ai/test", response_model=AITestResponse)
+async def test_ai_connection(current_user: User = Depends(get_current_user)):
+    """
+    测试 AI 连接
+    """
+    try:
+        result = await config_service.test_ai_connection()
+        return AITestResponse(**result)
+        
+    except Exception as e:
+        return AITestResponse(
+            success=False,
+            message=f"测试失败: {str(e)}"
+        )
+
+
+@router.delete("/ai", response_model=AIConfigSaveResponse)
+def delete_ai_config(current_user: User = Depends(get_current_user)):
+    """
+    删除 AI 配置
+    """
+    try:
+        config_service.delete_ai_config()
+        
+        return AIConfigSaveResponse(
+            success=True,
+            message="AI 配置已删除"
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"删除 AI 配置失败: {str(e)}"
+        )
+

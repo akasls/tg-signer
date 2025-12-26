@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { login, resetTOTP } from "../lib/api";
 import { setToken } from "../lib/auth";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
@@ -62,71 +62,92 @@ export default function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold text-center">
-          tg-signer 控制台登录
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <Label>用户名</Label>
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} />
-          </div>
-          <div>
-            <Label>密码</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>TOTP (可选)</Label>
-            <Input
-              value={totp}
-              onChange={(e) => setTotp(e.target.value)}
-              placeholder="如未启用两步验证，请留空"
-            />
+    <div className="min-h-screen flex items-center justify-center p-4">
+      {/* 背景装饰 */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-violet-500/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <Card className="w-full max-w-md relative animate-scale-in">
+        <CardContent className="p-8">
+          {/* Logo 和标题 */}
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4 animate-pulse-glow inline-block rounded-full p-2">⚡</div>
+            <h1 className="text-2xl font-bold aurora-text mb-2">SignPulse</h1>
+            <p className="text-white/50 text-sm">Telegram 自动签到控制台</p>
           </div>
 
-          {error && (
-            <div className="text-sm text-red-600 p-2 bg-red-50 rounded">
-              {error}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label>用户名</Label>
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="请输入用户名"
+              />
             </div>
-          )}
-
-          {success && (
-            <div className="text-sm text-green-600 p-2 bg-green-50 rounded">
-              {success}
+            <div className="space-y-2">
+              <Label>密码</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="请输入密码"
+              />
             </div>
-          )}
-
-          {showTotpHelp && (
-            <div className="text-sm p-3 bg-yellow-50 border border-yellow-200 rounded">
-              <p className="font-medium text-yellow-800 mb-2">无法登录？</p>
-              <p className="text-yellow-700 mb-2">
-                如果您未完成两步验证设置但系统要求输入验证码，可以点击下方按钮重置。
-              </p>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleResetTOTP}
-                disabled={loading}
-                className="w-full"
-              >
-                {loading ? "重置中..." : "重置两步验证"}
-              </Button>
+            <div className="space-y-2">
+              <Label>两步验证码 (可选)</Label>
+              <Input
+                value={totp}
+                onChange={(e) => setTotp(e.target.value)}
+                placeholder="如未启用两步验证，请留空"
+              />
             </div>
-          )}
 
-          <Button className="w-full" type="submit" disabled={loading}>
-            {loading ? "登录中..." : "登录"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            {error && (
+              <div className="text-sm text-rose-300 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="text-sm text-emerald-300 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                {success}
+              </div>
+            )}
+
+            {showTotpHelp && (
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                <p className="font-medium text-amber-300 mb-2">无法登录？</p>
+                <p className="text-amber-200/70 text-sm mb-3">
+                  如果您未完成两步验证设置但系统要求输入验证码，可以点击下方按钮重置。
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleResetTOTP}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ? "重置中..." : "重置两步验证"}
+                </Button>
+              </div>
+            )}
+
+            <Button className="w-full" type="submit" disabled={loading}>
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  登录中...
+                </span>
+              ) : "登录"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

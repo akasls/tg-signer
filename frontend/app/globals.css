@@ -3,95 +3,443 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+  --aurora-1: #00d4ff;
+  --aurora-2: #7c3aed;
+  --aurora-3: #ec4899;
+  --glow-color: rgba(0, 212, 255, 0.3);
 }
 
 body {
-  @apply bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 min-h-screen;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  color: #e2e8f0;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* 卡片悬停效果 */
-.card-hover {
-  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
-}
+/* ========== Glassmorphism 核心样式 ========== */
 
-/* 渐变背景 */
-.gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-/* 玻璃态效果 */
 .glass {
-  @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* 按钮动画 */
-.btn-animate {
-  @apply transition-all duration-200 active:scale-95;
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* 输入框聚焦效果 */
-.input-focus {
-  @apply focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all;
+.glass-button {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.glass-button:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(236, 72, 153, 0.5));
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.4);
+  transform: translateY(-2px);
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.glass-input {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  transition: all 0.3s ease;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+.glass-input:focus {
+  border-color: var(--aurora-1);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+  outline: none;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+.glass-input::placeholder {
+  color: rgba(226, 232, 240, 0.4);
 }
 
-/* 动画 */
+/* ========== Aurora 渐变效果 ========== */
+
+.aurora-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--aurora-1) 0%,
+    var(--aurora-2) 50%,
+    var(--aurora-3) 100%
+  );
+}
+
+.aurora-text {
+  background: linear-gradient(135deg, var(--aurora-1), var(--aurora-2), var(--aurora-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.aurora-border {
+  border: 1px solid transparent;
+  background: 
+    linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(26, 26, 46, 0.9)) padding-box,
+    linear-gradient(135deg, var(--aurora-1), var(--aurora-2), var(--aurora-3)) border-box;
+}
+
+/* ========== 卡片样式 ========== */
+
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 40px rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+/* ========== 发光效果 ========== */
+
+.glow {
+  box-shadow: 0 0 40px var(--glow-color);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px var(--glow-color);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
+}
+
+.glow-pink {
+  box-shadow: 0 0 30px rgba(236, 72, 153, 0.3);
+}
+
+/* ========== 动画 ========== */
+
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@keyframes slideIn {
+@keyframes slideInRight {
   from {
-    transform: translateX(-100%);
+    opacity: 0;
+    transform: translateX(100px);
   }
-
   to {
+    opacity: 1;
     transform: translateX(0);
   }
 }
 
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out;
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-/* 加载动画 */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(124, 58, 237, 0.5);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes aurora {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-aurora {
+  background-size: 200% 200%;
+  animation: aurora 5s ease infinite;
+}
+
+/* 延迟动画类 */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* ========== Toast 气泡通知 ========== */
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%) translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes toastSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.toast-enter {
+  animation: toastSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.toast-exit {
+  animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ========== 按钮样式 ========== */
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--aurora-2), var(--aurora-3));
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+}
+
+/* ========== 滚动条样式 ========== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--aurora-2), var(--aurora-3));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--aurora-1), var(--aurora-2));
+}
+
+/* ========== 骨架屏加载 ========== */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ========== 页面过渡 ========== */
+
+.page-transition {
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out 0.1s forwards;
+}
+
+/* ========== 选中态 ========== */
+
+::selection {
+  background: rgba(124, 58, 237, 0.4);
+  color: white;
+}
+
+/* ========== 聚焦样式 ========== */
+
+*:focus-visible {
+  outline: 2px solid var(--aurora-1);
+  outline-offset: 2px;
+}
+
+/* ========== 响应式字体 ========== */
+
+html {
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* ========== 页面加载动画 ========== */
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--aurora-1);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
-}
-
-.animate-spin-slow {
-  animation: spin 3s linear infinite;
 }

@@ -6,7 +6,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        "rounded-lg border border-gray-200 bg-white text-gray-900 shadow-sm",
+        "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl text-white shadow-xl shadow-black/10",
         className
       )}
       {...props}
@@ -19,7 +19,7 @@ const CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("px-4 py-3", className)} {...props} />
+  <div ref={ref} className={cn("px-6 py-4 border-b border-white/5", className)} {...props} />
 ));
 CardHeader.displayName = "CardHeader";
 
@@ -29,20 +29,38 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("text-lg font-semibold leading-none tracking-tight text-white", className)}
     {...props}
   />
 ));
 CardTitle.displayName = "CardTitle";
 
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-white/60 mt-1", className)}
+    {...props}
+  />
+));
+CardDescription.displayName = "CardDescription";
+
 const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("px-4 py-3", className)} {...props} />
+  <div ref={ref} className={cn("px-6 py-4", className)} {...props} />
 ));
 CardContent.displayName = "CardContent";
 
-export { Card, CardHeader, CardTitle, CardContent };
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("px-6 py-4 border-t border-white/5", className)} {...props} />
+));
+CardFooter.displayName = "CardFooter";
 
-
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };

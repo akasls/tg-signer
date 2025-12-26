@@ -31,8 +31,29 @@ async function request<T>(
     cache: "no-store", // 禁用缓存，确保获取最新数据
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "请求失败");
+    // 尝试解析 JSON 错误响应
+    let errorMessage = "请求失败";
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData);
+    } catch {
+      // 如果不是 JSON，使用文本
+      try {
+        errorMessage = await res.text() || "请求失败";
+      } catch {
+        // 忽略
+      }
+    }
+    
+    // 如果是认证失败 (401)，清除 token 并跳转到登录页
+    if (res.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("tg-signer-token");
+        window.location.href = "/";
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
   return res.json();
 }

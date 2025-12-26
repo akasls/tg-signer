@@ -207,7 +207,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-3">
               <div className="text-2xl animate-pulse-glow rounded-full p-1">⚡</div>
               <h1 className="text-xl font-bold aurora-text">
-                SignPulse
+                TG SignPulse
               </h1>
             </div>
 

@@ -429,16 +429,23 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="min-h-screen">
+            {/* 背景装饰 */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 -left-32 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-float"></div>
+                <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+                <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl"></div>
+            </div>
+
             {/* 导航栏 */}
-            <nav className="bg-white shadow-sm border-b">
+            <nav className="glass border-b border-white/10 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
                         {/* 左边：返回箭头 + 面包屑 */}
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => router.push("/dashboard")}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-white/70 hover:text-white"
                                 title="返回主页"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,18 +453,18 @@ export default function SettingsPage() {
                                 </svg>
                             </button>
                             <div className="flex items-center gap-2 text-sm">
-                                <button onClick={() => router.push("/dashboard")} className="text-gray-500 hover:text-gray-700">
+                                <button onClick={() => router.push("/dashboard")} className="text-white/50 hover:text-white transition-colors">
                                     首页
                                 </button>
-                                <span className="text-gray-400">/</span>
-                                <span className="text-gray-900 font-medium">设置</span>
+                                <span className="text-white/30">/</span>
+                                <span className="text-white font-medium">设置</span>
                             </div>
                         </div>
 
                         {/* 右边：退出登录图标 */}
                         <button
                             onClick={handleLogout}
-                            className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600"
+                            className="p-2.5 hover:bg-rose-500/20 rounded-xl transition-all text-rose-400 hover:text-rose-300"
                             title="退出登录"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -468,25 +475,25 @@ export default function SettingsPage() {
                 </div>
             </nav>
 
-            <div className="p-6">
+            <div className="p-6 relative z-10 page-transition">
                 <div className="max-w-4xl mx-auto space-y-8">
 
                     {/* 错误和成功提示 */}
                     {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
+                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 animate-fade-in">
                             {error}
                         </div>
                     )}
                     {success && (
-                        <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700">
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 animate-fade-in">
                             {success}
                         </div>
                     )}
 
                     {/* 任务设置区块 - 放在最上面 */}
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                             </svg>
                             任务设置
@@ -511,7 +518,7 @@ export default function SettingsPage() {
                                                 sign_interval: e.target.value ? parseInt(e.target.value) : null
                                             })}
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="text-xs text-white/50 mt-1">
                                             执行多个任务时，每个任务之间的等待时间。留空则随机 1-120 秒
                                         </p>
                                     </div>
@@ -531,29 +538,29 @@ export default function SettingsPage() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="font-medium">配置状态</p>
-                                            <p className="text-sm text-gray-500">
+                                            <p className="text-sm text-white/50">
                                                 {aiConfig?.has_config ? "✅ 已配置" : "❌ 未配置"}
                                             </p>
                                         </div>
                                     </div>
 
                                     {aiConfig?.has_config && (
-                                        <div className="p-3 bg-gray-50 rounded text-sm">
-                                            <p><span className="text-gray-500">API Key:</span> {aiConfig.api_key_masked}</p>
+                                        <div className="p-3 bg-white/5 rounded text-sm">
+                                            <p><span className="text-white/50">API Key:</span> {aiConfig.api_key_masked}</p>
                                             {aiConfig.base_url && (
-                                                <p><span className="text-gray-500">Base URL:</span> {aiConfig.base_url}</p>
+                                                <p><span className="text-white/50">Base URL:</span> {aiConfig.base_url}</p>
                                             )}
                                             {aiConfig.model && (
-                                                <p><span className="text-gray-500">Model:</span> {aiConfig.model}</p>
+                                                <p><span className="text-white/50">Model:</span> {aiConfig.model}</p>
                                             )}
                                         </div>
                                     )}
 
-                                    <div className="space-y-3 p-4 bg-gray-50 rounded">
+                                    <div className="space-y-3 p-4 bg-white/5 rounded">
                                         <p className="font-medium text-sm">
                                             {aiConfig?.has_config ? "更新配置" : "添加配置"}
                                         </p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-white/50">
                                             用于 AI 图片识别和 AI 计算题功能，需要 OpenAI 兼容的 API
                                         </p>
 
@@ -576,7 +583,7 @@ export default function SettingsPage() {
                                                 value={aiForm.base_url}
                                                 onChange={(e) => setAIForm({ ...aiForm, base_url: e.target.value })}
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">
+                                            <p className="text-xs text-white/50 mt-1">
                                                 留空使用 OpenAI 官方地址，可填写兼容 API 地址
                                             </p>
                                         </div>
@@ -589,7 +596,7 @@ export default function SettingsPage() {
                                                 value={aiForm.model}
                                                 onChange={(e) => setAIForm({ ...aiForm, model: e.target.value })}
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">
+                                            <p className="text-xs text-white/50 mt-1">
                                                 默认 gpt-4o，图片识别需要支持 vision 的模型
                                             </p>
                                         </div>
@@ -737,7 +744,7 @@ export default function SettingsPage() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="font-medium">状态</p>
-                                            <p className="text-sm text-gray-500">
+                                            <p className="text-sm text-white/50">
                                                 {totpEnabled ? "✅ 已启用" : "❌ 未启用"}
                                             </p>
                                         </div>
@@ -749,7 +756,7 @@ export default function SettingsPage() {
                                     </div>
 
                                     {showTotpSetup && totpSecret && token && (
-                                        <div className="space-y-4 p-4 bg-gray-50 rounded">
+                                        <div className="space-y-4 p-4 bg-white/5 rounded">
                                             <div>
                                                 <p className="font-medium mb-2">1. 扫描二维码</p>
                                                 <img
@@ -795,7 +802,7 @@ export default function SettingsPage() {
                                     )}
 
                                     {totpEnabled && (
-                                        <div className="space-y-4 p-4 bg-gray-50 rounded">
+                                        <div className="space-y-4 p-4 bg-white/5 rounded">
                                             <p className="text-sm text-gray-600">
                                                 如需禁用两步验证，请输入验证码确认
                                             </p>
@@ -837,7 +844,7 @@ export default function SettingsPage() {
                                                 log_retention_days: parseInt(e.target.value) || 7
                                             })}
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="text-xs text-white/50 mt-1">
                                             超过保留天数的日志将被自动清理，默认保留 7 天
                                         </p>
                                     </div>
@@ -856,7 +863,7 @@ export default function SettingsPage() {
                                 <CardContent className="space-y-4">
                                     <div>
                                         <p className="font-medium mb-2">导出配置</p>
-                                        <p className="text-sm text-gray-500 mb-3">
+                                        <p className="text-sm text-white/50 mb-3">
                                             导出所有任务配置，用于备份或迁移
                                         </p>
                                         <Button onClick={handleExportConfig} disabled={loading}>
@@ -868,7 +875,7 @@ export default function SettingsPage() {
 
                                     <div>
                                         <p className="font-medium mb-2">导入配置</p>
-                                        <p className="text-sm text-gray-500 mb-3">
+                                        <p className="text-sm text-white/50 mb-3">
                                             从备份文件恢复配置
                                         </p>
 

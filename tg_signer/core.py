@@ -22,7 +22,8 @@ from urllib import parse
 
 import httpx
 from croniter import CroniterBadCronError, croniter
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError
+
 from pyrogram import Client as BaseClient
 from pyrogram import errors, filters
 from pyrogram.enums import ChatMembersFilter, ChatType
@@ -547,7 +548,10 @@ class Waiter:
 
 
 class UserSignerWorkerContext(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    """签到工作上下文"""
+    
+    class Config:
+        arbitrary_types_allowed = True
 
     waiter: Waiter
     sign_chats: defaultdict[int, list[SignChatV3]]  # 签到配置列表

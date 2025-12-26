@@ -269,9 +269,23 @@ class SignTaskService:
         # 调用 CLI 命令执行任务
         import subprocess
         
+        # 构建命令: tg-signer --workdir <workdir> --session_dir <session_dir> --account <account> run-once <task>
+        session_dir = str(Path(settings.data_dir) / "sessions")
+        
+        cmd = [
+            "tg-signer",
+            "--workdir", str(self.workdir),
+            "--session_dir", session_dir,
+            "--account", account_name,
+            "run-once",  # 使用 run-once 来运行一次
+            task_name,
+        ]
+        
+        print(f"DEBUG: 执行命令: {' '.join(cmd)}")
+        
         try:
             result = subprocess.run(
-                ["tg-signer", "run", account_name, task_name],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 分钟超时

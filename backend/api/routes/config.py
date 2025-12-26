@@ -387,3 +387,58 @@ def delete_ai_config(current_user: User = Depends(get_current_user)):
             detail=f"删除 AI 配置失败: {str(e)}"
         )
 
+
+# ============ 全局设置 ============
+
+class GlobalSettingsRequest(BaseModel):
+    """全局设置请求"""
+    sign_interval: Optional[int] = None  # None 表示随机 1-120 秒
+
+
+class GlobalSettingsResponse(BaseModel):
+    """全局设置响应"""
+    sign_interval: Optional[int] = None
+
+
+@router.get("/settings", response_model=GlobalSettingsResponse)
+def get_global_settings(current_user: User = Depends(get_current_user)):
+    """
+    获取全局设置
+    """
+    try:
+        settings = config_service.get_global_settings()
+        return GlobalSettingsResponse(**settings)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取全局设置失败: {str(e)}"
+        )
+
+
+@router.post("/settings", response_model=AIConfigSaveResponse)
+def save_global_settings(
+    request: GlobalSettingsRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    保存全局设置
+    """
+    try:
+        settings = {
+            "sign_interval": request.sign_interval
+        }
+        config_service.save_global_settings(settings)
+        
+        return AIConfigSaveResponse(
+            success=True,
+            message="全局设置已保存"
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"保存全局设置失败: {str(e)}"
+        )
+
+

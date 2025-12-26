@@ -17,6 +17,9 @@ import {
     testAIConnection,
     deleteAIConfig,
     AIConfig,
+    getGlobalSettings,
+    saveGlobalSettings,
+    GlobalSettings,
 } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -57,6 +60,9 @@ export default function SettingsPage() {
     const [aiTestResult, setAITestResult] = useState<string | null>(null);
     const [aiTesting, setAITesting] = useState(false);
 
+    // 全局设置
+    const [globalSettings, setGlobalSettings] = useState<GlobalSettings>({ sign_interval: null });
+
     useEffect(() => {
         const t = getToken();
         if (!t) {
@@ -66,6 +72,7 @@ export default function SettingsPage() {
         setLocalToken(t);
         loadTOTPStatus(t);
         loadAIConfig(t);
+        loadGlobalSettings(t);
     }, [router]);
 
     const loadTOTPStatus = async (t: string) => {
@@ -90,6 +97,31 @@ export default function SettingsPage() {
             }
         } catch (err: any) {
             console.error("加载AI配置失败:", err);
+        }
+    };
+
+    const loadGlobalSettings = async (t: string) => {
+        try {
+            const settings = await getGlobalSettings(t);
+            setGlobalSettings(settings);
+        } catch (err: any) {
+            console.error("加载全局设置失败:", err);
+        }
+    };
+
+    const handleSaveGlobalSettings = async () => {
+        if (!token) return;
+
+        try {
+            setLoading(true);
+            setError("");
+
+            await saveGlobalSettings(token, globalSettings);
+            setSuccess("全局设置已保存");
+        } catch (err: any) {
+            setError(err.message || "保存全局设置失败");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -621,13 +653,42 @@ export default function SettingsPage() {
 
                                 {aiTestResult && (
                                     <div className={`p-3 rounded text-sm ${aiTestResult.startsWith("✅")
-                                            ? "bg-green-50 text-green-700 border border-green-200"
-                                            : "bg-red-50 text-red-700 border border-red-200"
+                                        ? "bg-green-50 text-green-700 border border-green-200"
+                                        : "bg-red-50 text-red-700 border border-red-200"
                                         }`}>
                                         {aiTestResult}
                                     </div>
                                 )}
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* 全局设置 */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>全局设置</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <Label htmlFor="signInterval">任务间隔（秒）</Label>
+                                <Input
+                                    id="signInterval"
+                                    type="number"
+                                    placeholder="留空使用随机 1-120 秒"
+                                    value={globalSettings.sign_interval ?? ""}
+                                    onChange={(e) => setGlobalSettings({
+                                        ...globalSettings,
+                                        sign_interval: e.target.value ? parseInt(e.target.value) : null
+                                    })}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    执行多个任务时，每个任务之间的等待时间。留空则随机 1-120 秒
+                                </p>
+                            </div>
+
+                            <Button onClick={handleSaveGlobalSettings} disabled={loading}>
+                                {loading ? "保存中..." : "保存设置"}
+                            </Button>
                         </CardContent>
                     </Card>
 

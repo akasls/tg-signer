@@ -121,14 +121,29 @@ class SignTaskService:
         sign_at: str,
         chats: List[Dict[str, Any]],
         random_seconds: int = 0,
-        sign_interval: int = 1,
+        sign_interval: Optional[int] = None,
         account_name: str = "",
     ) -> Dict[str, Any]:
         """
         创建新的签到任务
+        
+        Args:
+            sign_interval: 签到间隔，None 表示使用全局配置或随机 1-120 秒
         """
+        import random
+        from backend.services.config import config_service
+        
         task_dir = self.signs_dir / task_name
         task_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 获取 sign_interval
+        if sign_interval is None:
+            global_settings = config_service.get_global_settings()
+            sign_interval = global_settings.get("sign_interval")
+        
+        # 如果仍然是 None，使用随机值 1-120
+        if sign_interval is None:
+            sign_interval = random.randint(1, 120)
         
         config = {
             "_version": 3,
@@ -141,7 +156,7 @@ class SignTaskService:
         
         config_file = task_dir / "config.json"
         
-        print(f"DEBUG: 正在创建任务, file={config_file}, account={account_name}")
+        print(f"DEBUG: 正在创建任务, file={config_file}, account={account_name}, sign_interval={sign_interval}")
         try:
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)

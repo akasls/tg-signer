@@ -399,6 +399,58 @@ class ConfigService:
                 "message": f"连接失败: {str(e)}"
             }
 
+    # ============ 全局设置 ============
+    
+    def _get_global_settings_file(self) -> Path:
+        """获取全局设置文件路径"""
+        return self.workdir / ".global_settings.json"
+    
+    def get_global_settings(self) -> Dict:
+        """
+        获取全局设置
+        
+        Returns:
+            设置字典
+        """
+        config_file = self._get_global_settings_file()
+        
+        default_settings = {
+            "sign_interval": None,  # None 表示使用随机 1-120 秒
+        }
+        
+        if not config_file.exists():
+            return default_settings
+        
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                settings = json.load(f)
+                # 合并默认设置
+                for key, value in default_settings.items():
+                    if key not in settings:
+                        settings[key] = value
+                return settings
+        except (json.JSONDecodeError, OSError):
+            return default_settings
+    
+    def save_global_settings(self, settings: Dict) -> bool:
+        """
+        保存全局设置
+        
+        Args:
+            settings: 设置字典
+            
+        Returns:
+            是否成功保存
+        """
+        config_file = self._get_global_settings_file()
+        
+        try:
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(settings, f, ensure_ascii=False, indent=2)
+            return True
+        except OSError:
+            return False
+
 
 # 创建全局实例
 config_service = ConfigService()

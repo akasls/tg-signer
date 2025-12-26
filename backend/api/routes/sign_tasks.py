@@ -66,7 +66,7 @@ class SignTaskCreate(BaseModel):
     sign_at: str = Field(..., description="签到时间（CRON 表达式）")
     chats: List[ChatConfig] = Field(..., description="Chat 配置列表")
     random_seconds: int = Field(0, description="随机延迟秒数")
-    sign_interval: int = Field(1, description="签到间隔秒数")
+    sign_interval: Optional[int] = Field(None, description="签到间隔秒数，留空使用全局配置或随机 1-120 秒")
 
     @validator('name')
     def name_must_be_valid_filename(cls, v):

@@ -291,7 +291,22 @@ export const deleteAIConfig = (token: string) =>
     method: "DELETE",
   }, token);
 
+// ============ 全局设置 ============
 
+export interface GlobalSettings {
+  sign_interval?: number | null;  // null 表示随机 1-120 秒
+}
+
+export const getGlobalSettings = (token: string) =>
+  request<GlobalSettings>("/config/settings", {}, token);
+
+export const saveGlobalSettings = (token: string, settings: GlobalSettings) =>
+  request<{ success: boolean; message: string }>("/config/settings", {
+    method: "POST",
+    body: JSON.stringify(settings),
+  }, token);
+
+// ============ 签到任务管理 ============
 
 export interface SignTaskChat {
   chat_id: number;

@@ -71,9 +71,9 @@ export default function Dashboard() {
   };
 
   const getAccountTaskCount = (accountName: string) => {
-    return tasks.filter(task =>
-      task.chats.some(chat => chat.name.includes(accountName))
-    ).length;
+    // 任务与账号关联：查找签到任务总数（因为任务是全局配置，显示总任务数）
+    // 每个账号显示它可以执行的任务数量
+    return tasks.length;
   };
 
   const handleStartLogin = async () => {
@@ -192,13 +192,6 @@ export default function Dashboard() {
 
             {/* 右侧：GitHub + 设置 */}
             <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard/sign-tasks"
-                className="text-gray-600 hover:text-blue-600 font-medium mr-2"
-              >
-                任务管理
-              </Link>
-
               <a
                 href="https://github.com/akasls/tg-signer"
                 target="_blank"
@@ -211,9 +204,12 @@ export default function Dashboard() {
                 </svg>
               </a>
 
-              <div className="relative">
+              <div
+                className="relative"
+                onMouseEnter={() => setShowSettingsMenu(true)}
+                onMouseLeave={() => setShowSettingsMenu(false)}
+              >
                 <button
-                  onClick={() => setShowSettingsMenu(!showSettingsMenu)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="设置"
                 >

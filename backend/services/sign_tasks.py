@@ -21,7 +21,45 @@ class SignTaskService:
         self.workdir = Path(settings.data_dir) / ".signer"
         self.signs_dir = self.workdir / "signs"
         self.signs_dir.mkdir(parents=True, exist_ok=True)
+        self.run_history_dir = self.workdir / ".run_history"
+        self.run_history_dir.mkdir(parents=True, exist_ok=True)
         print(f"DEBUG: 初始化 SignTaskService, signs_dir={self.signs_dir}, exists={self.signs_dir.exists()}")
+
+    def _get_last_run_info(self, task_dir: Path) -> Optional[Dict[str, Any]]:
+        """
+        获取任务的最后执行信息
+        
+        Returns:
+            包含 time, success, message 的字典，如果没有记录则返回 None
+        """
+        history_file = self.run_history_dir / f"{task_dir.name}.json"
+        
+        if not history_file.exists():
+            return None
+        
+        try:
+            with open(history_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return None
+    
+    def _save_run_info(self, task_name: str, success: bool, message: str = ""):
+        """保存任务执行信息"""
+        from datetime import datetime
+        
+        history_file = self.run_history_dir / f"{task_name}.json"
+        
+        info = {
+            "time": datetime.now().isoformat(),
+            "success": success,
+            "message": message
+        }
+        
+        try:
+            with open(history_file, "w", encoding="utf-8") as f:
+                json.dump(info, f, ensure_ascii=False, indent=2)
+        except OSError:
+            pass
 
     def list_tasks(self, account_name: Optional[str] = None) -> List[Dict[str, Any]]:
         """
@@ -54,6 +92,9 @@ class SignTaskService:
                     if account_name and task_account != account_name:
                         continue
                     
+                    # 读取最后执行记录
+                    last_run = self._get_last_run_info(task_dir)
+                    
                     # 基本信息
                     task_info = {
                         "name": task_dir.name,
@@ -63,6 +104,7 @@ class SignTaskService:
                         "sign_interval": config.get("sign_interval", 1),
                         "chats": config.get("chats", []),
                         "enabled": True,  # 默认启用
+                        "last_run": last_run,
                     }
                     
                     tasks.append(task_info)
@@ -201,9 +243,10 @@ class SignTaskService:
         if not existing:
             raise ValueError(f"任务 {task_name} 不存在")
         
-        # 更新配置
+        # 更新配置（保留 account_name）
         config = {
             "_version": 3,
+            "account_name": existing.get("account_name", ""),
             "sign_at": sign_at if sign_at is not None else existing["sign_at"],
             "random_seconds": random_seconds if random_seconds is not None else existing["random_seconds"],
             "sign_interval": sign_interval if sign_interval is not None else existing["sign_interval"],
@@ -218,6 +261,7 @@ class SignTaskService:
         
         return {
             "name": task_name,
+            "account_name": config["account_name"],
             "sign_at": config["sign_at"],
             "random_seconds": config["random_seconds"],
             "sign_interval": config["sign_interval"],
@@ -326,18 +370,28 @@ class SignTaskService:
             if result.stderr:
                 print(f"DEBUG: CLI stderr:\n{result.stderr}")
             
+            success = result.returncode == 0
+            error_msg = result.stderr if not success else ""
+            
+            # 保存执行记录
+            self._save_run_info(task_name, success, error_msg)
+            
             return {
-                "success": result.returncode == 0,
+                "success": success,
                 "output": result.stdout,
                 "error": result.stderr,
             }
         except subprocess.TimeoutExpired:
+            # 保存超时记录
+            self._save_run_info(task_name, False, "任务执行超时（超过 5 分钟）")
             return {
                 "success": False,
                 "output": "",
                 "error": "任务执行超时（超过 5 分钟）",
             }
         except Exception as e:
+            # 保存错误记录
+            self._save_run_info(task_name, False, str(e))
             return {
                 "success": False,
                 "output": "",

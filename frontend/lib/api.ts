@@ -316,6 +316,12 @@ export interface SignTaskChat {
   action_interval: number;
 }
 
+export interface LastRunInfo {
+  time: string;
+  success: boolean;
+  message?: string;
+}
+
 export interface SignTask {
   name: string;
   account_name: string;
@@ -324,6 +330,7 @@ export interface SignTask {
   random_seconds: number;
   sign_interval: number;
   enabled: boolean;
+  last_run?: LastRunInfo | null;
 }
 
 export interface CreateSignTaskRequest {

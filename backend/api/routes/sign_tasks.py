@@ -88,6 +88,13 @@ class SignTaskUpdate(BaseModel):
     sign_interval: Optional[int] = Field(None, description="签到间隔秒数")
 
 
+class LastRunInfo(BaseModel):
+    """最后执行信息"""
+    time: str
+    success: bool
+    message: str = ""
+
+
 class SignTaskOut(BaseModel):
     """签到任务输出"""
     name: str
@@ -97,6 +104,7 @@ class SignTaskOut(BaseModel):
     random_seconds: int
     sign_interval: int
     enabled: bool
+    last_run: Optional[LastRunInfo] = None
 
 
 class ChatOut(BaseModel):

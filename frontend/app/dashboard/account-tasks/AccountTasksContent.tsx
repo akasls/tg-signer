@@ -10,6 +10,7 @@ import {
     runSignTask,
     getAccountChats,
     createSignTask,
+    updateSignTask,
     SignTask,
     ChatInfo,
     CreateSignTaskRequest,
@@ -36,14 +37,22 @@ export default function AccountTasksContent() {
     const [newTask, setNewTask] = useState({
         name: "",
         sign_at: "0 6 * * *",
+        random_minutes: 0,  // 改为分钟
         chat_id: 0,
         chat_id_manual: "",
         chat_name: "",
         actions: [{ action: 1, text: "" }],
         delete_after: undefined as number | undefined,
         action_interval: 1,
-        sign_interval: 1,
-        random_seconds: 0,
+    });
+
+    // 编辑任务对话框
+    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [editingTaskName, setEditingTaskName] = useState("");
+    const [editTask, setEditTask] = useState({
+        sign_at: "0 6 * * *",
+        random_minutes: 0,
+        chats: [] as any[],
     });
 
     useEffect(() => {
@@ -179,8 +188,7 @@ export default function AccountTasksContent() {
                     delete_after: newTask.delete_after,
                     action_interval: newTask.action_interval,
                 }],
-                random_seconds: newTask.random_seconds,
-                sign_interval: newTask.sign_interval,
+                random_seconds: newTask.random_minutes * 60,  // 分钟转换为秒
             };
 
             await createSignTask(token, request);
@@ -189,14 +197,13 @@ export default function AccountTasksContent() {
             setNewTask({
                 name: "",
                 sign_at: "0 6 * * *",
+                random_minutes: 0,
                 chat_id: 0,
                 chat_id_manual: "",
                 chat_name: "",
                 actions: [{ action: 1, text: "" }],
                 delete_after: undefined,
                 action_interval: 1,
-                sign_interval: 1,
-                random_seconds: 0,
             });
             await loadData(token);
         } catch (err: any) {
@@ -224,6 +231,39 @@ export default function AccountTasksContent() {
             ...newTask,
             actions: newTask.actions.filter((_, i) => i !== index),
         });
+    };
+
+    const handleEditTask = (task: SignTask) => {
+        setEditingTaskName(task.name);
+        setEditTask({
+            sign_at: task.sign_at,
+            random_minutes: Math.round(task.random_seconds / 60),
+            chats: task.chats,
+        });
+        setShowEditDialog(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!token) return;
+
+        try {
+            setLoading(true);
+            setError("");
+
+            await updateSignTask(token, editingTaskName, {
+                sign_at: editTask.sign_at,
+                random_seconds: editTask.random_minutes * 60,  // 转换回秒
+                chats: editTask.chats,
+            });
+
+            setSuccess("任务更新成功！");
+            setShowEditDialog(false);
+            await loadData(token);
+        } catch (err: any) {
+            setError(err.message || "更新任务失败");
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (!token) {
@@ -288,7 +328,7 @@ export default function AccountTasksContent() {
                             <Card key={task.name} className="card-hover">
                                 <CardContent className="p-4">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex-1 grid grid-cols-4 gap-4">
+                                        <div className="flex-1 grid grid-cols-5 gap-4">
                                             {/* 任务名称 */}
                                             <div>
                                                 <div className="text-xs text-gray-500 mb-1">任务名称</div>
@@ -307,17 +347,50 @@ export default function AccountTasksContent() {
                                             <div>
                                                 <div className="text-xs text-gray-500 mb-1">签到时间</div>
                                                 <div className="font-mono text-sm">{task.sign_at}</div>
+                                                {task.random_seconds > 0 && (
+                                                    <div className="text-xs text-gray-400">+随机{Math.round(task.random_seconds / 60)}分钟</div>
+                                                )}
                                             </div>
 
-                                            {/* 随机延迟 */}
+                                            {/* 最后执行 */}
                                             <div>
-                                                <div className="text-xs text-gray-500 mb-1">随机延迟</div>
-                                                <div className="text-sm">{task.random_seconds}秒</div>
+                                                <div className="text-xs text-gray-500 mb-1">最后执行</div>
+                                                {task.last_run ? (
+                                                    <div>
+                                                        <div className={`text-sm ${task.last_run.success ? 'text-green-600' : 'text-red-600'}`}>
+                                                            {task.last_run.success ? '✓ 成功' : '✗ 失败'}
+                                                        </div>
+                                                        <div className="text-xs text-gray-400">
+                                                            {new Date(task.last_run.time).toLocaleString('zh-CN', {
+                                                                month: '2-digit',
+                                                                day: '2-digit',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-sm text-gray-400">从未执行</div>
+                                                )}
+                                            </div>
+
+                                            {/* 状态 */}
+                                            <div>
+                                                <div className="text-xs text-gray-500 mb-1">状态</div>
+                                                <div className="text-sm text-green-600">已启用</div>
                                             </div>
                                         </div>
 
                                         {/* 操作按钮 */}
                                         <div className="flex gap-2 ml-4">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => handleEditTask(task)}
+                                                disabled={loading}
+                                            >
+                                                编辑
+                                            </Button>
                                             <Button
                                                 variant="secondary"
                                                 size="sm"
@@ -374,6 +447,21 @@ export default function AccountTasksContent() {
                                     </div>
                                 </div>
 
+                                {/* 随机延迟 - 放在签到时间下面 */}
+                                <div>
+                                    <Label htmlFor="randomMinutes">随机延迟（分钟）</Label>
+                                    <Input
+                                        id="randomMinutes"
+                                        type="number"
+                                        placeholder="0"
+                                        value={newTask.random_minutes}
+                                        onChange={(e) => setNewTask({
+                                            ...newTask,
+                                            random_minutes: parseInt(e.target.value) || 0,
+                                        })}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">在签到时间基础上增加随机延迟，更自然</p>
+                                </div>
                                 {/* Chat 配置 */}
                                 {/* Chat 配置 */}
                                 <div className="border-t pt-4">
@@ -552,6 +640,61 @@ export default function AccountTasksContent() {
                                 >
                                     {loading ? "创建中..." : "创建任务"}
                                 </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* 编辑任务对话框 */}
+            {showEditDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <Card className="w-full max-w-md">
+                        <CardContent className="p-6">
+                            <h2 className="text-xl font-bold mb-4">编辑任务: {editingTaskName}</h2>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <Label htmlFor="editSignAt">签到时间（CRON）</Label>
+                                    <Input
+                                        id="editSignAt"
+                                        placeholder="0 6 * * *"
+                                        value={editTask.sign_at}
+                                        onChange={(e) => setEditTask({ ...editTask, sign_at: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="editRandomMinutes">随机延迟（分钟）</Label>
+                                    <Input
+                                        id="editRandomMinutes"
+                                        type="number"
+                                        placeholder="0"
+                                        value={editTask.random_minutes}
+                                        onChange={(e) => setEditTask({
+                                            ...editTask,
+                                            random_minutes: parseInt(e.target.value) || 0,
+                                        })}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">在签到时间基础上增加随机延迟</p>
+                                </div>
+
+                                <div className="flex gap-2 pt-4">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => setShowEditDialog(false)}
+                                        className="flex-1"
+                                    >
+                                        取消
+                                    </Button>
+                                    <Button
+                                        onClick={handleSaveEdit}
+                                        disabled={loading}
+                                        className="flex-1"
+                                    >
+                                        {loading ? "保存中..." : "保存"}
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

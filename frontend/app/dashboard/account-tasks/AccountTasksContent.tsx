@@ -540,33 +540,19 @@ export default function AccountTasksContent() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <Label htmlFor="deleteAfter">删除延迟（秒）</Label>
-                                            <Input
-                                                id="deleteAfter"
-                                                type="number"
-                                                placeholder="不删除"
-                                                value={newTask.delete_after || ""}
-                                                onChange={(e) => setNewTask({
-                                                    ...newTask,
-                                                    delete_after: e.target.value ? parseInt(e.target.value) : undefined,
-                                                })}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="randomSeconds">随机延迟（秒）</Label>
-                                            <Input
-                                                id="randomSeconds"
-                                                type="number"
-                                                value={newTask.random_seconds}
-                                                onChange={(e) => setNewTask({
-                                                    ...newTask,
-                                                    random_seconds: parseInt(e.target.value) || 0,
-                                                })}
-                                            />
-                                        </div>
+                                    <div>
+                                        <Label htmlFor="deleteAfter">删除延迟（秒）</Label>
+                                        <Input
+                                            id="deleteAfter"
+                                            type="number"
+                                            placeholder="不删除"
+                                            value={newTask.delete_after || ""}
+                                            onChange={(e) => setNewTask({
+                                                ...newTask,
+                                                delete_after: e.target.value ? parseInt(e.target.value) : undefined,
+                                            })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">发送消息后多少秒删除，留空不删除</p>
                                     </div>
                                 </div>
 

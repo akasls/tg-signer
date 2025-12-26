@@ -458,7 +458,6 @@ class BaseUserWorker(Generic[ConfigT]):
                 level="WARNING",
             )
         message = await self.app.send_dice(chat_id, emoji, **kwargs)
-        self.log(f"DEBUG: send_dice 结果: message={message}, delete_after={delete_after}, type={type(delete_after)}")
         if message and delete_after is not None:
             self.log(
                 f"Dice「{emoji}」 to {chat_id} will be deleted after {delete_after} seconds."
@@ -470,8 +469,6 @@ class BaseUserWorker(Generic[ConfigT]):
                 self.log(f"Dice「{emoji}」 to {chat_id} deleted!")
             except Exception as e:
                 self.log(f"删除骰子消息失败: {e}", level="ERROR")
-        else:
-            self.log(f"DEBUG: 骰子消息不会被删除 - message={message is not None}, delete_after={delete_after}")
         return message
 
     async def search_members(
@@ -942,11 +939,9 @@ class UserSigner(BaseUserWorker[SignConfigV3]):
         return False
 
     async def wait_for(self, chat: SignChatV3, action: ActionT, timeout=10):
-        self.log(f"DEBUG: wait_for 开始 - chat.delete_after={chat.delete_after}, action={type(action).__name__}")
         if isinstance(action, SendTextAction):
             return await self.send_message(chat.chat_id, action.text, chat.delete_after)
         elif isinstance(action, SendDiceAction):
-            self.log(f"DEBUG: 执行 SendDiceAction, dice={action.dice}, delete_after={chat.delete_after}")
             return await self.send_dice(chat.chat_id, action.dice, chat.delete_after)
         self.context.waiter.add(chat.chat_id)
         start = time.perf_counter()

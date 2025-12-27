@@ -477,7 +477,7 @@ export default function SettingsPage() {
                 </div>
             </nav>
 
-            <div className="p-6 relative z-10 page-transition">
+            <div className="p-6 pb-20 relative z-10 page-transition">
                 <div className="max-w-4xl mx-auto space-y-8">
 
                     {/* 错误和成功提示 */}

@@ -31,6 +31,13 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+/* 导航栏固定时确保宽度正确 */
+nav.glass {
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+
 .glass-card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(16px);
@@ -111,10 +118,13 @@ input[type="file"] {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: #e2e8f0;
-  padding: 0.5rem;
+  padding: 0.75rem;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 
 input[type="file"]:hover {
@@ -136,6 +146,31 @@ input[type="file"]::file-selector-button {
 
 input[type="file"]::file-selector-button:hover {
   opacity: 0.9;
+}
+
+/* ========== Textarea 文本域样式 ========== */
+
+textarea {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  transition: all 0.3s ease;
+  resize: vertical;
+}
+
+textarea:focus {
+  border-color: var(--aurora-1);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+  outline: none;
+}
+
+textarea::placeholder {
+  color: rgba(226, 232, 240, 0.4);
 }
 
 /* ========== Aurora 渐变效果 ========== */

@@ -63,15 +63,17 @@ export default function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      {/* 背景装饰 */}
+      {/* 动态流光背景 */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-violet-500/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-violet-600/30 rounded-full blur-[120px] animate-glow-move"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-cyan-500/25 rounded-full blur-[100px] animate-glow-move-reverse"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-500/15 rounded-full blur-[150px] animate-glow-pulse"></div>
+        </div>
       </div>
 
-      <Card className="w-full max-w-lg relative animate-scale-in">
-        <CardContent className="p-10">
+      <Card className="w-full max-w-xl relative animate-scale-in">
+        <CardContent className="p-8 sm:p-12">
           {/* Logo 和标题 */}
           <div className="text-center mb-8">
             <div className="text-5xl mb-4 animate-pulse-glow inline-block rounded-full p-2">⚡</div>

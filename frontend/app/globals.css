@@ -24,7 +24,7 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
@@ -35,7 +35,7 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  box-shadow: 
+  box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
@@ -74,12 +74,10 @@ body {
 /* ========== Aurora 渐变效果 ========== */
 
 .aurora-gradient {
-  background: linear-gradient(
-    135deg,
-    var(--aurora-1) 0%,
-    var(--aurora-2) 50%,
-    var(--aurora-3) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--aurora-1) 0%,
+      var(--aurora-2) 50%,
+      var(--aurora-3) 100%);
 }
 
 .aurora-text {
@@ -91,7 +89,7 @@ body {
 
 .aurora-border {
   border: 1px solid transparent;
-  background: 
+  background:
     linear-gradient(135deg, rgba(15, 15, 35, 0.9), rgba(26, 26, 46, 0.9)) padding-box,
     linear-gradient(135deg, var(--aurora-1), var(--aurora-2), var(--aurora-3)) border-box;
 }
@@ -107,7 +105,7 @@ body {
 
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.3),
     0 0 40px rgba(124, 58, 237, 0.1);
   border-color: rgba(124, 58, 237, 0.3);
@@ -135,6 +133,82 @@ body {
   box-shadow: 0 0 30px rgba(236, 72, 153, 0.3);
 }
 
+/* ========== 动态流光动画 ========== */
+
+@keyframes glow-move {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+
+  25% {
+    transform: translate(10%, 15%) scale(1.1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: translate(-5%, -10%) scale(0.9);
+    opacity: 0.5;
+  }
+
+  75% {
+    transform: translate(-15%, 5%) scale(1.05);
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-move-reverse {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.5;
+  }
+
+  25% {
+    transform: translate(-20%, -10%) scale(1.15);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translate(15%, 10%) scale(0.85);
+    opacity: 0.6;
+  }
+
+  75% {
+    transform: translate(10%, -15%) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.5;
+  }
+}
+
+.animate-glow-move {
+  animation: glow-move 15s ease-in-out infinite;
+}
+
+.animate-glow-move-reverse {
+  animation: glow-move-reverse 18s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 10s ease-in-out infinite;
+}
+
 /* ========== 动画 ========== */
 
 @keyframes fadeIn {
@@ -142,6 +216,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -153,6 +228,7 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -164,6 +240,7 @@ body {
     opacity: 0;
     transform: translateX(100px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -175,6 +252,7 @@ body {
     opacity: 0;
     transform: translateX(-100px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -186,6 +264,7 @@ body {
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -193,18 +272,24 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
   }
+
   50% {
     box-shadow: 0 0 40px rgba(124, 58, 237, 0.5);
   }
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -214,15 +299,19 @@ body {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
 }
 
 @keyframes aurora {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -257,7 +346,7 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -268,11 +357,25 @@ body {
 }
 
 /* 延迟动画类 */
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}
 
 /* ========== Toast 气泡通知 ========== */
 
@@ -281,6 +384,7 @@ body {
     opacity: 0;
     transform: translateX(100%) translateY(0);
   }
+
   to {
     opacity: 1;
     transform: translateX(0) translateY(0);
@@ -292,6 +396,7 @@ body {
     opacity: 1;
     transform: translateX(0);
   }
+
   to {
     opacity: 0;
     transform: translateX(100%);
@@ -383,12 +488,10 @@ body {
 /* ========== 骨架屏加载 ========== */
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.03) 75%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.03) 25%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;

@@ -424,17 +424,19 @@ export default function SettingsPage() {
     }
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        router.push("/");
+        if (confirm("确定要退出登录吗？")) {
+            localStorage.removeItem("tg-signer-token");
+            router.push("/");
+        }
     };
 
     return (
         <div className="min-h-screen">
-            {/* 背景装饰 */}
+            {/* 动态流光背景 */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 -left-32 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-float"></div>
-                <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-                <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px] animate-glow-move"></div>
+                <div className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-cyan-500/15 rounded-full blur-[100px] animate-glow-move-reverse"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-500/10 rounded-full blur-[150px] animate-glow-pulse"></div>
             </div>
 
             {/* 导航栏 */}

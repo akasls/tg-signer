@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from backend.core.config import get_settings
 
@@ -208,7 +208,7 @@ class ConfigService:
         
         return json.dumps(all_configs, ensure_ascii=False, indent=2)
 
-    def import_all_configs(self, json_str: str, overwrite: bool = False) -> Dict[str, any]:
+    def import_all_configs(self, json_str: str, overwrite: bool = False) -> Dict[str, Any]:
         """
         导入所有配置
         
@@ -447,6 +447,94 @@ class ConfigService:
         try:
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(settings, f, ensure_ascii=False, indent=2)
+            return True
+        except OSError:
+            return False
+
+    # ============ Telegram API 配置 ============
+    
+    # 默认的 Telegram API 凭证
+    DEFAULT_TG_API_ID = "611335"
+    DEFAULT_TG_API_HASH = "d524b414d21f4d37f08684c1df41ac9c"
+    
+    def _get_telegram_config_file(self) -> Path:
+        """获取 Telegram API 配置文件路径"""
+        return self.workdir / ".telegram_api.json"
+    
+    def get_telegram_config(self) -> Dict:
+        """
+        获取 Telegram API 配置
+        
+        Returns:
+            配置字典，包含 api_id, api_hash, is_custom (是否为自定义配置)
+        """
+        config_file = self._get_telegram_config_file()
+        
+        # 默认配置
+        default_config = {
+            "api_id": self.DEFAULT_TG_API_ID,
+            "api_hash": self.DEFAULT_TG_API_HASH,
+            "is_custom": False,
+        }
+        
+        if not config_file.exists():
+            return default_config
+        
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                # 如果有自定义配置，标记为自定义
+                if config.get("api_id") and config.get("api_hash"):
+                    config["is_custom"] = True
+                    return config
+                else:
+                    return default_config
+        except (json.JSONDecodeError, OSError):
+            return default_config
+    
+    def save_telegram_config(
+        self, 
+        api_id: str, 
+        api_hash: str
+    ) -> bool:
+        """
+        保存 Telegram API 配置
+        
+        Args:
+            api_id: Telegram API ID
+            api_hash: Telegram API Hash
+            
+        Returns:
+            是否成功保存
+        """
+        config = {
+            "api_id": api_id,
+            "api_hash": api_hash,
+        }
+        
+        config_file = self._get_telegram_config_file()
+        
+        try:
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+            return True
+        except OSError:
+            return False
+    
+    def reset_telegram_config(self) -> bool:
+        """
+        重置 Telegram API 配置（恢复默认）
+        
+        Returns:
+            是否成功重置
+        """
+        config_file = self._get_telegram_config_file()
+        
+        if not config_file.exists():
+            return True
+        
+        try:
+            config_file.unlink()
             return True
         except OSError:
             return False

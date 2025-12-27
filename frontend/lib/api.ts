@@ -313,6 +313,33 @@ export const saveGlobalSettings = (token: string, settings: GlobalSettings) =>
     body: JSON.stringify(settings),
   }, token);
 
+// ============ Telegram API 配置 ============
+
+export interface TelegramConfig {
+  api_id: string;
+  api_hash: string;
+  is_custom: boolean;
+  default_api_id: string;
+  default_api_hash: string;
+}
+
+export const getTelegramConfig = (token: string) =>
+  request<TelegramConfig>("/config/telegram", {}, token);
+
+export const saveTelegramConfig = (
+  token: string,
+  config: { api_id: string; api_hash: string }
+) =>
+  request<{ success: boolean; message: string }>("/config/telegram", {
+    method: "POST",
+    body: JSON.stringify(config),
+  }, token);
+
+export const resetTelegramConfig = (token: string) =>
+  request<{ success: boolean; message: string }>("/config/telegram", {
+    method: "DELETE",
+  }, token);
+
 // ============ 账号日志 ============
 
 export interface AccountLog {

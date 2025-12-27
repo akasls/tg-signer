@@ -444,3 +444,115 @@ def save_global_settings(
             detail=f"保存全局设置失败: {str(e)}"
         )
 
+
+# ============ Telegram API 配置 ============
+
+class TelegramConfigRequest(BaseModel):
+    """Telegram API 配置请求"""
+    api_id: str
+    api_hash: str
+
+
+class TelegramConfigResponse(BaseModel):
+    """Telegram API 配置响应"""
+    api_id: str
+    api_hash: str
+    is_custom: bool  # 是否为自定义配置
+    # 默认值（用于 UI 显示）
+    default_api_id: str
+    default_api_hash: str
+
+
+class TelegramConfigSaveResponse(BaseModel):
+    """保存 Telegram API 配置响应"""
+    success: bool
+    message: str
+
+
+@router.get("/telegram", response_model=TelegramConfigResponse)
+def get_telegram_config(current_user: User = Depends(get_current_user)):
+    """
+    获取 Telegram API 配置
+    
+    返回当前配置（可能是默认值或自定义值）
+    """
+    try:
+        config = config_service.get_telegram_config()
+        
+        return TelegramConfigResponse(
+            api_id=config.get("api_id", ""),
+            api_hash=config.get("api_hash", ""),
+            is_custom=config.get("is_custom", False),
+            default_api_id=config_service.DEFAULT_TG_API_ID,
+            default_api_hash=config_service.DEFAULT_TG_API_HASH
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取 Telegram API 配置失败: {str(e)}"
+        )
+
+
+@router.post("/telegram", response_model=TelegramConfigSaveResponse)
+def save_telegram_config(
+    request: TelegramConfigRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    保存 Telegram API 配置
+    
+    设置自定义的 API ID 和 API Hash
+    """
+    try:
+        # 验证输入
+        if not request.api_id or not request.api_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="API ID 和 API Hash 不能为空"
+            )
+        
+        success = config_service.save_telegram_config(
+            api_id=request.api_id,
+            api_hash=request.api_hash
+        )
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="保存配置失败"
+            )
+        
+        return TelegramConfigSaveResponse(
+            success=True,
+            message="Telegram API 配置已保存"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"保存 Telegram API 配置失败: {str(e)}"
+        )
+
+
+@router.delete("/telegram", response_model=TelegramConfigSaveResponse)
+def reset_telegram_config(current_user: User = Depends(get_current_user)):
+    """
+    重置 Telegram API 配置（恢复默认）
+    """
+    try:
+        success = config_service.reset_telegram_config()
+        
+        return TelegramConfigSaveResponse(
+            success=True,
+            message="Telegram API 配置已重置为默认值"
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"重置 Telegram API 配置失败: {str(e)}"
+        )
+

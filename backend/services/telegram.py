@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from backend.core.config import get_settings
 
@@ -24,7 +24,7 @@ class TelegramService:
         self.session_dir = settings.resolve_session_dir()
         self.session_dir.mkdir(parents=True, exist_ok=True)
 
-    def list_accounts(self) -> List[Dict[str, any]]:
+    def list_accounts(self) -> List[Dict[str, Any]]:
         """
         获取所有账号列表（基于 session 文件）
         
@@ -87,7 +87,7 @@ class TelegramService:
         account_name: str,
         phone_number: str,
         proxy: Optional[str] = None
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         开始登录流程（发送验证码）
         
@@ -107,10 +107,18 @@ class TelegramService:
         from pyrogram import Client
         from pyrogram.errors import PhoneNumberInvalid, FloodWait
         
-        # 从环境变量获取 API credentials
-        # 如果未设置，使用默认的公共 API 凭证
-        api_id = os.getenv("TG_API_ID", "611335")
-        api_hash = os.getenv("TG_API_HASH", "d524b414d21f4d37f08684c1df41ac9c")
+        # 获取 API credentials：优先使用配置服务中的自定义设置
+        from backend.services.config import config_service
+        
+        tg_config = config_service.get_telegram_config()
+        api_id = tg_config.get("api_id")
+        api_hash = tg_config.get("api_hash")
+        
+        # 环境变量可以覆盖配置
+        if os.getenv("TG_API_ID"):
+            api_id = os.getenv("TG_API_ID")
+        if os.getenv("TG_API_HASH"):
+            api_hash = os.getenv("TG_API_HASH")
         
         # 解析代理
         proxy_dict = None
@@ -172,7 +180,7 @@ class TelegramService:
         phone_code_hash: str,
         password: Optional[str] = None,
         proxy: Optional[str] = None
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         验证登录（输入验证码和可选的2FA密码）
         
@@ -257,7 +265,7 @@ class TelegramService:
             # 清理 session
             try:
                 await client.disconnect()
-            except:
+            except Exception:
                 pass
             _login_sessions.pop(session_key, None)
             raise ValueError("验证码错误，请检查验证码是否正确")
@@ -265,7 +273,7 @@ class TelegramService:
             # 清理 session
             try:
                 await client.disconnect()
-            except:
+            except Exception:
                 pass
             _login_sessions.pop(session_key, None)
             raise ValueError("验证码已过期，请重新获取")
@@ -274,7 +282,7 @@ class TelegramService:
             if "两步验证" not in str(e):
                 try:
                     await client.disconnect()
-                except:
+                except Exception:
                     pass
                 _login_sessions.pop(session_key, None)
             raise e
@@ -282,7 +290,7 @@ class TelegramService:
             # 清理 session
             try:
                 await client.disconnect()
-            except:
+            except Exception:
                 pass
             _login_sessions.pop(session_key, None)
             
@@ -305,7 +313,7 @@ class TelegramService:
         phone_code_hash: Optional[str] = None,
         password: Optional[str] = None,
         proxy: Optional[str] = None
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         同步版本的登录方法（用于 FastAPI）
         

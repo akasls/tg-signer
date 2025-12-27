@@ -21,6 +21,10 @@ import {
     getGlobalSettings,
     saveGlobalSettings,
     GlobalSettings,
+    getTelegramConfig,
+    saveTelegramConfig,
+    resetTelegramConfig,
+    TelegramConfig,
 } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -70,6 +74,12 @@ export default function SettingsPage() {
     // 全局设置
     const [globalSettings, setGlobalSettings] = useState<GlobalSettings>({ sign_interval: null, log_retention_days: 7 });
 
+    // Telegram API 配置
+    const [telegramConfig, setTelegramConfig] = useState<TelegramConfig | null>(null);
+    const [telegramForm, setTelegramForm] = useState({
+        api_id: "",
+        api_hash: "",
+    });
 
     useEffect(() => {
         const t = getToken();
@@ -81,6 +91,7 @@ export default function SettingsPage() {
         loadTOTPStatus(t);
         loadAIConfig(t);
         loadGlobalSettings(t);
+        loadTelegramConfig(t);
     }, [router]);
 
     const loadTOTPStatus = async (t: string) => {
@@ -114,6 +125,62 @@ export default function SettingsPage() {
             setGlobalSettings(settings);
         } catch (err: any) {
             console.error("加载全局设置失败:", err);
+        }
+    };
+
+    const loadTelegramConfig = async (t: string) => {
+        try {
+            const config = await getTelegramConfig(t);
+            setTelegramConfig(config);
+            setTelegramForm({
+                api_id: config.api_id,
+                api_hash: config.api_hash,
+            });
+        } catch (err: any) {
+            console.error("加载 Telegram API 配置失败:", err);
+        }
+    };
+
+    const handleSaveTelegramConfig = async () => {
+        if (!token) return;
+
+        if (!telegramForm.api_id || !telegramForm.api_hash) {
+            setError("API ID 和 API Hash 不能为空");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError("");
+
+            await saveTelegramConfig(token, telegramForm);
+            setSuccess("Telegram API 配置已保存");
+            loadTelegramConfig(token);
+        } catch (err: any) {
+            setError(err.message || "保存 Telegram API 配置失败");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetTelegramConfig = async () => {
+        if (!token) return;
+
+        if (!confirm("确定要重置为默认配置吗？")) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError("");
+
+            await resetTelegramConfig(token);
+            setSuccess("Telegram API 配置已重置为默认值");
+            loadTelegramConfig(token);
+        } catch (err: any) {
+            setError(err.message || "重置 Telegram API 配置失败");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -528,6 +595,77 @@ export default function SettingsPage() {
                                     <Button onClick={handleSaveGlobalSettings} disabled={loading}>
                                         {loading ? "保存中..." : "保存设置"}
                                     </Button>
+                                </CardContent>
+                            </Card>
+
+                            {/* Telegram API 配置 */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Telegram API 配置</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium">配置状态</p>
+                                            <p className="text-sm text-white/50">
+                                                {telegramConfig?.is_custom ? "✅ 自定义配置" : "📋 使用默认配置"}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 bg-white/5 rounded text-sm space-y-1">
+                                        <p><span className="text-white/50">当前 API ID:</span> {telegramForm.api_id}</p>
+                                        <p><span className="text-white/50">当前 API Hash:</span> {telegramForm.api_hash.substring(0, 8)}...{telegramForm.api_hash.substring(telegramForm.api_hash.length - 4)}</p>
+                                        {telegramConfig && !telegramConfig.is_custom && (
+                                            <p className="text-amber-400/80 text-xs mt-2">
+                                                ℹ️ 当前使用内置默认配置，您可以设置自己的 API 凭证
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-3 p-4 bg-white/5 rounded">
+                                        <p className="font-medium text-sm text-white">
+                                            {telegramConfig?.is_custom ? "更新配置" : "设置自定义配置"}
+                                        </p>
+                                        <p className="text-xs text-white/50">
+                                            从 <a href="https://my.telegram.org" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">my.telegram.org</a> 获取您自己的 API 凭证
+                                        </p>
+
+                                        <div>
+                                            <Label htmlFor="tgApiId">API ID *</Label>
+                                            <Input
+                                                id="tgApiId"
+                                                placeholder={telegramConfig?.default_api_id || "123456"}
+                                                value={telegramForm.api_id}
+                                                onChange={(e) => setTelegramForm({ ...telegramForm, api_id: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="tgApiHash">API Hash *</Label>
+                                            <Input
+                                                id="tgApiHash"
+                                                placeholder={telegramConfig?.default_api_hash ? telegramConfig.default_api_hash.substring(0, 8) + "..." : "abc...xyz"}
+                                                value={telegramForm.api_hash}
+                                                onChange={(e) => setTelegramForm({ ...telegramForm, api_hash: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <Button onClick={handleSaveTelegramConfig} disabled={loading}>
+                                                {loading ? "保存中..." : "保存配置"}
+                                            </Button>
+                                            {telegramConfig?.is_custom && (
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={handleResetTelegramConfig}
+                                                    disabled={loading}
+                                                >
+                                                    恢复默认
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
                                 </CardContent>
                             </Card>
 

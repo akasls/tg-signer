@@ -114,7 +114,7 @@ export default function SettingsPage() {
             setAIConfigState(config);
             if (config) {
                 setAIForm({
-                    api_key: config.api_key || "",
+                    api_key: "", // 不回填密钥
                     base_url: config.base_url || "",
                     model: config.model || "gpt-4o",
                 });
@@ -346,7 +346,7 @@ export default function SettingsPage() {
         try {
             setLoading(true);
             await saveTelegramConfig(token, {
-                api_id: parseInt(telegramForm.api_id),
+                api_id: telegramForm.api_id,
                 api_hash: telegramForm.api_hash,
             });
             addToast("Telegram 配置保存成功", "success");

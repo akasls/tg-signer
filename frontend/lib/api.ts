@@ -255,7 +255,7 @@ export const disableTOTP = (token: string, totpCode: string) =>
   }, token);
 
 export const changeUsername = (token: string, newUsername: string, password: string) =>
-  request<{ success: boolean; message: string }>("/user/username", {
+  request<ChangeUsernameResponse>("/user/username", {
     method: "PUT",
     body: JSON.stringify({ new_username: newUsername, password: password }),
   }, token);

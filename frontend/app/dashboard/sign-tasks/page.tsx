@@ -14,17 +14,23 @@ import {
 } from "../../../lib/api";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { ToastContainer, useToast } from "../../../components/ui/toast";
 
 export default function SignTasksPage() {
     const router = useRouter();
+    const { toasts, addToast, removeToast } = useToast();
     const [token, setLocalToken] = useState<string | null>(null);
     const [tasks, setTasks] = useState<SignTask[]>([]);
     const [accounts, setAccounts] = useState<AccountInfo[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         const t = getToken();
         if (!t) {
             router.replace("/");
@@ -32,7 +38,7 @@ export default function SignTasksPage() {
         }
         setLocalToken(t);
         loadData(t);
-    }, [router]);
+    }, [mounted, router]);
 
     const loadData = async (t: string) => {
         try {
@@ -45,7 +51,7 @@ export default function SignTasksPage() {
             console.log("Sign Tasks Data:", tasksData);
             setAccounts(accountsData.accounts);
         } catch (err: any) {
-            setError(err.message || "加载数据失败");
+            addToast(err.message || "加载数据失败", "error");
         } finally {
             setLoading(false);
         }
@@ -60,12 +66,11 @@ export default function SignTasksPage() {
 
         try {
             setLoading(true);
-            setError("");
             await deleteSignTask(token, taskName);
-            setSuccess(`任务 ${taskName} 已删除`);
+            addToast(`任务 ${taskName} 已删除`, "success");
             await loadData(token);
         } catch (err: any) {
-            setError(err.message || "删除任务失败");
+            addToast(err.message || "删除任务失败", "error");
         } finally {
             setLoading(false);
         }
@@ -80,16 +85,15 @@ export default function SignTasksPage() {
 
         try {
             setLoading(true);
-            setError("");
             const result = await runSignTask(token, taskName, accountName);
 
             if (result.success) {
-                setSuccess(`任务 ${taskName} 运行成功`);
+                addToast(`任务 ${taskName} 运行成功`, "success");
             } else {
-                setError(`任务运行失败: ${result.error}`);
+                addToast(`任务运行失败: ${result.error}`, "error");
             }
         } catch (err: any) {
-            setError(err.message || "运行任务失败");
+            addToast(err.message || "运行任务失败", "error");
         } finally {
             setLoading(false);
         }
@@ -114,20 +118,6 @@ export default function SignTasksPage() {
                         <Button>+ 创建任务</Button>
                     </Link>
                 </div>
-
-                {/* 错误和成功提示 */}
-                {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700">
-                        {error}
-                        <button onClick={() => setError("")} className="ml-2 font-bold">×</button>
-                    </div>
-                )}
-                {success && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-700">
-                        {success}
-                        <button onClick={() => setSuccess("")} className="ml-2 font-bold">×</button>
-                    </div>
-                )}
 
                 {/* 任务列表 */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -219,6 +209,9 @@ export default function SignTasksPage() {
                     </Link>
                 </div>
             </div>
+
+            {/* Toast 通知容器 */}
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 }

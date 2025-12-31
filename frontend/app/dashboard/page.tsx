@@ -54,7 +54,14 @@ export default function Dashboard() {
 
 
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const t = getToken();
     if (!t) {
       router.replace("/");
@@ -62,7 +69,7 @@ export default function Dashboard() {
     }
     setLocalToken(t);
     loadData(t);
-  }, [router]);
+  }, [mounted, router]);
 
   const loadData = async (t: string) => {
     try {

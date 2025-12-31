@@ -19,18 +19,18 @@ import { Button } from "../../../components/ui/button";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { ToastContainer, useToast } from "../../../components/ui/toast";
 
 export default function AccountTasksContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const accountName = searchParams.get("name") || "";
+    const { toasts, addToast, removeToast } = useToast();
 
     const [token, setLocalToken] = useState<string | null>(null);
     const [tasks, setTasks] = useState<SignTask[]>([]);
     const [chats, setChats] = useState<ChatInfo[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
 
     // 创建任务对话框
     const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -60,7 +60,15 @@ export default function AccountTasksContent() {
         action_interval: 1,
     });
 
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
+
         const t = getToken();
         if (!t) {
             router.replace("/");
@@ -72,7 +80,7 @@ export default function AccountTasksContent() {
         }
         setLocalToken(t);
         loadData(t);
-    }, [router, accountName]);
+    }, [mounted, router, accountName]);
 
     const loadData = async (t: string) => {
         try {
@@ -85,7 +93,7 @@ export default function AccountTasksContent() {
             setTasks(tasksData);
             setChats(chatsData);
         } catch (err: any) {
-            setError(err.message || "加载数据失败");
+            addToast(err.message || "加载数据失败", "error");
         } finally {
             setLoading(false);
         }
@@ -97,9 +105,9 @@ export default function AccountTasksContent() {
             setLoading(true);
             const chatsData = await getAccountChats(token, accountName);
             setChats(chatsData);
-            setSuccess("Chat 列表已刷新");
+            addToast("Chat 列表已刷新", "success");
         } catch (err: any) {
-            setError(err.message || "刷新失败");
+            addToast(err.message || "刷新失败", "error");
         } finally {
             setLoading(false);
         }
@@ -114,12 +122,11 @@ export default function AccountTasksContent() {
 
         try {
             setLoading(true);
-            setError("");
             await deleteSignTask(token, taskName);
-            setSuccess(`任务 ${taskName} 已删除`);
+            addToast(`任务 ${taskName} 已删除`, "success");
             await loadData(token);
         } catch (err: any) {
-            setError(err.message || "删除任务失败");
+            addToast(err.message || "删除任务失败", "error");
         } finally {
             setLoading(false);
         }
@@ -130,16 +137,15 @@ export default function AccountTasksContent() {
 
         try {
             setLoading(true);
-            setError("");
             const result = await runSignTask(token, taskName, accountName);
 
             if (result.success) {
-                setSuccess(`任务 ${taskName} 运行成功`);
+                addToast(`任务 ${taskName} 运行成功`, "success");
             } else {
-                setError(`任务运行失败: ${result.error}`);
+                addToast(`任务运行失败: ${result.error}`, "error");
             }
         } catch (err: any) {
-            setError(err.message || "运行任务失败");
+            addToast(err.message || "运行任务失败", "error");
         } finally {
             setLoading(false);
         }
@@ -149,12 +155,12 @@ export default function AccountTasksContent() {
         if (!token) return;
 
         if (!newTask.name) {
-            setError("请输入任务名称");
+            addToast("请输入任务名称", "error");
             return;
         }
 
         if (!newTask.sign_at) {
-            setError("请输入签到时间");
+            addToast("请输入签到时间", "error");
             return;
         }
 
@@ -163,24 +169,23 @@ export default function AccountTasksContent() {
         if (newTask.chat_id_manual) {
             chatId = parseInt(newTask.chat_id_manual);
             if (isNaN(chatId)) {
-                setError("手动输入的 Chat ID 必须是数字");
+                addToast("手动输入的 Chat ID 必须是数字", "error");
                 return;
             }
         }
 
         if (chatId === 0) {
-            setError("请选择或输入 Chat ID");
+            addToast("请选择或输入 Chat ID", "error");
             return;
         }
 
         if (newTask.actions.length === 0 || !newTask.actions[0].text) {
-            setError("请至少添加一个动作");
+            addToast("请至少添加一个动作", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             const request: CreateSignTaskRequest = {
                 name: newTask.name,
@@ -197,7 +202,7 @@ export default function AccountTasksContent() {
             };
 
             await createSignTask(token, request);
-            setSuccess("任务创建成功！");
+            addToast("任务创建成功！", "success");
             setShowCreateDialog(false);
             setNewTask({
                 name: "",
@@ -212,7 +217,7 @@ export default function AccountTasksContent() {
             });
             await loadData(token);
         } catch (err: any) {
-            setError(err.message || "创建任务失败");
+            addToast(err.message || "创建任务失败", "error");
         } finally {
             setLoading(false);
         }
@@ -260,18 +265,17 @@ export default function AccountTasksContent() {
         // 验证 Chat ID
         const chatId = editTask.chat_id || parseInt(editTask.chat_id_manual) || 0;
         if (!chatId) {
-            setError("请选择或输入 Chat ID");
+            addToast("请选择或输入 Chat ID", "error");
             return;
         }
 
         if (editTask.actions.length === 0 || !editTask.actions[0].text) {
-            setError("请至少添加一个动作");
+            addToast("请至少添加一个动作", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             await updateSignTask(token, editingTaskName, {
                 sign_at: editTask.sign_at,
@@ -285,11 +289,11 @@ export default function AccountTasksContent() {
                 }],
             });
 
-            setSuccess("任务更新成功！");
+            addToast("任务更新成功！", "success");
             setShowEditDialog(false);
             await loadData(token);
         } catch (err: any) {
-            setError(err.message || "更新任务失败");
+            addToast(err.message || "更新任务失败", "error");
         } finally {
             setLoading(false);
         }
@@ -363,20 +367,6 @@ export default function AccountTasksContent() {
 
             {/* 主内容 */}
             <div className="max-w-7xl mx-auto px-6 py-8 page-transition relative z-10">
-                {/* 错误和成功提示 */}
-                {error && (
-                    <div className="mb-4 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 flex items-center justify-between animate-fade-in">
-                        <span>{error}</span>
-                        <button onClick={() => setError("")} className="ml-2 text-rose-300 hover:text-rose-200">×</button>
-                    </div>
-                )}
-                {success && (
-                    <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 flex items-center justify-between animate-fade-in">
-                        <span>{success}</span>
-                        <button onClick={() => setSuccess("")} className="ml-2 text-emerald-300 hover:text-emerald-200">×</button>
-                    </div>
-                )}
-
                 {/* 任务列表 */}
                 {loading && tasks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
@@ -948,6 +938,9 @@ export default function AccountTasksContent() {
                     </div>
                 )
             }
+
+            {/* Toast 通知容器 */}
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div >
     );
 }

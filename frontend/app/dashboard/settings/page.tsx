@@ -30,13 +30,13 @@ import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { ToastContainer, useToast } from "../../../components/ui/toast";
 
 export default function SettingsPage() {
     const router = useRouter();
+    const { toasts, addToast, removeToast } = useToast();
     const [token, setLocalToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
 
     // 用户名修改
     const [usernameForm, setUsernameForm] = useState({
@@ -81,7 +81,14 @@ export default function SettingsPage() {
         api_hash: "",
     });
 
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         const t = getToken();
         if (!t) {
             router.replace("/");
@@ -92,7 +99,7 @@ export default function SettingsPage() {
         loadAIConfig(t);
         loadGlobalSettings(t);
         loadTelegramConfig(t);
-    }, [router]);
+    }, [mounted, router]);
 
     const loadTOTPStatus = async (t: string) => {
         try {
@@ -145,19 +152,18 @@ export default function SettingsPage() {
         if (!token) return;
 
         if (!telegramForm.api_id || !telegramForm.api_hash) {
-            setError("API ID 和 API Hash 不能为空");
+            addToast("API ID 和 API Hash 不能为空", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             await saveTelegramConfig(token, telegramForm);
-            setSuccess("Telegram API 配置已保存");
+            addToast("Telegram API 配置已保存", "success");
             loadTelegramConfig(token);
         } catch (err: any) {
-            setError(err.message || "保存 Telegram API 配置失败");
+            addToast(err.message || "保存 Telegram API 配置失败", "error");
         } finally {
             setLoading(false);
         }
@@ -172,13 +178,12 @@ export default function SettingsPage() {
 
         try {
             setLoading(true);
-            setError("");
 
             await resetTelegramConfig(token);
-            setSuccess("Telegram API 配置已重置为默认值");
+            addToast("Telegram API 配置已重置为默认值", "success");
             loadTelegramConfig(token);
         } catch (err: any) {
-            setError(err.message || "重置 Telegram API 配置失败");
+            addToast(err.message || "重置 Telegram API 配置失败", "error");
         } finally {
             setLoading(false);
         }
@@ -189,12 +194,11 @@ export default function SettingsPage() {
 
         try {
             setLoading(true);
-            setError("");
 
             await saveGlobalSettings(token, globalSettings);
-            setSuccess("全局设置已保存");
+            addToast("全局设置已保存", "success");
         } catch (err: any) {
-            setError(err.message || "保存全局设置失败");
+            addToast(err.message || "保存全局设置失败", "error");
         } finally {
             setLoading(false);
         }
@@ -204,23 +208,22 @@ export default function SettingsPage() {
         if (!token) return;
 
         if (!passwordForm.oldPassword || !passwordForm.newPassword) {
-            setError("请填写所有密码字段");
+            addToast("请填写所有密码字段", "error");
             return;
         }
 
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            setError("新密码和确认密码不一致");
+            addToast("新密码和确认密码不一致", "error");
             return;
         }
 
         if (passwordForm.newPassword.length < 6) {
-            setError("新密码长度至少为 6 个字符");
+            addToast("新密码长度至少为 6 个字符", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             const result = await changePassword(
                 token,
@@ -228,14 +231,14 @@ export default function SettingsPage() {
                 passwordForm.newPassword
             );
 
-            setSuccess(result.message);
+            addToast(result.message, "success");
             setPasswordForm({
                 oldPassword: "",
                 newPassword: "",
                 confirmPassword: "",
             });
         } catch (err: any) {
-            setError(err.message || "修改密码失败");
+            addToast(err.message || "修改密码失败", "error");
         } finally {
             setLoading(false);
         }
@@ -245,18 +248,17 @@ export default function SettingsPage() {
         if (!token) return;
 
         if (!usernameForm.newUsername || !usernameForm.password) {
-            setError("请填写新用户名和密码");
+            addToast("请填写新用户名和密码", "error");
             return;
         }
 
         if (usernameForm.newUsername.length < 3) {
-            setError("用户名长度至少为 3 个字符");
+            addToast("用户名长度至少为 3 个字符", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             const result = await changeUsername(
                 token,
@@ -264,13 +266,13 @@ export default function SettingsPage() {
                 usernameForm.password
             );
 
-            setSuccess(result.message);
+            addToast(result.message, "success");
             setUsernameForm({
                 newUsername: "",
                 password: "",
             });
         } catch (err: any) {
-            setError(err.message || "修改用户名失败");
+            addToast(err.message || "修改用户名失败", "error");
         } finally {
             setLoading(false);
         }
@@ -281,14 +283,13 @@ export default function SettingsPage() {
 
         try {
             setLoading(true);
-            setError("");
 
             const result = await setupTOTP(token);
             setTotpSecret(result.secret);
             setShowTotpSetup(true);
-            setSuccess("2FA 密钥已生成，请扫描二维码");
+            addToast("2FA 密钥已生成，请扫描二维码", "success");
         } catch (err: any) {
-            setError(err.message || "设置2FA失败");
+            addToast(err.message || "设置2FA失败", "error");
         } finally {
             setLoading(false);
         }
@@ -298,22 +299,21 @@ export default function SettingsPage() {
         if (!token) return;
 
         if (!totpCode) {
-            setError("请输入验证码");
+            addToast("请输入验证码", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             const result = await enableTOTP(token, totpCode);
-            setSuccess(result.message);
+            addToast(result.message, "success");
             setTotpEnabled(true);
             setShowTotpSetup(false);
             setTotpCode("");
             setTotpSecret("");
         } catch (err: any) {
-            setError(err.message || "启用2FA失败");
+            addToast(err.message || "启用2FA失败", "error");
         } finally {
             setLoading(false);
         }
@@ -323,7 +323,7 @@ export default function SettingsPage() {
         if (!token) return;
 
         if (!totpCode) {
-            setError("请输入验证码");
+            addToast("请输入验证码", "error");
             return;
         }
 
@@ -333,14 +333,13 @@ export default function SettingsPage() {
 
         try {
             setLoading(true);
-            setError("");
 
             const result = await disableTOTP(token, totpCode);
-            setSuccess(result.message);
+            addToast(result.message, "success");
             setTotpEnabled(false);
             setTotpCode("");
         } catch (err: any) {
-            setError(err.message || "禁用2FA失败");
+            addToast(err.message || "禁用2FA失败", "error");
         } finally {
             setLoading(false);
         }
@@ -351,7 +350,6 @@ export default function SettingsPage() {
 
         try {
             setLoading(true);
-            setError("");
 
             const configJson = await exportAllConfigs(token);
 
@@ -366,9 +364,9 @@ export default function SettingsPage() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            setSuccess("配置已导出");
+            addToast("配置已导出", "success");
         } catch (err: any) {
-            setError(err.message || "导出配置失败");
+            addToast(err.message || "导出配置失败", "error");
         } finally {
             setLoading(false);
         }
@@ -378,19 +376,18 @@ export default function SettingsPage() {
         if (!token) return;
 
         if (!importConfig) {
-            setError("请粘贴配置 JSON");
+            addToast("请粘贴配置 JSON", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             const result = await importAllConfigs(token, importConfig, overwriteConfig);
-            setSuccess(result.message);
+            addToast(result.message, "success");
             setImportConfig("");
         } catch (err: any) {
-            setError(err.message || "导入配置失败");
+            addToast(err.message || "导入配置失败", "error");
         } finally {
             setLoading(false);
         }
@@ -413,13 +410,12 @@ export default function SettingsPage() {
         if (!token) return;
 
         if (!aiForm.api_key) {
-            setError("请输入 API Key");
+            addToast("请输入 API Key", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             await saveAIConfig(token, {
                 api_key: aiForm.api_key,
@@ -427,11 +423,11 @@ export default function SettingsPage() {
                 model: aiForm.model || undefined,
             });
 
-            setSuccess("AI 配置已保存");
+            addToast("AI 配置已保存", "success");
             loadAIConfig(token);
             setAIForm({ ...aiForm, api_key: "" });  // 清空密钥输入
         } catch (err: any) {
-            setError(err.message || "保存 AI 配置失败");
+            addToast(err.message || "保存 AI 配置失败", "error");
         } finally {
             setLoading(false);
         }
@@ -443,7 +439,6 @@ export default function SettingsPage() {
         try {
             setAITesting(true);
             setAITestResult(null);
-            setError("");
 
             const result = await testAIConnection(token);
 
@@ -468,10 +463,9 @@ export default function SettingsPage() {
 
         try {
             setLoading(true);
-            setError("");
 
             await deleteAIConfig(token);
-            setSuccess("AI 配置已删除");
+            addToast("AI 配置已删除", "success");
             setAIConfig(null);
             setAIForm({
                 api_key: "",
@@ -480,7 +474,7 @@ export default function SettingsPage() {
             });
             setAITestResult(null);
         } catch (err: any) {
-            setError(err.message || "删除 AI 配置失败");
+            addToast(err.message || "删除 AI 配置失败", "error");
         } finally {
             setLoading(false);
         }
@@ -545,526 +539,500 @@ export default function SettingsPage() {
             </nav>
 
             <div className="p-6 pb-20 relative z-10 page-transition">
-                <div className="max-w-4xl mx-auto space-y-8">
+                <div className="max-w-4xl mx-auto space-y-4">
 
-                    {/* 错误和成功提示 */}
-                    {error && (
-                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 animate-fade-in">
-                            {error}
-                        </div>
-                    )}
-                    {success && (
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 animate-fade-in">
-                            {success}
-                        </div>
-                    )}
+                    {/* 任务相关设置区块 */}
+                    <div className="grid gap-4">
 
-                    {/* 任务设置区块 - 放在最上面 */}
-                    <div>
-                        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                            </svg>
-                            任务设置
-                        </h2>
-                        <div className="grid gap-4">
+                        {/* 任务间隔 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>任务间隔</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <Label htmlFor="signInterval">任务间隔（秒）</Label>
+                                    <Input
+                                        id="signInterval"
+                                        type="number"
+                                        placeholder="留空使用随机 1-120 秒"
+                                        value={globalSettings.sign_interval ?? ""}
+                                        onChange={(e) => setGlobalSettings({
+                                            ...globalSettings,
+                                            sign_interval: e.target.value ? parseInt(e.target.value) : null
+                                        })}
+                                    />
+                                    <p className="text-xs text-white/50 mt-1">
+                                        执行多个任务时，每个任务之间的等待时间。留空则随机 1-120 秒
+                                    </p>
+                                </div>
 
-                            {/* 任务间隔 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>任务间隔</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                                <Button onClick={handleSaveGlobalSettings} disabled={loading}>
+                                    {loading ? "保存中..." : "保存设置"}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Telegram API 配置 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Telegram API 配置</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <Label htmlFor="signInterval">任务间隔（秒）</Label>
-                                        <Input
-                                            id="signInterval"
-                                            type="number"
-                                            placeholder="留空使用随机 1-120 秒"
-                                            value={globalSettings.sign_interval ?? ""}
-                                            onChange={(e) => setGlobalSettings({
-                                                ...globalSettings,
-                                                sign_interval: e.target.value ? parseInt(e.target.value) : null
-                                            })}
-                                        />
-                                        <p className="text-xs text-white/50 mt-1">
-                                            执行多个任务时，每个任务之间的等待时间。留空则随机 1-120 秒
+                                        <p className="font-medium">配置状态</p>
+                                        <p className="text-sm text-white/50">
+                                            {telegramConfig?.is_custom ? "✅ 自定义配置" : "📋 使用默认配置"}
                                         </p>
                                     </div>
+                                </div>
 
-                                    <Button onClick={handleSaveGlobalSettings} disabled={loading}>
-                                        {loading ? "保存中..." : "保存设置"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* Telegram API 配置 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Telegram API 配置</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="font-medium">配置状态</p>
-                                            <p className="text-sm text-white/50">
-                                                {telegramConfig?.is_custom ? "✅ 自定义配置" : "📋 使用默认配置"}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-3 bg-white/5 rounded text-sm space-y-1">
-                                        <p><span className="text-white/50">当前 API ID:</span> {telegramForm.api_id}</p>
-                                        <p><span className="text-white/50">当前 API Hash:</span> {telegramForm.api_hash.substring(0, 8)}...{telegramForm.api_hash.substring(telegramForm.api_hash.length - 4)}</p>
-                                        {telegramConfig && !telegramConfig.is_custom && (
-                                            <p className="text-amber-400/80 text-xs mt-2">
-                                                ℹ️ 当前使用内置默认配置，您可以设置自己的 API 凭证
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-3 p-4 bg-white/5 rounded">
-                                        <p className="font-medium text-sm text-white">
-                                            {telegramConfig?.is_custom ? "更新配置" : "设置自定义配置"}
+                                <div className="p-3 bg-white/5 rounded text-sm space-y-1">
+                                    <p><span className="text-white/50">当前 API ID:</span> {telegramForm.api_id}</p>
+                                    <p><span className="text-white/50">当前 API Hash:</span> {telegramForm.api_hash.substring(0, 8)}...{telegramForm.api_hash.substring(telegramForm.api_hash.length - 4)}</p>
+                                    {telegramConfig && !telegramConfig.is_custom && (
+                                        <p className="text-amber-400/80 text-xs mt-2">
+                                            ℹ️ 当前使用内置默认配置，您可以设置自己的 API 凭证
                                         </p>
-                                        <p className="text-xs text-white/50">
-                                            从 <a href="https://my.telegram.org" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">my.telegram.org</a> 获取您自己的 API 凭证
-                                        </p>
-
-                                        <div>
-                                            <Label htmlFor="tgApiId">API ID *</Label>
-                                            <Input
-                                                id="tgApiId"
-                                                placeholder={telegramConfig?.default_api_id || "123456"}
-                                                value={telegramForm.api_id}
-                                                onChange={(e) => setTelegramForm({ ...telegramForm, api_id: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="tgApiHash">API Hash *</Label>
-                                            <Input
-                                                id="tgApiHash"
-                                                placeholder={telegramConfig?.default_api_hash ? telegramConfig.default_api_hash.substring(0, 8) + "..." : "abc...xyz"}
-                                                value={telegramForm.api_hash}
-                                                onChange={(e) => setTelegramForm({ ...telegramForm, api_hash: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="flex gap-2">
-                                            <Button onClick={handleSaveTelegramConfig} disabled={loading}>
-                                                {loading ? "保存中..." : "保存配置"}
-                                            </Button>
-                                            {telegramConfig?.is_custom && (
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={handleResetTelegramConfig}
-                                                    disabled={loading}
-                                                >
-                                                    恢复默认
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* AI 配置 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>AI 配置</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="font-medium">配置状态</p>
-                                            <p className="text-sm text-white/50">
-                                                {aiConfig?.has_config ? "✅ 已配置" : "❌ 未配置"}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {aiConfig?.has_config && (
-                                        <div className="p-3 bg-white/5 rounded text-sm">
-                                            <p><span className="text-white/50">API Key:</span> {aiConfig.api_key_masked}</p>
-                                            {aiConfig.base_url && (
-                                                <p><span className="text-white/50">Base URL:</span> {aiConfig.base_url}</p>
-                                            )}
-                                            {aiConfig.model && (
-                                                <p><span className="text-white/50">Model:</span> {aiConfig.model}</p>
-                                            )}
-                                        </div>
                                     )}
+                                </div>
 
-                                    <div className="space-y-3 p-4 bg-white/5 rounded">
-                                        <p className="font-medium text-sm text-white">
-                                            {aiConfig?.has_config ? "更新配置" : "添加配置"}
-                                        </p>
-                                        <p className="text-xs text-white/50">
-                                            用于 AI 图片识别和 AI 计算题功能，需要 OpenAI 兼容的 API
-                                        </p>
+                                <div className="space-y-3 p-4 bg-white/5 rounded">
+                                    <p className="font-medium text-sm text-white">
+                                        {telegramConfig?.is_custom ? "更新配置" : "设置自定义配置"}
+                                    </p>
+                                    <p className="text-xs text-white/50">
+                                        从 <a href="https://my.telegram.org" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">my.telegram.org</a> 获取您自己的 API 凭证
+                                    </p>
 
-                                        <div>
-                                            <Label htmlFor="aiApiKey">API Key *</Label>
-                                            <Input
-                                                id="aiApiKey"
-                                                type="password"
-                                                placeholder="sk-..."
-                                                value={aiForm.api_key}
-                                                onChange={(e) => setAIForm({ ...aiForm, api_key: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="aiBaseUrl">Base URL（可选）</Label>
-                                            <Input
-                                                id="aiBaseUrl"
-                                                placeholder="https://api.openai.com/v1"
-                                                value={aiForm.base_url}
-                                                onChange={(e) => setAIForm({ ...aiForm, base_url: e.target.value })}
-                                            />
-                                            <p className="text-xs text-white/50 mt-1">
-                                                留空使用 OpenAI 官方地址，可填写兼容 API 地址
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="aiModel">Model（可选）</Label>
-                                            <Input
-                                                id="aiModel"
-                                                placeholder="gpt-4o"
-                                                value={aiForm.model}
-                                                onChange={(e) => setAIForm({ ...aiForm, model: e.target.value })}
-                                            />
-                                            <p className="text-xs text-white/50 mt-1">
-                                                默认 gpt-4o，图片识别需要支持 vision 的模型
-                                            </p>
-                                        </div>
-
-                                        <div className="flex gap-2">
-                                            <Button onClick={handleSaveAIConfig} disabled={loading}>
-                                                {loading ? "保存中..." : "保存配置"}
-                                            </Button>
-                                            {aiConfig?.has_config && (
-                                                <>
-                                                    <Button
-                                                        variant="secondary"
-                                                        onClick={handleTestAIConnection}
-                                                        disabled={aiTesting}
-                                                    >
-                                                        {aiTesting ? "测试中..." : "测试连接"}
-                                                    </Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        onClick={handleDeleteAIConfig}
-                                                        disabled={loading}
-                                                    >
-                                                        删除配置
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        {aiTestResult && (
-                                            <div className={`p-3 rounded text-sm ${aiTestResult.startsWith("✅")
-                                                ? "bg-green-50 text-green-700 border border-green-200"
-                                                : "bg-red-50 text-red-700 border border-red-200"
-                                                }`}>
-                                                {aiTestResult}
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-
-                    {/* 系统设置区块 */}
-                    <div>
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            系统设置
-                        </h2>
-                        <div className="grid gap-4">
-
-                            {/* 修改用户名 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>修改用户名</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
                                     <div>
-                                        <Label htmlFor="newUsername">新用户名</Label>
+                                        <Label htmlFor="tgApiId">API ID *</Label>
                                         <Input
-                                            id="newUsername"
-                                            placeholder="输入新用户名"
-                                            value={usernameForm.newUsername}
-                                            onChange={(e) =>
-                                                setUsernameForm({ ...usernameForm, newUsername: e.target.value })
-                                            }
+                                            id="tgApiId"
+                                            placeholder={telegramConfig?.default_api_id || "123456"}
+                                            value={telegramForm.api_id}
+                                            onChange={(e) => setTelegramForm({ ...telegramForm, api_id: e.target.value })}
                                         />
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="usernamePassword">确认密码</Label>
+                                        <Label htmlFor="tgApiHash">API Hash *</Label>
                                         <Input
-                                            id="usernamePassword"
-                                            type="password"
-                                            placeholder="输入当前密码确认"
-                                            value={usernameForm.password}
-                                            onChange={(e) =>
-                                                setUsernameForm({ ...usernameForm, password: e.target.value })
-                                            }
+                                            id="tgApiHash"
+                                            placeholder={telegramConfig?.default_api_hash ? telegramConfig.default_api_hash.substring(0, 8) + "..." : "abc...xyz"}
+                                            value={telegramForm.api_hash}
+                                            onChange={(e) => setTelegramForm({ ...telegramForm, api_hash: e.target.value })}
                                         />
                                     </div>
 
-                                    <Button onClick={handleChangeUsername} disabled={loading}>
-                                        {loading ? "修改中..." : "修改用户名"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* 修改密码 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>修改密码</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="oldPassword">旧密码</Label>
-                                        <Input
-                                            id="oldPassword"
-                                            type="password"
-                                            value={passwordForm.oldPassword}
-                                            onChange={(e) =>
-                                                setPasswordForm({ ...passwordForm, oldPassword: e.target.value })
-                                            }
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="newPassword">新密码</Label>
-                                        <Input
-                                            id="newPassword"
-                                            type="password"
-                                            value={passwordForm.newPassword}
-                                            onChange={(e) =>
-                                                setPasswordForm({ ...passwordForm, newPassword: e.target.value })
-                                            }
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="confirmPassword">确认新密码</Label>
-                                        <Input
-                                            id="confirmPassword"
-                                            type="password"
-                                            value={passwordForm.confirmPassword}
-                                            onChange={(e) =>
-                                                setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
-                                            }
-                                        />
-                                    </div>
-
-                                    <Button onClick={handleChangePassword} disabled={loading}>
-                                        {loading ? "修改中..." : "修改密码"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* 两步验证 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>两步验证 (2FA)</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="font-medium">状态</p>
-                                            <p className="text-sm text-white/50">
-                                                {totpEnabled ? "✅ 已启用" : "❌ 未启用"}
-                                            </p>
-                                        </div>
-                                        {!totpEnabled && !showTotpSetup && (
-                                            <Button onClick={handleSetupTOTP} disabled={loading}>
-                                                启用 2FA
-                                            </Button>
-                                        )}
-                                    </div>
-
-                                    {showTotpSetup && totpSecret && token && (
-                                        <div className="space-y-4 p-4 bg-white/5 rounded">
-                                            <div>
-                                                <p className="font-medium mb-2">1. 扫描二维码</p>
-                                                <img
-                                                    src={getTOTPQRCode(token)}
-                                                    alt="2FA QR Code"
-                                                    className="w-48 h-48 border rounded"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <p className="font-medium mb-2">2. 或手动输入密钥</p>
-                                                <code className="block p-2 bg-white border rounded text-sm break-all">
-                                                    {totpSecret}
-                                                </code>
-                                            </div>
-
-                                            <div>
-                                                <Label htmlFor="totpCode">3. 输入验证码</Label>
-                                                <Input
-                                                    id="totpCode"
-                                                    placeholder="输入 6 位验证码"
-                                                    value={totpCode}
-                                                    onChange={(e) => setTotpCode(e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => {
-                                                        setShowTotpSetup(false);
-                                                        setTotpSecret("");
-                                                        setTotpCode("");
-                                                    }}
-                                                >
-                                                    取消
-                                                </Button>
-                                                <Button onClick={handleEnableTOTP} disabled={loading}>
-                                                    {loading ? "验证中..." : "确认启用"}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {totpEnabled && (
-                                        <div className="space-y-4 p-4 bg-white/5 rounded">
-                                            <p className="text-sm text-gray-600">
-                                                如需禁用两步验证，请输入验证码确认
-                                            </p>
-                                            <div>
-                                                <Label htmlFor="disableTotpCode">验证码</Label>
-                                                <Input
-                                                    id="disableTotpCode"
-                                                    placeholder="输入 6 位验证码"
-                                                    value={totpCode}
-                                                    onChange={(e) => setTotpCode(e.target.value)}
-                                                />
-                                            </div>
+                                    <div className="flex gap-2">
+                                        <Button onClick={handleSaveTelegramConfig} disabled={loading}>
+                                            {loading ? "保存中..." : "保存配置"}
+                                        </Button>
+                                        {telegramConfig?.is_custom && (
                                             <Button
-                                                variant="destructive"
-                                                onClick={handleDisableTOTP}
+                                                variant="secondary"
+                                                onClick={handleResetTelegramConfig}
                                                 disabled={loading}
                                             >
-                                                {loading ? "禁用中..." : "禁用 2FA"}
+                                                恢复默认
                                             </Button>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                            {/* 日志保留天数 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>日志设置</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                        {/* AI 配置 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>AI 配置</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <Label htmlFor="logRetentionDays">日志保留天数</Label>
+                                        <p className="font-medium">配置状态</p>
+                                        <p className="text-sm text-white/50">
+                                            {aiConfig?.has_config ? "✅ 已配置" : "❌ 未配置"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {aiConfig?.has_config && (
+                                    <div className="p-3 bg-white/5 rounded text-sm">
+                                        <p><span className="text-white/50">API Key:</span> {aiConfig.api_key_masked}</p>
+                                        {aiConfig.base_url && (
+                                            <p><span className="text-white/50">Base URL:</span> {aiConfig.base_url}</p>
+                                        )}
+                                        {aiConfig.model && (
+                                            <p><span className="text-white/50">Model:</span> {aiConfig.model}</p>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="space-y-3 p-4 bg-white/5 rounded">
+                                    <p className="font-medium text-sm text-white">
+                                        {aiConfig?.has_config ? "更新配置" : "添加配置"}
+                                    </p>
+                                    <p className="text-xs text-white/50">
+                                        用于 AI 图片识别和 AI 计算题功能，需要 OpenAI 兼容的 API
+                                    </p>
+
+                                    <div>
+                                        <Label htmlFor="aiApiKey">API Key *</Label>
                                         <Input
-                                            id="logRetentionDays"
-                                            type="number"
-                                            value={globalSettings.log_retention_days ?? 7}
-                                            onChange={(e) => setGlobalSettings({
-                                                ...globalSettings,
-                                                log_retention_days: parseInt(e.target.value) || 7
-                                            })}
+                                            id="aiApiKey"
+                                            type="password"
+                                            placeholder="sk-..."
+                                            value={aiForm.api_key}
+                                            onChange={(e) => setAIForm({ ...aiForm, api_key: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="aiBaseUrl">Base URL（可选）</Label>
+                                        <Input
+                                            id="aiBaseUrl"
+                                            placeholder="https://api.openai.com/v1"
+                                            value={aiForm.base_url}
+                                            onChange={(e) => setAIForm({ ...aiForm, base_url: e.target.value })}
                                         />
                                         <p className="text-xs text-white/50 mt-1">
-                                            超过保留天数的日志将被自动清理，默认保留 7 天
+                                            留空使用 OpenAI 官方地址，可填写兼容 API 地址
                                         </p>
                                     </div>
 
-                                    <Button onClick={handleSaveGlobalSettings} disabled={loading}>
-                                        {loading ? "保存中..." : "保存日志设置"}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* 配置管理 */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>配置管理</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
                                     <div>
-                                        <p className="font-medium mb-2">导出配置</p>
-                                        <p className="text-sm text-white/50 mb-3">
-                                            导出所有任务配置，用于备份或迁移
+                                        <Label htmlFor="aiModel">Model（可选）</Label>
+                                        <Input
+                                            id="aiModel"
+                                            placeholder="gpt-4o"
+                                            value={aiForm.model}
+                                            onChange={(e) => setAIForm({ ...aiForm, model: e.target.value })}
+                                        />
+                                        <p className="text-xs text-white/50 mt-1">
+                                            默认 gpt-4o，图片识别需要支持 vision 的模型
                                         </p>
-                                        <Button onClick={handleExportConfig} disabled={loading}>
-                                            {loading ? "导出中..." : "导出所有配置"}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <Button onClick={handleSaveAIConfig} disabled={loading}>
+                                            {loading ? "保存中..." : "保存配置"}
                                         </Button>
+                                        {aiConfig?.has_config && (
+                                            <>
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={handleTestAIConnection}
+                                                    disabled={aiTesting}
+                                                >
+                                                    {aiTesting ? "测试中..." : "测试连接"}
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    onClick={handleDeleteAIConfig}
+                                                    disabled={loading}
+                                                >
+                                                    删除配置
+                                                </Button>
+                                            </>
+                                        )}
                                     </div>
 
-                                    <hr />
+                                    {aiTestResult && (
+                                        <div className={`p-3 rounded text-sm ${aiTestResult.startsWith("✅")
+                                            ? "bg-green-50 text-green-700 border border-green-200"
+                                            : "bg-red-50 text-red-700 border border-red-200"
+                                            }`}>
+                                            {aiTestResult}
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
+                    {/* 系统相关设置区块 */}
+                    <div className="grid gap-4">
+
+                        {/* 修改用户名 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>修改用户名</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <Label htmlFor="newUsername">新用户名</Label>
+                                    <Input
+                                        id="newUsername"
+                                        placeholder="输入新用户名"
+                                        value={usernameForm.newUsername}
+                                        onChange={(e) =>
+                                            setUsernameForm({ ...usernameForm, newUsername: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="usernamePassword">确认密码</Label>
+                                    <Input
+                                        id="usernamePassword"
+                                        type="password"
+                                        placeholder="输入当前密码确认"
+                                        value={usernameForm.password}
+                                        onChange={(e) =>
+                                            setUsernameForm({ ...usernameForm, password: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <Button onClick={handleChangeUsername} disabled={loading}>
+                                    {loading ? "修改中..." : "修改用户名"}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* 修改密码 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>修改密码</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <Label htmlFor="oldPassword">旧密码</Label>
+                                    <Input
+                                        id="oldPassword"
+                                        type="password"
+                                        value={passwordForm.oldPassword}
+                                        onChange={(e) =>
+                                            setPasswordForm({ ...passwordForm, oldPassword: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="newPassword">新密码</Label>
+                                    <Input
+                                        id="newPassword"
+                                        type="password"
+                                        value={passwordForm.newPassword}
+                                        onChange={(e) =>
+                                            setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="confirmPassword">确认新密码</Label>
+                                    <Input
+                                        id="confirmPassword"
+                                        type="password"
+                                        value={passwordForm.confirmPassword}
+                                        onChange={(e) =>
+                                            setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                                        }
+                                    />
+                                </div>
+
+                                <Button onClick={handleChangePassword} disabled={loading}>
+                                    {loading ? "修改中..." : "修改密码"}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* 两步验证 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>两步验证 (2FA)</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium mb-2">导入配置</p>
-                                        <p className="text-sm text-white/50 mb-3">
-                                            从备份文件恢复配置
+                                        <p className="font-medium">状态</p>
+                                        <p className="text-sm text-white/50">
+                                            {totpEnabled ? "✅ 已启用" : "❌ 未启用"}
                                         </p>
+                                    </div>
+                                    {!totpEnabled && !showTotpSetup && (
+                                        <Button onClick={handleSetupTOTP} disabled={loading}>
+                                            启用 2FA
+                                        </Button>
+                                    )}
+                                </div>
 
-                                        <div className="space-y-3">
-                                            <div>
-                                                <Label htmlFor="importFile">选择配置文件</Label>
-                                                <Input
-                                                    id="importFile"
-                                                    type="file"
-                                                    accept=".json"
-                                                    onChange={handleImportFile}
-                                                />
-                                            </div>
+                                {showTotpSetup && totpSecret && token && (
+                                    <div className="space-y-4 p-4 bg-white/5 rounded">
+                                        <div>
+                                            <p className="font-medium mb-2">1. 扫描二维码</p>
+                                            <img
+                                                src={getTOTPQRCode(token)}
+                                                alt="2FA QR Code"
+                                                className="w-48 h-48 border rounded"
+                                            />
+                                        </div>
 
-                                            <div>
-                                                <Label htmlFor="importConfig">或粘贴配置 JSON</Label>
-                                                <textarea
-                                                    id="importConfig"
-                                                    className="w-full h-32 p-2 border rounded font-mono text-sm"
-                                                    placeholder='{"signs": {...}, "monitors": {...}}'
-                                                    value={importConfig}
-                                                    onChange={(e) => setImportConfig(e.target.value)}
-                                                />
-                                            </div>
+                                        <div>
+                                            <p className="font-medium mb-2">2. 或手动输入密钥</p>
+                                            <code className="block p-2 bg-white border rounded text-sm break-all">
+                                                {totpSecret}
+                                            </code>
+                                        </div>
 
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id="overwrite"
-                                                    checked={overwriteConfig}
-                                                    onChange={(e) => setOverwriteConfig(e.target.checked)}
-                                                />
-                                                <Label htmlFor="overwrite" className="cursor-pointer">
-                                                    覆盖已存在的配置
-                                                </Label>
-                                            </div>
+                                        <div>
+                                            <Label htmlFor="totpCode">3. 输入验证码</Label>
+                                            <Input
+                                                id="totpCode"
+                                                placeholder="输入 6 位验证码"
+                                                value={totpCode}
+                                                onChange={(e) => setTotpCode(e.target.value)}
+                                            />
+                                        </div>
 
-                                            <Button onClick={handleImportConfig} disabled={loading}>
-                                                {loading ? "导入中..." : "导入配置"}
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="secondary"
+                                                onClick={() => {
+                                                    setShowTotpSetup(false);
+                                                    setTotpSecret("");
+                                                    setTotpCode("");
+                                                }}
+                                            >
+                                                取消
+                                            </Button>
+                                            <Button onClick={handleEnableTOTP} disabled={loading}>
+                                                {loading ? "验证中..." : "确认启用"}
                                             </Button>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                                )}
+
+                                {totpEnabled && (
+                                    <div className="space-y-4 p-4 bg-white/5 rounded">
+                                        <p className="text-sm text-gray-600">
+                                            如需禁用两步验证，请输入验证码确认
+                                        </p>
+                                        <div>
+                                            <Label htmlFor="disableTotpCode">验证码</Label>
+                                            <Input
+                                                id="disableTotpCode"
+                                                placeholder="输入 6 位验证码"
+                                                value={totpCode}
+                                                onChange={(e) => setTotpCode(e.target.value)}
+                                            />
+                                        </div>
+                                        <Button
+                                            variant="destructive"
+                                            onClick={handleDisableTOTP}
+                                            disabled={loading}
+                                        >
+                                            {loading ? "禁用中..." : "禁用 2FA"}
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* 日志保留天数 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>日志设置</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <Label htmlFor="logRetentionDays">日志保留天数</Label>
+                                    <Input
+                                        id="logRetentionDays"
+                                        type="number"
+                                        value={globalSettings.log_retention_days ?? 7}
+                                        onChange={(e) => setGlobalSettings({
+                                            ...globalSettings,
+                                            log_retention_days: parseInt(e.target.value) || 7
+                                        })}
+                                    />
+                                    <p className="text-xs text-white/50 mt-1">
+                                        超过保留天数的日志将被自动清理，默认保留 7 天
+                                    </p>
+                                </div>
+
+                                <Button onClick={handleSaveGlobalSettings} disabled={loading}>
+                                    {loading ? "保存中..." : "保存日志设置"}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* 配置管理 */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>配置管理</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <p className="font-medium mb-2">导出配置</p>
+                                    <p className="text-sm text-white/50 mb-3">
+                                        导出所有任务配置，用于备份或迁移
+                                    </p>
+                                    <Button onClick={handleExportConfig} disabled={loading}>
+                                        {loading ? "导出中..." : "导出所有配置"}
+                                    </Button>
+                                </div>
+
+                                <hr />
+
+                                <div>
+                                    <p className="font-medium mb-2">导入配置</p>
+                                    <p className="text-sm text-white/50 mb-3">
+                                        从备份文件恢复配置
+                                    </p>
+
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label htmlFor="importFile">选择配置文件</Label>
+                                            <Input
+                                                id="importFile"
+                                                type="file"
+                                                accept=".json"
+                                                onChange={handleImportFile}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="importConfig">或粘贴配置 JSON</Label>
+                                            <textarea
+                                                id="importConfig"
+                                                className="w-full h-32 p-2 border rounded font-mono text-sm"
+                                                placeholder='{"signs": {...}, "monitors": {...}}'
+                                                value={importConfig}
+                                                onChange={(e) => setImportConfig(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id="overwrite"
+                                                checked={overwriteConfig}
+                                                onChange={(e) => setOverwriteConfig(e.target.checked)}
+                                            />
+                                            <Label htmlFor="overwrite" className="cursor-pointer">
+                                                覆盖已存在的配置
+                                            </Label>
+                                        </div>
+
+                                        <Button onClick={handleImportConfig} disabled={loading}>
+                                            {loading ? "导入中..." : "导入配置"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
 
                 </div>
             </div>
+
+            {/* Toast 通知容器 */}
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );
 }

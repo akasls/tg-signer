@@ -20,6 +20,8 @@ import { Card, CardContent } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { ToastContainer, useToast } from "../../../components/ui/toast";
+import { ThemeLanguageToggle } from "../../../components/ThemeLanguageToggle";
+import { useLanguage } from "../../../context/LanguageContext";
 
 // Memoized Task Item Component
 const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {

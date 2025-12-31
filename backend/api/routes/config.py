@@ -105,8 +105,9 @@ def export_sign_task(
                 detail=f"任务 {task_name} 不存在"
             )
         
+        from fastapi import Response
         # 返回 JSON 响应，设置下载文件名
-        return JSONResponse(
+        return Response(
             content=config_json,
             media_type="application/json",
             headers={
@@ -150,6 +151,10 @@ def import_sign_task(
         data = json.loads(request.config_json)
         final_task_name = request.task_name or data.get("task_name", "imported_task")
         
+        # 同步调度器
+        from backend.scheduler import sync_jobs
+        sync_jobs()
+        
         return ImportTaskResponse(
             success=True,
             task_name=final_task_name,
@@ -175,8 +180,9 @@ def export_all_configs(current_user: User = Depends(get_current_user)):
     try:
         config_json = config_service.export_all_configs()
         
+        from fastapi import Response
         # 返回 JSON 响应，设置下载文件名
-        return JSONResponse(
+        return Response(
             content=config_json,
             media_type="application/json",
             headers={
@@ -220,6 +226,10 @@ def import_all_configs(
         
         message = "，".join(message_parts) if message_parts else "没有导入任何配置"
         
+        # 同步调度器
+        from backend.scheduler import sync_jobs
+        sync_jobs()
+        
         return ImportAllResponse(
             **result,
             message=message
@@ -250,6 +260,10 @@ def delete_sign_task(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"任务 {task_name} 不存在"
             )
+        
+        # 同步调度器
+        from backend.scheduler import sync_jobs
+        sync_jobs()
         
         return {"success": True, "message": f"任务 {task_name} 已删除"}
         

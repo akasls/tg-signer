@@ -14,8 +14,8 @@ export default function Home() {
     setHasToken(!!token);
     setChecking(false);
 
-    // 如果有 token，使用 replace 跳转（不添加历史记录）
-    if (token) {
+    // 如果有 token，且当前是根路径，则使用 replace 跳转到 dashboard
+    if (token && window.location.pathname === "/") {
       window.location.replace("/dashboard");
     }
   }, []);

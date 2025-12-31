@@ -58,6 +58,11 @@ async def serve_spa(full_path: str):
     if file_path.exists() and file_path.is_file():
         return FileResponse(file_path)
     
+    # 尝试添加 .html 后缀（Next.js 导出通常会生成 .html 文件）
+    html_path = web_dir / f"{full_path}.html"
+    if html_path.exists() and html_path.is_file():
+        return FileResponse(html_path)
+    
     # 否则返回 index.html（SPA 路由）
     index_path = web_dir / "index.html"
     if index_path.exists():

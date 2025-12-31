@@ -159,6 +159,11 @@ def create_sign_task(
             random_seconds=payload.random_seconds,
             sign_interval=payload.sign_interval,
         )
+        
+        # 同步调度器
+        from backend.scheduler import sync_jobs
+        sync_jobs()
+        
         return task
     except Exception as e:
         print(f"创建任务失败: {str(e)}")
@@ -203,6 +208,11 @@ def update_sign_task(
             random_seconds=payload.random_seconds,
             sign_interval=payload.sign_interval,
         )
+        
+        # 同步调度器
+        from backend.scheduler import sync_jobs
+        sync_jobs()
+        
         return task
     except HTTPException:
         raise
@@ -222,6 +232,11 @@ def delete_sign_task(
     success = sign_task_service.delete_task(task_name)
     if not success:
         raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
+    
+    # 同步调度器
+    from backend.scheduler import sync_jobs
+    sync_jobs()
+    
     return {"ok": True}
 
 

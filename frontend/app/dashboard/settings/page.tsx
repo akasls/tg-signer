@@ -27,10 +27,23 @@ import {
     resetTelegramConfig,
     TelegramConfig,
 } from "../../../lib/api";
-import { Button } from "../../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
+import {
+    CaretLeft,
+    User,
+    Lock,
+    ShieldCheck,
+    Robot,
+    Gear,
+    Cpu,
+    DownloadSimple,
+    SignOut,
+    Spinner,
+    ArrowUDownLeft,
+    FloppyDisk,
+    WarningCircle,
+    Trash,
+    Robot as BotIcon
+} from "@phosphor-icons/react";
 import { ToastContainer, useToast } from "../../../components/ui/toast";
 import { ThemeLanguageToggle } from "../../../components/ThemeLanguageToggle";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -378,401 +391,379 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen">
-            <nav className="glass border-b border-white/10 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Link
-                                href="/dashboard"
-                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-main/70 hover:text-main"
-                                title={t("cancel")}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </Link>
-                            <div className="flex items-center gap-2 text-sm">
-                                <Link href="/dashboard" className="text-main/50 hover:text-main transition-colors">
-                                    {t("sidebar_home")}
-                                </Link>
-                                <span className="text-main/30">/</span>
-                                <span className="text-main font-medium">{t("sidebar_settings")}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <ThemeLanguageToggle />
-                            <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
-                            <button
-                                onClick={() => {
-                                    const { logout } = require("../../../lib/auth");
-                                    logout();
-                                    router.push("/");
-                                }}
-                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-rose-400 hover:text-rose-300"
-                                title={t("logout")}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                            </button>
-                        </div>
+        <div id="settings-view" className="w-full h-full flex flex-col pt-[72px]">
+            <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard" className="action-btn" title={t("sidebar_home")}>
+                        <CaretLeft weight="bold" />
+                    </Link>
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                        <span className="text-main/40 uppercase tracking-widest text-[10px]">{t("sidebar_home")}</span>
+                        <span className="text-main/20">/</span>
+                        <span className="text-main uppercase tracking-widest text-[10px]">{t("sidebar_settings")}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <ThemeLanguageToggle />
+                    <div
+                        className="action-btn !text-rose-400 hover:bg-rose-500/10"
+                        title={t("logout")}
+                        onClick={() => {
+                            const { logout } = require("../../../lib/auth");
+                            logout();
+                            router.push("/");
+                        }}
+                    >
+                        <SignOut weight="bold" />
                     </div>
                 </div>
             </nav>
 
-            <div className="max-w-4xl mx-auto px-6 py-8 relative z-0">
+            <main className="flex-1 p-5 md:p-10 w-full max-w-[1000px] mx-auto overflow-y-auto animate-float-up pb-20">
                 <header className="mb-10">
-                    <h1 className="text-3xl font-bold text-main mb-2">{t("settings_title")}</h1>
-                    <p className="text-muted">管理您的账户安全、AI 配置及系统偏好设置</p>
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">{t("settings_title")}</h1>
+                    <p className="text-[#9496a1] text-sm">管理您的账户安全、AI 配置及系统偏好设置</p>
                 </header>
 
-                <div className="grid gap-8 pb-20">
+                <div className="flex flex-col gap-8">
                     {/* 用户名修改 */}
-                    <Card className="card-hover">
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center gap-2">
-                                <span className="p-2 bg-blue-500/10 rounded-lg text-blue-400">👤</span>
-                                {t("username")}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>新用户名</Label>
-                                    <Input
-                                        value={usernameForm.newUsername}
-                                        onChange={(e) => setUsernameForm({ ...usernameForm, newUsername: e.target.value })}
-                                        className="glass-input"
-                                        placeholder="输入新用户名"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>当前密码</Label>
-                                    <Input
-                                        type="password"
-                                        value={usernameForm.password}
-                                        onChange={(e) => setUsernameForm({ ...usernameForm, password: e.target.value })}
-                                        className="glass-input"
-                                        placeholder="验证当前密码"
-                                    />
-                                </div>
+                    <div className="glass-panel p-8">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-400">
+                                <User weight="bold" size={20} />
                             </div>
-                            <Button onClick={handleChangeUsername} className="btn-primary" disabled={loading}>
-                                {loading ? "处理中..." : "修改用户名"}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                            <h2 className="text-xl font-bold">{t("username")}</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label>新用户名</label>
+                                <input
+                                    type="text"
+                                    placeholder="New Username"
+                                    value={usernameForm.newUsername}
+                                    onChange={(e) => setUsernameForm({ ...usernameForm, newUsername: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label>当前密码</label>
+                                <input
+                                    type="password"
+                                    placeholder="Verify Current Password"
+                                    value={usernameForm.password}
+                                    onChange={(e) => setUsernameForm({ ...usernameForm, password: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <button className="btn-gradient w-fit px-8" onClick={handleChangeUsername} disabled={loading}>
+                            {loading ? <Spinner className="animate-spin" /> : "修改用户名"}
+                        </button>
+                    </div>
 
                     {/* 密码修改 */}
-                    <Card className="card-hover">
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center gap-2">
-                                <span className="p-2 bg-amber-500/10 rounded-lg text-amber-400">🔒</span>
-                                修改密码
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label>旧密码</Label>
-                                    <Input
-                                        type="password"
-                                        value={passwordForm.oldPassword}
-                                        onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
-                                        className="glass-input"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>新密码</Label>
-                                    <Input
-                                        type="password"
-                                        value={passwordForm.newPassword}
-                                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                                        className="glass-input"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>确认新密码</Label>
-                                    <Input
-                                        type="password"
-                                        value={passwordForm.confirmPassword}
-                                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                                        className="glass-input"
-                                    />
-                                </div>
+                    <div className="glass-panel p-8">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400">
+                                <Lock weight="bold" size={20} />
                             </div>
-                            <Button onClick={handleChangePassword} className="btn-primary" disabled={loading}>
-                                {loading ? "处理中..." : "修改密码"}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                            <h2 className="text-xl font-bold">修改密码</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div>
+                                <label>旧密码</label>
+                                <input
+                                    type="password"
+                                    value={passwordForm.oldPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label>新密码</label>
+                                <input
+                                    type="password"
+                                    value={passwordForm.newPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label>确认新密码</label>
+                                <input
+                                    type="password"
+                                    value={passwordForm.confirmPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <button className="btn-gradient w-fit px-8" onClick={handleChangePassword} disabled={loading}>
+                            {loading ? <Spinner className="animate-spin" /> : "修改密码"}
+                        </button>
+                    </div>
 
                     {/* 2FA 设置 */}
-                    <Card className="card-hover overflow-hidden">
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <CardTitle className="text-xl flex items-center gap-2">
-                                    <span className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">🛡️</span>
-                                    两步验证 (2FA)
-                                </CardTitle>
-                                <div className={`px-3 py-1 rounded-full text-xs font-medium ${totpEnabled ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                                    {totpEnabled ? "已启用" : "未启用"}
+                    <div className="glass-panel p-8 overflow-hidden">
+                        <div className="flex justify-between items-center mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400">
+                                    <ShieldCheck weight="bold" size={20} />
+                                </div>
+                                <h2 className="text-xl font-bold">两步验证 (2FA)</h2>
+                            </div>
+                            <div className={`shrink-0 bg-${totpEnabled ? 'emerald' : 'rose'}-500/10 border border-${totpEnabled ? 'emerald' : 'rose'}-500/20 text-${totpEnabled ? 'emerald' : 'rose'}-400 px-4 py-1 rounded-full text-xs font-bold`}>
+                                {totpEnabled ? "ENABLED" : "DISABLED"}
+                            </div>
+                        </div>
+
+                        {!totpEnabled && !showTotpSetup && (
+                            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-6 flex gap-6 items-start">
+                                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                    <WarningCircle weight="bold" size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-main/70 leading-relaxed max-w-2xl">
+                                        启用两步验证将显著提升您的账户安全性。启用后，登录时除了密码外，还需要输入由身份验证器生成的动态代码。
+                                    </p>
+                                    <button onClick={handleSetupTOTP} className="btn-secondary mt-6 w-fit h-10 px-6 text-sm" disabled={loading}>
+                                        开始设置
+                                    </button>
                                 </div>
                             </div>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            {!totpEnabled && !showTotpSetup && (
-                                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 flex gap-4 items-start">
-                                    <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400 text-xl">💡</div>
-                                    <div>
-                                        <p className="text-sm text-main/70 leading-relaxed">
-                                            启用两步验证将显著提升您的账户安全性。启用后，登录时除了密码外，还需要输入由身份验证器生成的动态代码。
-                                        </p>
-                                        <Button onClick={handleSetupTOTP} variant="outline" className="mt-4" disabled={loading}>
-                                            开始设置
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
+                        )}
 
-                            {showTotpSetup && (
-                                <div className="space-y-6 animate-scale-in">
-                                    <div className="flex flex-col md:flex-row gap-8 items-center md:items-start p-6 bg-white/5 rounded-2xl border border-white/5">
-                                        <div className="bg-white p-4 rounded-xl">
-                                            <img
-                                                src={`/api/user/totp/qrcode?secret=${totpSecret}`}
-                                                alt="QR Code"
-                                                className="w-40 h-40"
-                                            />
+                        {showTotpSetup && (
+                            <div className="animate-float-up space-y-8">
+                                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start p-6 bg-white/2 rounded-2xl border border-white/5 shadow-inner">
+                                    <div className="bg-white p-4 rounded-xl shrink-0">
+                                        <img
+                                            src={`/api/user/totp/qrcode?secret=${totpSecret}`}
+                                            alt="QR Code"
+                                            className="w-40 h-40"
+                                        />
+                                    </div>
+                                    <div className="flex-1 space-y-6">
+                                        <div>
+                                            <h4 className="font-bold text-main mb-2">1. 扫描二维码</h4>
+                                            <p className="text-sm text-[#9496a1]">使用 Google Authenticator 或其他身份验证器扫描左侧二维码</p>
                                         </div>
-                                        <div className="flex-1 space-y-4">
-                                            <div>
-                                                <h4 className="font-bold text-main mb-2">1. 扫描二维码</h4>
-                                                <p className="text-sm text-muted">使用 Google Authenticator 或其他身份验证器扫描左侧二维码</p>
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-main mb-2">2. 备份密钥</h4>
-                                                <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-sm break-all font-mono text-cyan-300">
-                                                    {totpSecret}
-                                                </div>
+                                        <div>
+                                            <h4 className="font-bold text-main mb-2">2. 备份密钥</h4>
+                                            <div className="p-4 bg-white/2 border border-white/8 rounded-xl text-[13px] break-all font-mono text-[#b57dff]">
+                                                {totpSecret}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2 max-w-xs">
-                                        <Label>验证代码</Label>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={totpCode}
-                                                onChange={(e) => setTotpCode(e.target.value)}
-                                                placeholder="6 位数字代码"
-                                                className="glass-input text-center text-lg tracking-widest"
-                                            />
-                                            <Button onClick={handleEnableTOTP} className="btn-primary" disabled={loading}>
-                                                验证并启用
-                                            </Button>
-                                        </div>
+                                </div>
+                                <div className="space-y-4 max-w-xs">
+                                    <label>验证代码</label>
+                                    <div className="flex gap-3">
+                                        <input
+                                            value={totpCode}
+                                            onChange={(e) => setTotpCode(e.target.value)}
+                                            placeholder="6 位数字代码"
+                                            className="text-center text-lg tracking-widest h-12"
+                                        />
+                                        <button onClick={handleEnableTOTP} className="btn-gradient px-6 shrink-0 h-12" disabled={loading}>
+                                            验证
+                                        </button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                            {totpEnabled && (
-                                <Button onClick={handleDisableTOTP} variant="destructive" disabled={loading}>
-                                    停用两步验证
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
+                        {totpEnabled && (
+                            <button onClick={handleDisableTOTP} className="btn-secondary !text-rose-400 hover:bg-rose-500/10 w-fit px-8" disabled={loading}>
+                                停用两步验证
+                            </button>
+                        )}
+                    </div>
 
                     {/* AI 配置 */}
-                    <Card className="card-hover">
-                        <CardHeader>
-                            <div className="flex justify-between items-center">
-                                <CardTitle className="text-xl flex items-center gap-2">
-                                    <span className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">🤖</span>
-                                    AI 模型配置 (用于自动答题)
-                                </CardTitle>
-                                {aiConfig && (
-                                    <Button variant="ghost" size="sm" onClick={handleDeleteAI} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
-                                        删除配置
-                                    </Button>
-                                )}
+                    <div className="glass-panel p-8">
+                        <div className="flex justify-between items-center mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400">
+                                    <BotIcon weight="bold" size={20} />
+                                </div>
+                                <h2 className="text-xl font-bold">AI 模型配置</h2>
                             </div>
-                        </CardHeader>
-                        <CardContent className="space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>API 密钥</Label>
-                                    <Input
-                                        type="password"
-                                        value={aiForm.api_key}
-                                        onChange={(e) => setAIForm({ ...aiForm, api_key: e.target.value })}
-                                        className="glass-input"
-                                        placeholder={aiConfig ? "******** (已保存)" : "sk-..."}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>基础 URL (Base URL)</Label>
-                                    <Input
-                                        value={aiForm.base_url}
-                                        onChange={(e) => setAIForm({ ...aiForm, base_url: e.target.value })}
-                                        className="glass-input"
-                                        placeholder="https://api.openai.com/v1"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>预设模型 (Model)</Label>
-                                    <Input
-                                        value={aiForm.model}
-                                        onChange={(e) => setAIForm({ ...aiForm, model: e.target.value })}
-                                        className="glass-input"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 pt-2">
-                                <Button onClick={handleSaveAI} className="btn-primary" disabled={loading}>
-                                    {loading ? "保存中..." : "保存 AI 配置"}
-                                </Button>
-                                <Button onClick={handleTestAI} variant="outline" disabled={aiTesting || !aiConfig}>
-                                    {aiTesting ? "测试中..." : "连接测试"}
-                                </Button>
-                            </div>
-
-                            {aiTestResult && (
-                                <div className={`p-4 rounded-xl text-sm ${aiTestResult.includes("成功") ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                                    {aiTestResult}
-                                </div>
+                            {aiConfig && (
+                                <button onClick={handleDeleteAI} className="action-btn !text-rose-400" title="删除 AI 配置">
+                                    <Trash weight="bold" />
+                                </button>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div className="md:col-span-2">
+                                <label>API 密钥</label>
+                                <input
+                                    type="password"
+                                    value={aiForm.api_key}
+                                    onChange={(e) => setAIForm({ ...aiForm, api_key: e.target.value })}
+                                    placeholder={aiConfig ? "******** (已保存)" : "sk-..."}
+                                />
+                            </div>
+                            <div>
+                                <label>基础 URL (Base URL)</label>
+                                <input
+                                    value={aiForm.base_url}
+                                    onChange={(e) => setAIForm({ ...aiForm, base_url: e.target.value })}
+                                    placeholder="https://api.openai.com/v1"
+                                />
+                            </div>
+                            <div>
+                                <label>预设模型 (Model)</label>
+                                <input
+                                    value={aiForm.model}
+                                    onChange={(e) => setAIForm({ ...aiForm, model: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button onClick={handleSaveAI} className="btn-gradient w-fit px-8" disabled={loading}>
+                                {loading ? <Spinner className="animate-spin" /> : "保存配置"}
+                            </button>
+                            <button onClick={handleTestAI} className="btn-secondary w-fit px-8" disabled={aiTesting || !aiConfig}>
+                                {aiTesting ? <Spinner className="animate-spin" /> : "连接测试"}
+                            </button>
+                        </div>
+
+                        {aiTestResult && (
+                            <div className={`mt-6 p-5 rounded-2xl text-sm border ${aiTestResult.includes("成功") ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/10' : 'bg-rose-500/5 text-rose-400 border-rose-500/10'} animate-float-up`}>
+                                <div className="flex items-center gap-2 font-bold mb-1 uppercase tracking-wider text-[10px]">
+                                    {aiTestResult.includes("成功") ? "Process Successful" : "Process Error"}
+                                </div>
+                                {aiTestResult}
+                            </div>
+                        )}
+                    </div>
 
                     {/* 全局设置 */}
-                    <Card className="card-hover">
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center gap-2">
-                                <span className="p-2 bg-violet-500/10 rounded-lg text-violet-400">⚙️</span>
-                                全局设置
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>全局签到间隔 (秒，可选)</Label>
-                                    <Input
-                                        type="number"
-                                        value={globalSettings.sign_interval === null ? "" : globalSettings.sign_interval}
-                                        onChange={(e) => setGlobalSettings({ ...globalSettings, sign_interval: e.target.value ? parseInt(e.target.value) : null })}
-                                        className="glass-input"
-                                        placeholder="例如: 60 (为空则随机 1-120 秒)"
-                                    />
-                                    <p className="text-[10px] text-dim">设置将应用于所有启用全局间隔的任务</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>日志保留天数</Label>
-                                    <Input
-                                        type="number"
-                                        value={globalSettings.log_retention_days}
-                                        onChange={(e) => setGlobalSettings({ ...globalSettings, log_retention_days: parseInt(e.target.value) || 0 })}
-                                        className="glass-input"
-                                    />
-                                </div>
+                    <div className="glass-panel p-8">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="p-2.5 bg-violet-500/10 rounded-xl text-violet-400">
+                                <Gear weight="bold" size={20} />
                             </div>
-                            <Button onClick={handleSaveGlobal} className="btn-primary" disabled={loading}>
-                                {loading ? "保存中..." : "保存全局设置"}
-                            </Button>
-                        </CardContent>
-                    </Card>
+                            <h2 className="text-xl font-bold">全局签到设置</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label>签到间隔 (秒)</label>
+                                <input
+                                    type="number"
+                                    value={globalSettings.sign_interval === null ? "" : globalSettings.sign_interval}
+                                    onChange={(e) => setGlobalSettings({ ...globalSettings, sign_interval: e.target.value ? parseInt(e.target.value) : null })}
+                                    placeholder="留空则随机 1-120 秒"
+                                />
+                                <p className="mt-2 text-[11px] text-[#9496a1]">设置将应用于所有启用全局间隔的任务</p>
+                            </div>
+                            <div>
+                                <label>日志保留天数</label>
+                                <input
+                                    type="number"
+                                    value={globalSettings.log_retention_days}
+                                    onChange={(e) => setGlobalSettings({ ...globalSettings, log_retention_days: parseInt(e.target.value) || 0 })}
+                                />
+                            </div>
+                        </div>
+                        <button className="btn-gradient w-fit px-8" onClick={handleSaveGlobal} disabled={loading}>
+                            {loading ? <Spinner className="animate-spin" /> : "保存全局参数"}
+                        </button>
+                    </div>
 
                     {/* Telegram API 配置 */}
-                    <Card className="card-hover">
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center gap-2">
-                                <span className="p-2 bg-sky-500/10 rounded-lg text-sky-400">💻</span>
-                                Telegram API 凭据
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>API ID</Label>
-                                    <Input
-                                        value={telegramForm.api_id}
-                                        onChange={(e) => setTelegramForm({ ...telegramForm, api_id: e.target.value })}
-                                        className="glass-input"
-                                        placeholder="从 my.telegram.org 获取"
-                                    />
+                    <div className="glass-panel p-8">
+                        <div className="flex justify-between items-center mb-8">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-sky-500/10 rounded-xl text-sky-400">
+                                    <Cpu weight="bold" size={20} />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>API Hash</Label>
-                                    <Input
-                                        value={telegramForm.api_hash}
-                                        onChange={(e) => setTelegramForm({ ...telegramForm, api_hash: e.target.value })}
-                                        className="glass-input"
-                                        placeholder="从 my.telegram.org 获取"
-                                    />
-                                </div>
+                                <h2 className="text-xl font-bold">Telegram API 凭据</h2>
                             </div>
-                            <div className="flex gap-3">
-                                <Button onClick={handleSaveTelegram} className="btn-primary" disabled={loading}>
-                                    {loading ? "保存中..." : "保存 API 配置"}
-                                </Button>
-                                <Button onClick={handleResetTelegram} variant="outline" disabled={loading}>
-                                    恢复默认
-                                </Button>
+                            <button onClick={handleResetTelegram} className="action-btn" title="恢复默认配置">
+                                <ArrowUDownLeft weight="bold" />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label>API ID</label>
+                                <input
+                                    value={telegramForm.api_id}
+                                    onChange={(e) => setTelegramForm({ ...telegramForm, api_id: e.target.value })}
+                                    placeholder="From my.telegram.org"
+                                />
                             </div>
-                            <p className="text-[10px] text-dim">
-                                注意：修改此配置可能导致现有登录会话失效，建议在添加账号出现问题时才自定义。
-                            </p>
-                        </CardContent>
-                    </Card>
+                            <div>
+                                <label>API Hash</label>
+                                <input
+                                    value={telegramForm.api_hash}
+                                    onChange={(e) => setTelegramForm({ ...telegramForm, api_hash: e.target.value })}
+                                    placeholder="From my.telegram.org"
+                                />
+                            </div>
+                        </div>
+                        <button className="btn-gradient w-fit px-8" onClick={handleSaveTelegram} disabled={loading}>
+                            {loading ? <Spinner className="animate-spin" /> : "应用 API 配置"}
+                        </button>
+                        <p className="mt-6 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-[11px] text-amber-200/50 leading-relaxed">
+                            <span className="font-bold text-amber-400 block mb-1">WARNING</span>
+                            修改此配置可能导致现有登录会话失效，建议仅在添加账号出现 API 兼容性问题时才进行自定义。
+                        </p>
+                    </div>
 
                     {/* 配置导出导入 */}
-                    <Card className="card-hover">
-                        <CardHeader>
-                            <CardTitle className="text-xl flex items-center gap-2">
-                                <span className="p-2 bg-pink-500/10 rounded-lg text-pink-400">💾</span>
-                                数据备份与迁移
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex flex-col md:flex-row gap-4">
-                                <div className="flex-1 space-y-4">
-                                    <Label>导出全部配置 (导出包含任务与账号基础信息的 JSON)</Label>
-                                    <Button onClick={handleExport} variant="outline" className="w-full flex items-center gap-2" disabled={loading}>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                        </svg>
-                                        下载备份文件
-                                    </Button>
-                                </div>
-                                <div className="flex-1 space-y-2">
-                                    <Label>导入配置内容</Label>
-                                    <textarea
-                                        className="w-full h-24 glass rounded-xl p-3 text-sm font-mono text-main/70 border border-white/10 focus:border-white/20 outline-none transition-all placeholder:text-muted"
-                                        placeholder="在此粘贴导出的 JSON 文本..."
-                                        value={importConfig}
-                                        onChange={(e) => setImportConfig(e.target.value)}
-                                    ></textarea>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="overwrite"
-                                            checked={overwriteConfig}
-                                            onChange={(e) => setOverwriteConfig(e.target.checked)}
-                                            className="rounded border-white/10 bg-white/5"
-                                        />
-                                        <Label htmlFor="overwrite" className="text-main/50 cursor-pointer">覆盖现有重复任务</Label>
-                                    </div>
-                                    <Button onClick={handleImport} className="w-full mt-2" disabled={loading}>
-                                        执行导入
-                                    </Button>
-                                </div>
+                    <div className="glass-panel p-8">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="p-2.5 bg-pink-500/10 rounded-xl text-pink-400">
+                                <DownloadSimple weight="bold" size={20} />
                             </div>
-                        </CardContent>
-                    </Card>
+                            <h2 className="text-xl font-bold">数据备份与迁移</h2>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-10">
+                            <div className="flex-1">
+                                <label className="mb-4">导出全部配置</label>
+                                <p className="text-xs text-[#9496a1] mb-6 leading-relaxed">包含所有任务定义与账号基础信息。注意：此文件包含敏感信息，请妥善保管。</p>
+                                <button onClick={handleExport} className="btn-secondary w-full flex items-center justify-center gap-2 h-12" disabled={loading}>
+                                    <FloppyDisk weight="bold" />
+                                    下载配置文件 (.json)
+                                </button>
+                            </div>
+
+                            <div className="w-px bg-white/5 self-stretch hidden md:block"></div>
+
+                            <div className="flex-1 flex flex-col">
+                                <label className="mb-4">导入配置内容</label>
+                                <textarea
+                                    className="w-full flex-1 min-h-[120px] bg-white/2 rounded-2xl p-4 text-xs font-mono text-main/60 border border-white/5 focus:border-[#8a3ffc]/30 outline-none transition-all placeholder:text-main/20 custom-scrollbar"
+                                    placeholder="在此粘贴 JSON 文本内容..."
+                                    value={importConfig}
+                                    onChange={(e) => setImportConfig(e.target.value)}
+                                ></textarea>
+
+                                <div className="flex items-center gap-3 mt-4 mb-6">
+                                    <div
+                                        className={`w-10 h-6 rounded-full relative cursor-pointer transition-all ${overwriteConfig ? 'bg-[#8a3ffc]' : 'bg-white/10 border border-white/10'}`}
+                                        onClick={() => setOverwriteConfig(!overwriteConfig)}
+                                    >
+                                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${overwriteConfig ? 'left-5' : 'left-1'}`}></div>
+                                    </div>
+                                    <span className="text-xs text-main/50 cursor-pointer" onClick={() => setOverwriteConfig(!overwriteConfig)}>
+                                        覆盖冲突的任务
+                                    </span>
+                                </div>
+
+                                <button onClick={handleImport} className="btn-gradient w-full h-12" disabled={loading}>
+                                    {loading ? <Spinner className="animate-spin" /> : "执行导入"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </main>
 
             <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>

@@ -4,119 +4,120 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login, resetTOTP } from "../lib/api";
 import { setToken } from "../lib/auth";
-import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { useToast } from "./ui/toast";
+import { 
+  Lightning, 
+  Spinner, 
+  Translate, 
+  Sun, 
+  Moon, 
+  GithubLogo, 
+  PaperPlaneRight 
+} from "@phosphor-icons/react";
+import { useTheme } from "../context/ThemeContext";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { addToast } = useToast();
+  const { theme, toggleTheme } = useTheme();
+  
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin123");
   const [totp, setTotp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showTotpHelp, setShowTotpHelp] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg("");
     try {
       const res = await login({ username, password, totp_code: totp || undefined });
       setToken(res.access_token);
-      addToast("登录成功", "success");
       router.push("/dashboard");
     } catch (err: any) {
-      const errMsg = err?.message || "登录失败";
-      // 常见错误中文转换
-      let displayMsg = errMsg;
-      if (errMsg.includes("Invalid credentials") || errMsg.includes("Invalid username or password")) {
+      const msg = err?.message || "登录失败";
+      let displayMsg = msg;
+      if (msg.includes("Invalid credentials") || msg.includes("Invalid username or password")) {
         displayMsg = "用户名或密码错误";
-      } else if (errMsg.includes("TOTP code required") || errMsg.includes("Invalid TOTP code")) {
+      } else if (msg.includes("TOTP code required") || msg.includes("Invalid TOTP code")) {
         displayMsg = "两步验证码错误或已过期";
-        setShowTotpHelp(true);
-      } else if (errMsg.includes("Could not validate credentials")) {
-        displayMsg = "认证失败，请重新登录";
       }
-
-      addToast(displayMsg, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetTOTP = async () => {
-    if (!username || !password) {
-      addToast("请先填写用户名和密码", "error");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await resetTOTP({ username, password });
-      addToast(res.message || "重置成功", "success");
-      setShowTotpHelp(false);
-      setTotp("");
-    } catch (err: any) {
-      addToast(err?.message || "重置失败", "error");
+      setErrorMsg(displayMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-xl relative animate-scale-in">
-        <CardContent className="p-8 sm:p-12">
-          {/* Logo 和标题 */}
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-4 animate-pulse-glow inline-block">⚡</div>
-            <h1 className="text-2xl font-bold aurora-text mb-2">TG SignPulse</h1>
-            <p className="text-muted text-sm">Telegram 自动签到控制台</p>
+    <div id="login-view" className="w-full h-full flex justify-center items-center relative p-5 animate-float-up">
+      <div className="glass-panel w-full max-w-[400px] p-12 text-center">
+        <div className="mb-8">
+          <Lightning 
+            weight="fill" 
+            className="inline-block" 
+            style={{ fontSize: '56px', color: '#fcd34d', filter: 'drop-shadow(0 0 10px rgba(252, 211, 77, 0.4))' }} 
+          />
+          <div className="brand-text-grad mt-3">TG SignPulse</div>
+          <p className="text-[#9496a1] text-xs mt-2">Telegram 自动签到控制台</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="text-left">
+          <div className="mb-5">
+            <label>用户名</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="请输入用户名"
+            />
+          </div>
+          <div className="mb-5">
+            <label>密码</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="请输入密码"
+            />
+          </div>
+          <div className="mb-5">
+            <label>2FA 动态码 (可选)</label>
+            <input
+              type="text"
+              value={totp}
+              onChange={(e) => setTotp(e.target.value)}
+              placeholder="如未启用请留空"
+              className="text-center tracking-[2px]"
+            />
           </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label>用户名</Label>
-              <Input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="请输入用户名"
-                className="glass-input"
-              />
+          {errorMsg && (
+            <div className="text-[#ff4757] text-xs mb-4 text-center bg-[#ff4757]/10 p-2 rounded-lg">
+              {errorMsg}
             </div>
-            <div className="space-y-2">
-              <Label>密码</Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="请输入密码"
-                className="glass-input"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>两步验证码 (可选)</Label>
-              <Input
-                value={totp}
-                onChange={(e) => setTotp(e.target.value)}
-                placeholder="如未启用两步验证，请留空"
-                className="glass-input"
-              />
-            </div>
+          )}
 
-            <Button className="w-full btn-primary" type="submit" disabled={loading}>
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  登录中...
-                </span>
-              ) : "登录"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <button className="btn-gradient w-full" type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <Spinner className="animate-spin" size={20} />
+                正在安全验证...
+              </>
+            ) : (
+              "进入控制台"
+            )}
+          </button>
+        </form>
+
+        <div className="flex justify-center gap-5 mt-8 pt-6 border-t border-white/10">
+          <div className="action-btn" title="Language"><Translate weight="bold" /></div>
+          <div className="action-btn" title="Theme" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun weight="bold" /> : <Moon weight="bold" />}
+          </div>
+          <a href="https://github.com" target="_blank" rel="noreferrer" className="action-btn" title="GitHub">
+            <GithubLogo weight="bold" />
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

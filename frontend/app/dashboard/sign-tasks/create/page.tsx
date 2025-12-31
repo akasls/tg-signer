@@ -12,10 +12,20 @@ import {
     ChatInfo,
     SignTaskChat,
 } from "../../../../lib/api";
-import { Button } from "../../../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card";
-import { Input } from "../../../../components/ui/input";
-import { Label } from "../../../../components/ui/label";
+import {
+    CaretLeft,
+    Plus,
+    X,
+    ChatCircleText,
+    Clock,
+    Trash,
+    Spinner,
+    DiceFive,
+    Robot,
+    MathOperations,
+    Lightning,
+    Check
+} from "@phosphor-icons/react";
 import { ThemeLanguageToggle } from "../../../../components/ThemeLanguageToggle";
 import { useLanguage } from "../../../../context/LanguageContext";
 import { ToastContainer, useToast } from "../../../../components/ui/toast";
@@ -143,112 +153,220 @@ export default function CreateSignTaskPage() {
     if (!token) return null;
 
     return (
-        <div className="min-h-screen bg-transparent text-white p-4 lg:p-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                        <Link href="/dashboard/sign-tasks" className="p-2 hover:bg-white/10 rounded-xl transition-all text-white/50 hover:text-white">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                        </Link>
-                        <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-                            {t("add_task")}
-                        </h1>
+        <div id="create-task-view" className="w-full h-full flex flex-col pt-[72px]">
+            <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard/sign-tasks" className="action-btn" title={t("cancel")}>
+                        <CaretLeft weight="bold" />
+                    </Link>
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                        <span className="text-main/40 uppercase tracking-widest text-[10px]">{t("sidebar_tasks")}</span>
+                        <span className="text-main/20">/</span>
+                        <span className="text-main uppercase tracking-widest text-[10px]">{t("add_task")}</span>
                     </div>
+                </div>
+                <div className="flex items-center gap-4">
                     <ThemeLanguageToggle />
                 </div>
+            </nav>
 
-                <div className="grid gap-6">
-                    <Card className="glass border-white/10">
-                        <CardHeader><CardTitle className="text-lg">基本配置</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>任务名称</Label>
-                                <Input className="glass-input" value={taskName} onChange={(e) => setTaskName(e.target.value)} placeholder="linuxdo_sign" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>签到时间 (CRON)</Label>
-                                <Input className="glass-input font-mono" value={signAt} onChange={(e) => setSignAt(e.target.value)} placeholder="0 6 * * *" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>关联账号</Label>
-                                    <select
-                                        className="w-full glass-input bg-zinc-900 border-white/10 rounded-xl p-2.5 outline-none focus:border-indigo-500/50 transition-all"
-                                        value={selectedAccount}
-                                        onChange={(e) => handleAccountChange(e.target.value)}
-                                    >
-                                        {accounts.map(acc => <option key={acc.name} value={acc.name}>{acc.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>随机延迟 (秒)</Label>
-                                    <Input type="number" className="glass-input" value={randomSeconds} onChange={(e) => setRandomSeconds(parseInt(e.target.value) || 0)} />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+            <main className="flex-1 p-5 md:p-10 w-full max-w-[900px] mx-auto overflow-y-auto animate-float-up pb-20">
+                <header className="mb-10">
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">{t("add_task")}</h1>
+                    <p className="text-[#9496a1] text-sm">定义全局签到规则，可以应用到多个目标频道</p>
+                </header>
 
-                    <Card className="glass border-white/10">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-lg">Chat 配置 ({chats.length})</CardTitle>
-                            <Button onClick={handleAddChat} className="glass-button text-xs py-1.5">+ 添加 Chat</Button>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
+                <div className="grid gap-8">
+                    {/* 基本配置 */}
+                    <section className="glass-panel p-6 space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#b57dff]">
+                                <Lightning weight="fill" size={18} />
+                            </div>
+                            <h2 className="text-lg font-bold">基本配置</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label>任务名称</label>
+                                <input
+                                    value={taskName}
+                                    onChange={(e) => setTaskName(e.target.value)}
+                                    placeholder="例如: linuxdo_sign"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label>签到时间 (CRON)</label>
+                                <input
+                                    className="font-mono"
+                                    value={signAt}
+                                    onChange={(e) => setSignAt(e.target.value)}
+                                    placeholder="0 6 * * *"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label>关联账号</label>
+                                <select
+                                    value={selectedAccount}
+                                    onChange={(e) => handleAccountChange(e.target.value)}
+                                >
+                                    {accounts.map(acc => <option key={acc.name} value={acc.name}>{acc.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label>随机延迟 (秒)</label>
+                                <input
+                                    type="number"
+                                    value={randomSeconds}
+                                    onChange={(e) => setRandomSeconds(parseInt(e.target.value) || 0)}
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Chat 配置 */}
+                    <section className="glass-panel p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#b57dff]">
+                                    <ChatCircleText weight="fill" size={18} />
+                                </div>
+                                <h2 className="text-lg font-bold">目标 Chat 配置 ({chats.length})</h2>
+                            </div>
+                            <button onClick={handleAddChat} className="btn-secondary !h-8 !px-3 font-bold !text-[10px]">
+                                + 添加 CHAT
+                            </button>
+                        </div>
+
+                        {chats.length === 0 ? (
+                            <div className="py-10 text-center border-2 border-dashed border-white/5 rounded-2xl text-main/20">
+                                <p className="text-sm">尚未添加任何目标频道</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3">
                                 {chats.map((chat, idx) => (
-                                    <div key={idx} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
-                                        <div>
-                                            <div className="font-bold">{chat.name}</div>
-                                            <div className="text-xs text-white/40">ID: {chat.chat_id} | Actions: {chat.actions.length}</div>
+                                    <div key={idx} className="glass-panel !bg-black/5 p-4 flex items-center justify-between group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold text-xs">
+                                                {idx + 1}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-sm">{chat.name}</div>
+                                                <div className="text-[10px] text-main/30 font-mono mt-0.5">
+                                                    ID: {chat.chat_id} | <span className="text-[#8a3ffc]/60 font-bold">{chat.actions.length} ACTIONS</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <Button variant="ghost" onClick={() => setChats(chats.filter((_, i) => i !== idx))} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
-                                            {t("delete")}
-                                        </Button>
+                                        <button
+                                            onClick={() => setChats(chats.filter((_, i) => i !== idx))}
+                                            className="action-btn !text-rose-400 hover:!bg-rose-500/10"
+                                        >
+                                            <Trash weight="bold" />
+                                        </button>
                                     </div>
                                 ))}
                             </div>
-                        </CardContent>
-                    </Card>
+                        )}
+                    </section>
 
-                    <div className="flex gap-4">
-                        <Button onClick={() => router.back()} variant="ghost" className="flex-1 glass-button">{t("cancel")}</Button>
-                        <Button onClick={handleSubmit} disabled={loading} className="flex-1 glass-button bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
-                            {loading ? t("login_loading") : t("save")}
-                        </Button>
+                    <div className="flex gap-4 pt-4">
+                        <button onClick={() => router.back()} className="btn-secondary flex-1">{t("cancel")}</button>
+                        <button onClick={handleSubmit} disabled={loading} className="btn-gradient flex-1">
+                            {loading ? <Spinner className="animate-spin mx-auto" weight="bold" /> : "立即部署任务"}
+                        </button>
                     </div>
                 </div>
-            </div>
+            </main>
 
-            {/* Editing Dialog - Simplified for brevity in implementation */}
+            {/* Editing Dialog */}
             {editingChat && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <Card className="glass border-white/10 w-full max-w-lg p-6 space-y-4">
-                        <h2 className="text-xl font-bold">配置 Chat</h2>
-                        <div className="space-y-4">
-                            <Label>选择目标 Chat</Label>
-                            <select
-                                className="w-full glass-input bg-zinc-900 border-white/10 rounded-xl p-2.5"
-                                value={editingChat.chat_id}
-                                onChange={(e) => {
-                                    const cid = parseInt(e.target.value);
-                                    const chat = availableChats.find(c => c.id === cid);
-                                    setEditingChat({ ...editingChat, chat_id: cid, name: chat?.title || chat?.username || "" });
-                                }}
-                            >
-                                <option value={0}>请选择...</option>
-                                {availableChats.map(c => <option key={c.id} value={c.id}>{c.title || c.username}</option>)}
-                            </select>
+                <div className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="glass-panel modal-content w-full max-w-lg animate-scale-in flex flex-col overflow-hidden">
+                        <header className="p-6 border-b border-white/5 flex justify-between items-center bg-black/5">
+                            <h2 className="text-xl font-bold flex items-center gap-3">
+                                <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#b57dff]">
+                                    <Plus weight="bold" size={20} />
+                                </div>
+                                配置目标 Chat
+                            </h2>
+                            <button onClick={() => setEditingChat(null)} className="action-btn !w-8 !h-8">
+                                <X weight="bold" />
+                            </button>
+                        </header>
 
-                            <Button onClick={() => setEditingChat({ ...editingChat, actions: [...editingChat.actions, { action: 1, text: "Check in" }] })} variant="ghost" className="text-xs text-indigo-400">+ 添加签到动作</Button>
+                        <div className="p-6 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs uppercase tracking-widest font-bold text-main/40">选择目标 Chat</label>
+                                <select
+                                    value={editingChat.chat_id}
+                                    onChange={(e) => {
+                                        const cid = parseInt(e.target.value);
+                                        const chat = availableChats.find(c => c.id === cid);
+                                        setEditingChat({ ...editingChat, chat_id: cid, name: chat?.title || chat?.username || "" });
+                                    }}
+                                >
+                                    <option value={0}>请选择服务器中的频道...</option>
+                                    {availableChats.map(c => <option key={c.id} value={c.id}>{c.title || c.username}</option>)}
+                                </select>
+                            </div>
 
-                            <div className="flex gap-2">
-                                <Button onClick={() => setEditingChat(null)} variant="ghost" className="flex-1 glass-button">{t("cancel")}</Button>
-                                <Button onClick={handleSaveChat} className="flex-1 glass-button bg-emerald-500/20 text-emerald-400 border-emerald-500/20">确定</Button>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs uppercase tracking-widest font-bold text-main/40">任务动作序列</label>
+                                    <button
+                                        onClick={() => setEditingChat({ ...editingChat, actions: [...editingChat.actions, { action: 1, text: "Check in" }] })}
+                                        className="text-[10px] font-bold text-[#8a3ffc] hover:underline"
+                                    >
+                                        + 添加签到动作
+                                    </button>
+                                </div>
+
+                                <div className="max-h-[200px] overflow-y-auto space-y-3 custom-scrollbar pr-2">
+                                    {editingChat.actions.map((act, i) => (
+                                        <div key={i} className="flex gap-3 items-center animate-scale-in">
+                                            <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-bold text-main/30">
+                                                {i + 1}
+                                            </div>
+                                            <input
+                                                className="!h-9 !text-sm"
+                                                value={act.text}
+                                                onChange={(e) => {
+                                                    const newActs = [...editingChat.actions];
+                                                    newActs[i] = { ...newActs[i], text: e.target.value };
+                                                    setEditingChat({ ...editingChat, actions: newActs });
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const newActs = editingChat.actions.filter((_, idx) => idx !== i);
+                                                    setEditingChat({ ...editingChat, actions: newActs });
+                                                }}
+                                                className="action-btn !w-9 !h-9 !text-rose-400"
+                                            >
+                                                <X weight="bold" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {editingChat.actions.length === 0 && (
+                                        <div className="text-center py-4 text-xs text-main/20 italic">
+                                            点击上方按钮添加第一个动作，如发送 "/checkin"
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </Card>
+
+                        <footer className="p-6 border-t border-white/5 flex gap-4 bg-black/10">
+                            <button onClick={() => setEditingChat(null)} className="btn-secondary flex-1">{t("cancel")}</button>
+                            <button onClick={handleSaveChat} className="btn-gradient flex-1 flex items-center justify-center gap-2">
+                                <Check weight="bold" />
+                                确认添加
+                            </button>
+                        </footer>
+                    </div>
                 </div>
             )}
 

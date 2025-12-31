@@ -15,10 +15,26 @@ import {
     ChatInfo,
     CreateSignTaskRequest,
 } from "../../../lib/api";
-import { Button } from "../../../components/ui/button";
-import { Card, CardContent } from "../../../components/ui/card";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
+import {
+    CaretLeft,
+    Plus,
+    Play,
+    PencilSimple,
+    Trash,
+    Spinner,
+    Clock,
+    ChatCircleText,
+    CheckCircle,
+    XCircle,
+    Hourglass,
+    ArrowClockwise,
+    X,
+    DotsThreeVertical,
+    DiceFive,
+    Robot,
+    MathOperations,
+    Lightning
+} from "@phosphor-icons/react";
 import { ToastContainer, useToast } from "../../../components/ui/toast";
 import { ThemeLanguageToggle } from "../../../components/ThemeLanguageToggle";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -32,123 +48,78 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
     onDelete: (name: string) => void;
 }) => {
     return (
-        <Card className="card-hover">
-            <CardContent className="p-4">
-                <div className="grid grid-cols-[1fr_auto] lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 lg:gap-4 items-start lg:items-center">
-                    <div>
-                        <div className="text-xs text-muted mb-1">任务名称</div>
-                        <div className="font-medium truncate text-main">{task.name}</div>
+        <div className="glass-panel p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 group hover:border-[#8a3ffc]/30 transition-all">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-[#8a3ffc]/10 flex items-center justify-center text-[#b57dff]">
+                    <ChatCircleText weight="bold" size={20} />
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold truncate text-sm" title={task.name}>{task.name}</h3>
+                        <span className="text-[9px] font-mono text-main/30 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                            {task.chats[0]?.chat_id || "-"}
+                        </span>
                     </div>
-
-                    <div className="flex items-start gap-2">
-                        <div className="flex-1">
-                            <div className="text-xs text-muted mb-1">Chat ID</div>
-                            <div className="font-mono text-sm truncate text-main/80">
-                                {task.chats[0]?.chat_id || "-"}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 text-main/40">
+                            <Clock weight="bold" size={12} />
+                            <span className="text-[10px] font-bold font-mono uppercase tracking-wider">{task.sign_at}</span>
+                        </div>
+                        {task.random_seconds > 0 && (
+                            <div className="flex items-center gap-1 text-[#8a3ffc]/60">
+                                <Hourglass weight="bold" size={12} />
+                                <span className="text-[10px] font-bold">~{Math.round(task.random_seconds / 60)}m</span>
                             </div>
-                        </div>
-                        <button
-                            onClick={() => onEdit(task)}
-                            disabled={loading}
-                            className="lg:hidden p-2 text-main/60 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition-all"
-                            title="编辑"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                        <div className="flex-1">
-                            <div className="text-xs text-muted mb-1">签到时间</div>
-                            <div className="font-mono text-sm text-main/80">{task.sign_at}</div>
-                            {task.random_seconds > 0 && (
-                                <div className="text-xs text-dim">+随机{Math.round(task.random_seconds / 60)}分钟</div>
-                            )}
-                        </div>
-                        <button
-                            onClick={() => onRun(task.name)}
-                            disabled={loading}
-                            className="lg:hidden p-2 text-main/60 hover:text-emerald-400 hover:bg-white/5 rounded-lg transition-all"
-                            title="运行"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                        <div className="flex-1">
-                            <div className="text-xs text-muted mb-1">最后执行</div>
-                            {task.last_run ? (
-                                <div>
-                                    <div className={`text-sm ${task.last_run.success ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                        {task.last_run.success ? '✓ 成功' : '✗ 失败'}
-                                    </div>
-                                    <div className="text-xs text-dim">
-                                        {new Date(task.last_run.time).toLocaleString('zh-CN', {
-                                            month: '2-digit',
-                                            day: '2-digit',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-sm text-dim">从未执行</div>
-                            )}
-                        </div>
-                        <button
-                            onClick={() => onDelete(task.name)}
-                            disabled={loading}
-                            className="lg:hidden p-2 text-main/60 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-all"
-                            title="删除"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div className="hidden lg:flex gap-1 flex-shrink-0">
-                        <button
-                            onClick={() => onEdit(task)}
-                            disabled={loading}
-                            className="p-2 text-main/60 hover:text-cyan-400 hover:bg-white/10 rounded-lg transition-all"
-                            title="编辑"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                        </button>
-                        <button
-                            onClick={() => onRun(task.name)}
-                            disabled={loading}
-                            className="p-2 text-main/60 hover:text-emerald-400 hover:bg-white/10 rounded-lg transition-all"
-                            title="运行"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </button>
-                        <button
-                            onClick={() => onDelete(task.name)}
-                            disabled={loading}
-                            className="p-2 text-main/60 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-all"
-                            title="删除"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
+                        )}
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+
+            <div className="flex items-center gap-8">
+                {task.last_run ? (
+                    <div className="flex flex-col items-end">
+                        <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest ${task.last_run.success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {task.last_run.success ? <CheckCircle weight="bold" /> : <XCircle weight="bold" />}
+                            {task.last_run.success ? 'Success' : 'Failed'}
+                        </div>
+                        <div className="text-[10px] text-main/30 font-mono mt-0.5">
+                            {new Date(task.last_run.time).toLocaleString('zh-CN', {
+                                month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                            })}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-[10px] text-main/20 font-bold uppercase tracking-widest italic">No Data</div>
+                )}
+
+                <div className="flex items-center gap-1 bg-black/10 rounded-xl p-1 border border-white/5">
+                    <button
+                        onClick={() => onRun(task.name)}
+                        disabled={loading}
+                        className="action-btn !w-8 !h-8 !text-emerald-400 hover:bg-emerald-500/10"
+                        title="立即运行"
+                    >
+                        <Play weight="fill" size={14} />
+                    </button>
+                    <button
+                        onClick={() => onEdit(task)}
+                        disabled={loading}
+                        className="action-btn !w-8 !h-8"
+                        title="编辑"
+                    >
+                        <PencilSimple weight="bold" size={14} />
+                    </button>
+                    <button
+                        onClick={() => onDelete(task.name)}
+                        disabled={loading}
+                        className="action-btn !w-8 !h-8 !text-rose-400 hover:bg-rose-500/10"
+                        title="删除"
+                    >
+                        <Trash weight="bold" size={14} />
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 });
 
@@ -449,76 +420,59 @@ export default function AccountTasksContent() {
     }
 
     return (
-        <div className="min-h-screen">
-            {/* 动态流光背景 */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px] animate-glow-move"></div>
-                <div className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-cyan-500/15 rounded-full blur-[100px] animate-glow-move-reverse"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-500/10 rounded-full blur-[150px] animate-glow-pulse"></div>
-            </div>
-
-            {/* 导航栏 */}
-            <nav className="glass border-b border-white/10 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        {/* 左边：返回箭头 + 面包屑导航 */}
-                        <div className="flex items-center gap-3">
-                            <Link
-                                href="/dashboard"
-                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-main/70 hover:text-main"
-                                title={t("cancel")}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </Link>
-                            <div className="flex items-center gap-2 text-sm">
-                                <Link href="/dashboard" className="text-muted hover:text-main transition-colors">
-                                    {t("sidebar_home")}
-                                </Link>
-                                <span className="text-dim">/</span>
-                                <span className="text-main font-medium">{accountName}</span>
-                            </div>
-                        </div>
-
-                        {/* 右边：切换按钮 + 新增任务图标 */}
-                        <div className="flex items-center gap-2">
-                            <ThemeLanguageToggle />
-                            <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
-                            <button
-                                onClick={() => setShowCreateDialog(true)}
-                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-main/70 hover:text-main"
-                                title={t("add_task")}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                                </svg>
-                            </button>
-                        </div>
+        <div id="account-tasks-view" className="w-full h-full flex flex-col pt-[72px]">
+            <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard" className="action-btn" title={t("sidebar_home")}>
+                        <CaretLeft weight="bold" />
+                    </Link>
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                        <span className="text-main/40 uppercase tracking-widest text-[10px]">{t("sidebar_home")}</span>
+                        <span className="text-main/20">/</span>
+                        <span className="text-main uppercase tracking-widest text-[10px]">{accountName}</span>
                     </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setShowCreateDialog(true)} className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg flex items-center gap-2">
+                        <Plus weight="bold" />
+                        {t("add_task")}
+                    </button>
+                    <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
+                    <ThemeLanguageToggle />
                 </div>
             </nav>
 
-            {/* 主内容 */}
-            <div className="max-w-7xl mx-auto px-6 py-8 page-transition relative z-10">
-                {/* 任务列表 */}
+            <main className="flex-1 p-5 md:p-10 w-full max-w-[1200px] mx-auto overflow-y-auto animate-float-up pb-20">
+                <header className="mb-10 flex justify-between items-end">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight mb-2">任务详情</h1>
+                        <p className="text-[#9496a1] text-sm">管理账号 <span className="text-main font-bold">{accountName}</span> 的所有自动签到任务</p>
+                    </div>
+                    <button
+                        onClick={refreshChats}
+                        disabled={loading}
+                        className="action-btn"
+                        title="刷新 Chat 列表"
+                    >
+                        <ArrowClockwise weight="bold" className={loading ? 'animate-spin' : ''} />
+                    </button>
+                </header>
+
                 {loading && tasks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <div className="loading-spinner mb-4"></div>
-                        <span className="text-muted">加载中...</span>
+                    <div className="w-full py-20 flex flex-col items-center justify-center text-main/20">
+                        <Spinner size={40} weight="bold" className="animate-spin mb-4" />
+                        <p className="text-xs uppercase tracking-widest font-bold font-mono">{t("login_loading")}</p>
                     </div>
                 ) : tasks.length === 0 ? (
-                    <Card>
-                        <CardContent className="py-16 text-center text-muted">
-                            <div className="text-5xl mb-4">📋</div>
-                            <p className="mb-6 text-lg">暂无任务</p>
-                            <Button onClick={() => setShowCreateDialog(true)}>
-                                创建第一个任务
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <div className="glass-panel p-20 flex flex-col items-center text-center justify-center border-dashed border-2 group hover:border-[#8a3ffc]/30 transition-all cursor-pointer" onClick={() => setShowCreateDialog(true)}>
+                        <div className="w-20 h-20 rounded-3xl bg-main/5 flex items-center justify-center text-main/20 mb-6 group-hover:scale-110 transition-transform group-hover:bg-[#8a3ffc]/10 group-hover:text-[#8a3ffc]">
+                            <Plus size={40} weight="bold" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">配置第一个签到目的地</h3>
+                        <p className="text-sm text-[#9496a1]">选择一个频道或群组，设定动作与时间点</p>
+                    </div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="flex flex-col gap-3">
                         {tasks.map((task) => (
                             <TaskItem
                                 key={task.name}
@@ -531,399 +485,261 @@ export default function AccountTasksContent() {
                         ))}
                     </div>
                 )}
-            </div>
+            </main>
 
-            {/* 创建任务对话框 */}
-            {showCreateDialog && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-                    <Card className="w-full max-w-2xl my-8">
-                        <CardContent className="p-6">
-                            <h2 className="text-xl font-bold mb-4">创建签到任务</h2>
+            {/* 创建/编辑对话框通用的渲染逻辑 */}
+            {(showCreateDialog || showEditDialog) && (
+                <div className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="glass-panel modal-content w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
+                        <header className="p-6 border-b border-white/5 flex justify-between items-center shrink-0">
+                            <h2 className="text-xl font-bold flex items-center gap-3">
+                                <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#b57dff]">
+                                    <Lightning weight="fill" size={20} />
+                                </div>
+                                {showCreateDialog ? "创建签到任务" : `编辑任务: ${editingTaskName}`}
+                            </h2>
+                            <button
+                                onClick={() => { setShowCreateDialog(false); setShowEditDialog(false); }}
+                                className="action-btn !w-8 !h-8"
+                            >
+                                <X weight="bold" />
+                            </button>
+                        </header>
 
-                            <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
-                                <div className="grid grid-cols-2 gap-4">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {showCreateDialog && (
                                     <div>
-                                        <Label htmlFor="taskName">任务名称</Label>
-                                        <Input
-                                            id="taskName"
-                                            placeholder="例如: linuxdo_sign"
+                                        <label>任务名称</label>
+                                        <input
+                                            placeholder="linuxdo_sign"
                                             value={newTask.name}
                                             onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
                                         />
                                     </div>
-                                    <div>
-                                        <Label htmlFor="signAt">签到时间（CRON）</Label>
-                                        <Input
-                                            id="signAt"
-                                            placeholder="0 6 * * *"
-                                            value={newTask.sign_at}
-                                            onChange={(e) => setNewTask({ ...newTask, sign_at: e.target.value })}
-                                        />
-                                    </div>
+                                )}
+                                <div className={showEditDialog ? "md:col-span-2" : ""}>
+                                    <label>签到时间 (CRON)</label>
+                                    <input
+                                        placeholder="0 6 * * *"
+                                        value={showCreateDialog ? newTask.sign_at : editTask.sign_at}
+                                        onChange={(e) => showCreateDialog
+                                            ? setNewTask({ ...newTask, sign_at: e.target.value })
+                                            : setEditTask({ ...editTask, sign_at: e.target.value })
+                                        }
+                                    />
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="randomMinutes">随机延迟（分钟）</Label>
-                                        <Input
-                                            id="randomMinutes"
-                                            type="number"
-                                            placeholder="0"
-                                            value={newTask.random_minutes}
-                                            onChange={(e) => setNewTask({
-                                                ...newTask,
-                                                random_minutes: parseInt(e.target.value) || 0,
-                                            })}
-                                        />
-                                    </div>
-                                    <div></div>
+                                <div>
+                                    <label>随机延迟 (分钟)</label>
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        value={showCreateDialog ? newTask.random_minutes : editTask.random_minutes}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            showCreateDialog
+                                                ? setNewTask({ ...newTask, random_minutes: val })
+                                                : setEditTask({ ...editTask, random_minutes: val });
+                                        }}
+                                    />
                                 </div>
+                                <div>
+                                    <label>动作间隔 (秒)</label>
+                                    <input
+                                        type="number"
+                                        value={showCreateDialog ? newTask.action_interval : editTask.action_interval}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 1;
+                                            showCreateDialog
+                                                ? setNewTask({ ...newTask, action_interval: val })
+                                                : setEditTask({ ...editTask, action_interval: val });
+                                        }}
+                                    />
+                                </div>
+                            </div>
 
-                                <div className="space-y-3">
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <Label className="mb-2 block">选择 Chat</Label>
-                                            <select
-                                                className="w-full p-2 border rounded"
-                                                value={newTask.chat_id}
-                                                onChange={(e) => {
-                                                    const chatId = parseInt(e.target.value);
-                                                    const chat = chats.find(c => c.id === chatId);
+                            <div className="glass-panel !bg-black/5 p-5 space-y-6 border-white/5">
+                                <div className="flex flex-col md:flex-row gap-6">
+                                    <div className="flex-1">
+                                        <label className="mb-2 block">选择频道/群组 (Chat)</label>
+                                        <select
+                                            value={showCreateDialog ? newTask.chat_id : editTask.chat_id}
+                                            onChange={(e) => {
+                                                const id = parseInt(e.target.value);
+                                                const chat = chats.find(c => c.id === id);
+                                                if (showCreateDialog) {
                                                     setNewTask({
                                                         ...newTask,
-                                                        chat_id: chatId,
+                                                        chat_id: id,
                                                         chat_id_manual: "",
                                                         chat_name: chat?.title || chat?.username || "",
                                                     });
-                                                }}
-                                            >
-                                                <option value={0}>选择 Chat...</option>
-                                                {chats.map((chat) => (
-                                                    <option key={chat.id} value={chat.id}>
-                                                        {chat.title || chat.username || chat.first_name || `Chat ${chat.id}`}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex-1">
-                                            <Label className="mb-2 block">或手动输入 Chat ID</Label>
-                                            <Input
-                                                placeholder="输入 Chat ID"
-                                                value={newTask.chat_id_manual}
-                                                onChange={(e) => setNewTask({
-                                                    ...newTask,
-                                                    chat_id_manual: e.target.value,
-                                                    chat_id: 0,
-                                                })}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <Label htmlFor="actionInterval">动作间隔（秒）</Label>
-                                            <Input
-                                                id="actionInterval"
-                                                type="number"
-                                                value={newTask.action_interval}
-                                                onChange={(e) => setNewTask({
-                                                    ...newTask,
-                                                    action_interval: parseInt(e.target.value) || 1,
-                                                })}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <Label htmlFor="deleteAfter">删除延迟（秒）</Label>
-                                            <Input
-                                                id="deleteAfter"
-                                                type="number"
-                                                placeholder="不删除"
-                                                value={newTask.delete_after || ""}
-                                                onChange={(e) => setNewTask({
-                                                    ...newTask,
-                                                    delete_after: e.target.value ? parseInt(e.target.value) : undefined,
-                                                })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <Label>签到动作</Label>
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={handleAddAction}
-                                        >
-                                            添加动作
-                                        </Button>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {newTask.actions.map((action, index) => (
-                                            <div key={index} className="flex gap-2 items-start p-3 bg-white/5 rounded">
-                                                <select
-                                                    className="p-2 border rounded min-w-[140px]"
-                                                    value={action.action}
-                                                    onChange={(e) => handleUpdateAction(index, "action", parseInt(e.target.value))}
-                                                >
-                                                    <option value={1}>发送文本</option>
-                                                    <option value={2}>发送骰子</option>
-                                                    <option value={3}>点击按钮</option>
-                                                    <option value={4}>AI 图片识别</option>
-                                                    <option value={5}>AI 计算题</option>
-                                                </select>
-                                                {(action.action === 1 || action.action === 3) && (
-                                                    <Input
-                                                        className="flex-1"
-                                                        placeholder={action.action === 1 ? "发送的文本" : "按钮文本"}
-                                                        value={action.text || ""}
-                                                        onChange={(e) => handleUpdateAction(index, "text", e.target.value)}
-                                                    />
-                                                )}
-                                                {action.action === 2 && (
-                                                    <Input
-                                                        className="flex-1"
-                                                        placeholder="骰子表情 (🎲🎯🏀⚽🎰🎳)"
-                                                        value={(action as any).dice || ""}
-                                                        onChange={(e) => handleUpdateAction(index, "dice", e.target.value)}
-                                                    />
-                                                )}
-                                                {(action.action === 4 || action.action === 5) && (
-                                                    <div className="flex-1 text-sm text-main/50 py-2">
-                                                        {action.action === 4 ? "AI 将自动识别图片选项" : "AI 将自动计算答案"}
-                                                    </div>
-                                                )}
-                                                {newTask.actions.length > 1 && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveAction(index)}
-                                                    >
-                                                        删除
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 pt-4 mt-4 border-t">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setShowCreateDialog(false)}
-                                    className="flex-1"
-                                >
-                                    取消
-                                </Button>
-                                <Button
-                                    onClick={handleCreateTask}
-                                    disabled={loading}
-                                    className="flex-1"
-                                >
-                                    {loading ? "创建中..." : "创建任务"}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {showEditDialog && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-                    <Card className="w-full max-w-2xl my-8">
-                        <CardContent className="p-6">
-                            <h2 className="text-xl font-bold mb-4">编辑任务: {editingTaskName}</h2>
-                            <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="editSignAt">签到时间（CRON）</Label>
-                                        <Input
-                                            id="editSignAt"
-                                            placeholder="0 6 * * *"
-                                            value={editTask.sign_at}
-                                            onChange={(e) => setEditTask({ ...editTask, sign_at: e.target.value })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="editRandomMinutes">随机延迟（分钟）</Label>
-                                        <Input
-                                            id="editRandomMinutes"
-                                            type="number"
-                                            placeholder="0"
-                                            value={editTask.random_minutes}
-                                            onChange={(e) => setEditTask({
-                                                ...editTask,
-                                                random_minutes: parseInt(e.target.value) || 0,
-                                            })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <Label className="mb-2 block">选择 Chat</Label>
-                                            <select
-                                                className="w-full p-2 border rounded"
-                                                value={editTask.chat_id}
-                                                onChange={(e) => {
-                                                    const id = parseInt(e.target.value);
-                                                    const chat = chats.find(c => c.id === id);
+                                                } else {
                                                     setEditTask({
                                                         ...editTask,
                                                         chat_id: id,
                                                         chat_id_manual: "",
                                                         chat_name: chat?.title || "",
                                                     });
-                                                }}
-                                            >
-                                                <option value={0}>选择 Chat...</option>
-                                                {chats.map(chat => (
-                                                    <option key={chat.id} value={chat.id}>
-                                                        {chat.title || chat.username || chat.id}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex-1">
-                                            <Label className="mb-2 block">或手动输入 Chat ID</Label>
-                                            <Input
-                                                placeholder="输入 Chat ID"
-                                                value={editTask.chat_id_manual}
-                                                onChange={(e) => setEditTask({
-                                                    ...editTask,
-                                                    chat_id_manual: e.target.value,
-                                                    chat_id: 0,
-                                                })}
-                                            />
-                                        </div>
+                                                }
+                                            }}
+                                        >
+                                            <option value={0}>从列表选择...</option>
+                                            {chats.map(chat => (
+                                                <option key={chat.id} value={chat.id}>
+                                                    {chat.title || chat.username || chat.id}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <Label htmlFor="editActionInterval">动作间隔（秒）</Label>
-                                            <Input
-                                                id="editActionInterval"
-                                                type="number"
-                                                value={editTask.action_interval}
-                                                onChange={(e) => setEditTask({
-                                                    ...editTask,
-                                                    action_interval: parseInt(e.target.value) || 1,
-                                                })}
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <Label htmlFor="editDeleteAfter">删除延迟（秒）</Label>
-                                            <Input
-                                                id="editDeleteAfter"
-                                                type="number"
-                                                placeholder="不删除"
-                                                value={editTask.delete_after || ""}
-                                                onChange={(e) => setEditTask({
-                                                    ...editTask,
-                                                    delete_after: e.target.value ? parseInt(e.target.value) : undefined,
-                                                })}
-                                            />
-                                        </div>
+                                    <div className="flex-1">
+                                        <label className="mb-2 block">或手动输入 Chat ID</label>
+                                        <input
+                                            placeholder="Manual Chat ID..."
+                                            value={showCreateDialog ? newTask.chat_id_manual : editTask.chat_id_manual}
+                                            onChange={(e) => {
+                                                if (showCreateDialog) {
+                                                    setNewTask({ ...newTask, chat_id_manual: e.target.value, chat_id: 0 });
+                                                } else {
+                                                    setEditTask({ ...editTask, chat_id_manual: e.target.value, chat_id: 0 });
+                                                }
+                                            }}
+                                        />
                                     </div>
                                 </div>
-
                                 <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <Label>签到动作</Label>
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={handleEditAddAction}
-                                        >
-                                            添加动作
-                                        </Button>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {editTask.actions.map((action, index) => (
-                                            <div key={index} className="flex gap-2 items-start p-3 bg-white/5 rounded">
-                                                <select
-                                                    className="p-2 border rounded min-w-[140px]"
-                                                    value={action.action}
-                                                    onChange={(e) => {
+                                    <label>消息删除延迟 (秒, 可选)</label>
+                                    <input
+                                        type="number"
+                                        placeholder="发送后多久自动删除指令..."
+                                        value={(showCreateDialog ? newTask.delete_after : editTask.delete_after) || ""}
+                                        onChange={(e) => {
+                                            const val = e.target.value ? parseInt(e.target.value) : undefined;
+                                            showCreateDialog
+                                                ? setNewTask({ ...newTask, delete_after: val })
+                                                : setEditTask({ ...editTask, delete_after: val });
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-main/40 flex items-center gap-2">
+                                        <DotsThreeVertical weight="bold" />
+                                        有序动作序列
+                                    </h3>
+                                    <button
+                                        onClick={showCreateDialog ? handleAddAction : handleEditAddAction}
+                                        className="btn-secondary !h-8 !px-3 !text-[10px]"
+                                    >
+                                        + 添加动作
+                                    </button>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    {(showCreateDialog ? newTask.actions : editTask.actions).map((action, index) => (
+                                        <div key={index} className="flex gap-3 items-start animate-scale-in">
+                                            <div className="shrink-0 w-6 h-10 flex items-center justify-center font-mono text-[10px] text-main/20 font-bold border-r border-white/5">
+                                                {index + 1}
+                                            </div>
+                                            <select
+                                                className="!w-[140px]"
+                                                value={action.action}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value);
+                                                    if (showCreateDialog) handleUpdateAction(index, "action", val);
+                                                    else {
                                                         const newActions = [...editTask.actions];
-                                                        newActions[index] = { ...newActions[index], action: parseInt(e.target.value) };
+                                                        newActions[index] = { ...newActions[index], action: val };
                                                         setEditTask({ ...editTask, actions: newActions });
-                                                    }}
-                                                >
-                                                    <option value={1}>发送文本</option>
-                                                    <option value={2}>发送骰子</option>
-                                                    <option value={3}>点击按钮</option>
-                                                    <option value={4}>AI 图片识别</option>
-                                                    <option value={5}>AI 计算题</option>
-                                                </select>
+                                                    }
+                                                }}
+                                            >
+                                                <option value={1}>发送文本</option>
+                                                <option value={2}>发送骰子</option>
+                                                <option value={3}>点击按钮</option>
+                                                <option value={4}>AI 图片识别</option>
+                                                <option value={5}>AI 计算题</option>
+                                            </select>
+
+                                            <div className="flex-1">
                                                 {(action.action === 1 || action.action === 3) && (
-                                                    <Input
-                                                        className="flex-1"
-                                                        placeholder={action.action === 1 ? "发送的文本" : "按钮文本"}
+                                                    <input
+                                                        placeholder={action.action === 1 ? "发送的消息内容..." : "要点击的按钮上的文字..."}
                                                         value={action.text || ""}
                                                         onChange={(e) => {
-                                                            const newActions = [...editTask.actions];
-                                                            newActions[index] = { ...newActions[index], text: e.target.value };
-                                                            setEditTask({ ...editTask, actions: newActions });
+                                                            if (showCreateDialog) handleUpdateAction(index, "text", e.target.value);
+                                                            else {
+                                                                const newActions = [...editTask.actions];
+                                                                newActions[index] = { ...newActions[index], text: e.target.value };
+                                                                setEditTask({ ...editTask, actions: newActions });
+                                                            }
                                                         }}
                                                     />
                                                 )}
                                                 {action.action === 2 && (
-                                                    <Input
-                                                        className="flex-1"
-                                                        placeholder="骰子表情 (🎲🎯🏀⚽🎰🎳)"
-                                                        value={(action as any).dice || ""}
-                                                        onChange={(e) => {
-                                                            const newActions = [...editTask.actions];
-                                                            newActions[index] = { ...newActions[index], dice: e.target.value };
-                                                            setEditTask({ ...editTask, actions: newActions });
-                                                        }}
-                                                    />
-                                                )}
-                                                {(action.action === 4 || action.action === 5) && (
-                                                    <div className="flex-1 text-sm text-main/50 py-2">
-                                                        {action.action === 4 ? "AI 将自动识别图片选项" : "AI 将自动计算答案"}
+                                                    <div className="flex gap-2">
+                                                        {['🎲', '🎯', '🏀', '⚽', '🎰', '🎳'].map(d => (
+                                                            <button
+                                                                key={d}
+                                                                className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${((action as any).dice === d) ? 'bg-[#8a3ffc]/20 border border-[#8a3ffc]/40' : 'bg-white/5 border border-white/5 hover:bg-white/10'}`}
+                                                                onClick={() => {
+                                                                    if (showCreateDialog) handleUpdateAction(index, "dice", d);
+                                                                    else {
+                                                                        const newActions = [...editTask.actions];
+                                                                        newActions[index] = { ...newActions[index], dice: d };
+                                                                        setEditTask({ ...editTask, actions: newActions });
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {d}
+                                                            </button>
+                                                        ))}
                                                     </div>
                                                 )}
-                                                {editTask.actions.length > 1 && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => handleEditRemoveAction(index)}
-                                                    >
-                                                        删除
-                                                    </Button>
+                                                {action.action === 4 && (
+                                                    <div className="h-10 px-4 flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[#8183ff] text-xs font-bold uppercase tracking-wider">
+                                                        <Robot weight="fill" size={16} />
+                                                        AI Vision Mode
+                                                    </div>
+                                                )}
+                                                {action.action === 5 && (
+                                                    <div className="h-10 px-4 flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-bold uppercase tracking-wider">
+                                                        <MathOperations weight="fill" size={16} />
+                                                        AI Logic Solver
+                                                    </div>
                                                 )}
                                             </div>
-                                        ))}
-                                    </div>
+
+                                            <button
+                                                onClick={() => showCreateDialog ? handleRemoveAction(index) : handleEditRemoveAction(index)}
+                                                className="action-btn !w-10 !h-10 !text-rose-400 !bg-rose-500/5 hover:!bg-rose-500/10"
+                                            >
+                                                <Trash weight="bold" size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            <div className="flex gap-2 pt-4 mt-4 border-t">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setShowEditDialog(false)}
-                                    className="flex-1"
-                                >
-                                    取消
-                                </Button>
-                                <Button
-                                    onClick={handleSaveEdit}
-                                    disabled={loading}
-                                    className="flex-1"
-                                >
-                                    {loading ? "保存中..." : "保存修改"}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+
+                        <footer className="p-6 border-t border-white/5 flex gap-4 shrink-0 bg-black/10">
+                            <button
+                                className="btn-secondary flex-1"
+                                onClick={() => { setShowCreateDialog(false); setShowEditDialog(false); }}
+                            >
+                                取消
+                            </button>
+                            <button
+                                className="btn-gradient flex-1"
+                                onClick={showCreateDialog ? handleCreateTask : handleSaveEdit}
+                                disabled={loading}
+                            >
+                                {loading ? <Spinner className="animate-spin mx-auto" weight="bold" /> : (showCreateDialog ? "立即部署" : "保存修改")}
+                            </button>
+                        </footer>
+                    </div>
                 </div>
             )}
 

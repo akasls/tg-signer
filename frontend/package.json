@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "autoprefixer": "^10.4.16",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
@@ -29,5 +30,3 @@
     "typescript": "^5.3.3"
   }
 }
-
-

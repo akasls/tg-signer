@@ -12,8 +12,17 @@ import {
     SignTask,
     AccountInfo,
 } from "../../../lib/api";
-import { Button } from "../../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import {
+    Plus,
+    CaretLeft,
+    Play,
+    PencilSimple,
+    Trash,
+    Spinner,
+    Lightning,
+    Clock,
+    ChatCircleText
+} from "@phosphor-icons/react";
 import { ToastContainer, useToast } from "../../../components/ui/toast";
 import { ThemeLanguageToggle } from "../../../components/ThemeLanguageToggle";
 import { useLanguage } from "../../../context/LanguageContext";
@@ -102,112 +111,110 @@ export default function SignTasksPage() {
     }
 
     return (
-        <div className="min-h-screen bg-transparent text-white p-4 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-                {/* Header Area */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div className="flex items-center gap-4">
-                        <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-xl transition-all text-white/50 hover:text-white">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-                                {t("sidebar_tasks")}
-                            </h1>
-                            <p className="text-white/40 text-sm mt-1">
-                                {t("sidebar_tasks")}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <ThemeLanguageToggle />
-                        <Link href="/dashboard/sign-tasks/create">
-                            <Button className="glass-button bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border-indigo-500/30">
-                                <span className="mr-2">+</span>
-                                {t("add_task")}
-                            </Button>
-                        </Link>
+        <div id="tasks-view" className="w-full h-full flex flex-col pt-[72px]">
+            <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard" className="action-btn" title={t("sidebar_home")}>
+                        <CaretLeft weight="bold" />
+                    </Link>
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                        <span className="text-main/40 uppercase tracking-widest text-[10px]">{t("sidebar_home")}</span>
+                        <span className="text-main/20">/</span>
+                        <span className="text-main uppercase tracking-widest text-[10px]">{t("sidebar_tasks")}</span>
                     </div>
                 </div>
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard/sign-tasks/create" className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg flex items-center gap-2">
+                        <Plus weight="bold" />
+                        {t("add_task")}
+                    </Link>
+                    <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
+                    <ThemeLanguageToggle />
+                </div>
+            </nav>
 
-                {/* Task List Container */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {loading && tasks.length === 0 ? (
-                        <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
-                            <div className="w-12 h-12 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4" />
-                            <p>{t("login_loading")}</p>
-                        </div>
-                    ) : tasks.length === 0 ? (
-                        <div className="col-span-full">
-                            <div className="glass p-12 text-center rounded-3xl border border-white/10">
-                                <div className="text-6xl mb-6 grayscale opacity-20">📋</div>
-                                <h3 className="text-xl font-medium text-white/60 mb-2">{t("sidebar_tasks")}</h3>
-                                <p className="text-white/30 mb-8 max-w-md mx-auto">暂无签到任务，点击上方按钮创建第一个任务</p>
-                                <Link href="/dashboard/sign-tasks/create">
-                                    <Button className="glass-button">{t("add_task")}</Button>
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        tasks.map((task) => (
-                            <Card key={task.name} className="glass border-white/10 overflow-hidden hover:border-indigo-500/30 transition-all duration-500 group">
-                                <CardHeader className="p-6 pb-4 border-b border-white/5 bg-white/5">
-                                    <CardTitle className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                                                ⚡
-                                            </div>
-                                            <span className="font-bold truncate max-w-[160px]">{task.name}</span>
-                                        </div>
-                                        <div className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${task.enabled ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-white/10 text-white/40 border border-white/10'}`}>
-                                            {task.enabled ? 'Active' : 'Disabled'}
-                                        </div>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                                                <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Time</div>
-                                                <div className="font-mono text-sm text-indigo-300">{task.sign_at}</div>
-                                            </div>
-                                            <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                                                <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Chats</div>
-                                                <div className="font-mono text-sm text-purple-300">{task.chats.length}</div>
-                                            </div>
-                                        </div>
+            <main className="flex-1 p-5 md:p-10 w-full max-w-[1400px] mx-auto overflow-y-auto animate-float-up pb-20">
+                <header className="mb-10">
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">{t("sidebar_tasks")}</h1>
+                    <p className="text-[#9496a1] text-sm">配置自动签到任务的时间、渠道与账号</p>
+                </header>
 
-                                        <div className="flex items-center gap-2">
-                                            <Link href={`/dashboard/account-tasks/AccountTasksContent?name=${task.name}`} className="flex-1">
-                                                <Button className="w-full glass-button text-xs py-2 bg-white/5 hover:bg-white/10">
-                                                    {t("edit")}
-                                                </Button>
-                                            </Link>
-                                            <Button
-                                                onClick={() => handleRun(task.name)}
-                                                disabled={loading}
-                                                className="glass-button bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20 text-xs py-2"
-                                            >
-                                                {t("run")}
-                                            </Button>
-                                            <Button
-                                                onClick={() => handleDelete(task.name)}
-                                                disabled={loading}
-                                                className="glass-button bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/20 text-xs py-2"
-                                            >
-                                                {t("delete")}
-                                            </Button>
+                {loading && tasks.length === 0 ? (
+                    <div className="w-full py-20 flex flex-col items-center justify-center text-main/20">
+                        <Spinner size={40} weight="bold" className="animate-spin mb-4" />
+                        <p className="text-xs uppercase tracking-widest font-bold font-mono">{t("login_loading")}</p>
+                    </div>
+                ) : tasks.length === 0 ? (
+                    <div className="glass-panel p-20 flex flex-col items-center text-center justify-center border-dashed border-2 group hover:border-[#8a3ffc]/30 transition-all cursor-pointer" onClick={() => router.push("/dashboard/sign-tasks/create")}>
+                        <div className="w-20 h-20 rounded-3xl bg-main/5 flex items-center justify-center text-main/20 mb-6 group-hover:scale-110 transition-transform group-hover:bg-[#8a3ffc]/10 group-hover:text-[#8a3ffc]">
+                            <Plus size={40} weight="bold" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">部署第一个任务</h3>
+                        <p className="text-sm text-[#9496a1] mb-8">点击此处或右上角按钮开始创建您的首个自动签到任务</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {tasks.map((task) => (
+                            <div key={task.name} className="glass-panel p-6 flex flex-col group hover:border-[#8a3ffc]/40 transition-all">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8a3ffc]/20 to-[#e83ffc]/20 flex items-center justify-center text-[#b57dff] group-hover:scale-110 transition-transform">
+                                            <Lightning weight="fill" size={24} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="font-bold text-lg truncate pr-2" title={task.name}>{task.name}</h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border ${task.enabled ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-white/5 text-main/30 border-white/10'}`}>
+                                                    {task.enabled ? 'Active' : 'Paused'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        ))
-                    )}
-                </div>
-            </div>
+                                </div>
+
+                                <div className="space-y-4 mb-8">
+                                    <div className="flex items-center justify-between p-3 bg-white/2 rounded-xl border border-white/5">
+                                        <div className="flex items-center gap-2 text-main/40">
+                                            <Clock weight="bold" size={14} />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">Schedule</span>
+                                        </div>
+                                        <span className="text-xs font-mono font-bold text-[#b57dff]">{task.sign_at}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-white/2 rounded-xl border border-white/5">
+                                        <div className="flex items-center gap-2 text-main/40">
+                                            <ChatCircleText weight="bold" size={14} />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">Channels</span>
+                                        </div>
+                                        <span className="text-xs font-mono font-bold text-[#e83ffc]">{task.chats.length} Hits</span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-auto flex items-center justify-between bg-black/10 -mx-6 -mb-6 p-4 border-t border-white/5">
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleRun(task.name)}
+                                            className="action-btn !text-emerald-400 hover:bg-emerald-500/10"
+                                            title={t("run")}
+                                        >
+                                            <Play weight="fill" />
+                                        </button>
+                                        <Link href={`/dashboard/account-tasks/AccountTasksContent?name=${task.name}`} className="action-btn" title={t("edit")}>
+                                            <PencilSimple weight="bold" />
+                                        </Link>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDelete(task.name)}
+                                        className="action-btn !text-rose-400 hover:bg-rose-500/10"
+                                        title={t("delete")}
+                                    >
+                                        <Trash weight="bold" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </main>
 
             <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>

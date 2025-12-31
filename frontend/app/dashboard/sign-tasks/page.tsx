@@ -15,9 +15,12 @@ import {
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { ToastContainer, useToast } from "../../../components/ui/toast";
+import { ThemeLanguageToggle } from "../../../components/ThemeLanguageToggle";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function SignTasksPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const { toasts, addToast, removeToast } = useToast();
     const [token, setLocalToken] = useState<string | null>(null);
     const [tasks, setTasks] = useState<SignTask[]>([]);
@@ -26,28 +29,27 @@ export default function SignTasksPage() {
     const [checking, setChecking] = useState(true);
 
     useEffect(() => {
-        const t = getToken();
-        if (!t) {
+        const tokenStr = getToken();
+        if (!tokenStr) {
             window.location.replace("/");
             return;
         }
-        setLocalToken(t);
+        setLocalToken(tokenStr);
         setChecking(false);
-        loadData(t);
+        loadData(tokenStr);
     }, []);
 
-    const loadData = async (t: string) => {
+    const loadData = async (tokenStr: string) => {
         try {
             setLoading(true);
             const [tasksData, accountsData] = await Promise.all([
-                listSignTasks(t),
-                listAccounts(t),
+                listSignTasks(tokenStr),
+                listAccounts(tokenStr),
             ]);
             setTasks(tasksData);
-            console.log("Sign Tasks Data:", tasksData);
             setAccounts(accountsData.accounts);
         } catch (err: any) {
-            addToast(err.message || "加载数据失败", "error");
+            addToast(err.message || t("login_failed"), "error");
         } finally {
             setLoading(false);
         }
@@ -56,17 +58,17 @@ export default function SignTasksPage() {
     const handleDelete = async (taskName: string) => {
         if (!token) return;
 
-        if (!confirm(`确定要删除任务 ${taskName} 吗？`)) {
+        if (!confirm(t("confirm_delete"))) {
             return;
         }
 
         try {
             setLoading(true);
             await deleteSignTask(token, taskName);
-            addToast(`任务 ${taskName} 已删除`, "success");
+            addToast(t("delete") + " " + taskName + " " + t("login_success"), "success");
             await loadData(token);
         } catch (err: any) {
-            addToast(err.message || "删除任务失败", "error");
+            addToast(err.message || t("login_failed"), "error");
         } finally {
             setLoading(false);
         }
@@ -75,8 +77,8 @@ export default function SignTasksPage() {
     const handleRun = async (taskName: string) => {
         if (!token) return;
 
-        // 选择账号
-        const accountName = prompt("请输入要使用的账号名称：");
+        // 选择账号 (Simplified for multi-language, usually this would be a select dialog)
+        const accountName = prompt(t("username"));
         if (!accountName) return;
 
         try {
@@ -84,12 +86,12 @@ export default function SignTasksPage() {
             const result = await runSignTask(token, taskName, accountName);
 
             if (result.success) {
-                addToast(`任务 ${taskName} 运行成功`, "success");
+                addToast(taskName + " " + t("run") + " " + t("login_success"), "success");
             } else {
-                addToast(`任务运行失败: ${result.error}`, "error");
+                addToast(t("login_failed") + ": " + result.error, "error");
             }
         } catch (err: any) {
-            addToast(err.message || "运行任务失败", "error");
+            addToast(err.message || t("login_failed"), "error");
         } finally {
             setLoading(false);
         }
@@ -100,95 +102,103 @@ export default function SignTasksPage() {
     }
 
     return (
-        <div className="p-6">
+        <div className="min-h-screen bg-transparent text-white p-4 lg:p-8">
             <div className="max-w-7xl mx-auto">
-                {/* 标题和创建按钮 */}
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold">签到任务管理</h1>
-                        <p className="text-sm text-gray-500 mt-1">
-                            管理您的 Telegram 自动签到任务
-                        </p>
+                {/* Header Area */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-4">
+                        <Link href="/dashboard" className="p-2 hover:bg-white/10 rounded-xl transition-all text-white/50 hover:text-white">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                                {t("sidebar_tasks")}
+                            </h1>
+                            <p className="text-white/40 text-sm mt-1">
+                                {t("sidebar_tasks")}
+                            </p>
+                        </div>
                     </div>
-                    <Link href="/dashboard/sign-tasks/create">
-                        <Button>+ 创建任务</Button>
-                    </Link>
+
+                    <div className="flex items-center gap-3">
+                        <ThemeLanguageToggle />
+                        <Link href="/dashboard/sign-tasks/create">
+                            <Button className="glass-button bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border-indigo-500/30">
+                                <span className="mr-2">+</span>
+                                {t("add_task")}
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
-                {/* 任务列表 */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {/* Task List Container */}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {loading && tasks.length === 0 ? (
-                        <div className="col-span-full text-center py-12 text-gray-500">
-                            加载中...
+                        <div className="col-span-full py-20 flex flex-col items-center justify-center text-white/20">
+                            <div className="w-12 h-12 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4" />
+                            <p>{t("login_loading")}</p>
                         </div>
                     ) : tasks.length === 0 ? (
                         <div className="col-span-full">
-                            <Card>
-                                <CardContent className="py-12 text-center text-gray-500">
-                                    <div className="text-4xl mb-4">📋</div>
-                                    <p className="mb-4">暂无签到任务</p>
-                                    <Link href="/dashboard/sign-tasks/create">
-                                        <Button>创建第一个任务</Button>
-                                    </Link>
-                                </CardContent>
-                            </Card>
+                            <div className="glass p-12 text-center rounded-3xl border border-white/10">
+                                <div className="text-6xl mb-6 grayscale opacity-20">📋</div>
+                                <h3 className="text-xl font-medium text-white/60 mb-2">{t("sidebar_tasks")}</h3>
+                                <p className="text-white/30 mb-8 max-w-md mx-auto">暂无签到任务，点击上方按钮创建第一个任务</p>
+                                <Link href="/dashboard/sign-tasks/create">
+                                    <Button className="glass-button">{t("add_task")}</Button>
+                                </Link>
+                            </div>
                         </div>
                     ) : (
                         tasks.map((task) => (
-                            <Card key={task.name} className="card-hover">
-                                <CardHeader>
+                            <Card key={task.name} className="glass border-white/10 overflow-hidden hover:border-indigo-500/30 transition-all duration-500 group">
+                                <CardHeader className="p-6 pb-4 border-b border-white/5 bg-white/5">
                                     <CardTitle className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl">⚡</span>
-                                            <span className="truncate">{task.name}</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                                ⚡
+                                            </div>
+                                            <span className="font-bold truncate max-w-[160px]">{task.name}</span>
                                         </div>
-                                        <div className={`text-xs px-2 py-1 rounded ${task.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
-                                            {task.enabled ? '已启用' : '已禁用'}
+                                        <div className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${task.enabled ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-white/10 text-white/40 border border-white/10'}`}>
+                                            {task.enabled ? 'Active' : 'Disabled'}
                                         </div>
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-3">
-                                        {/* 基本信息 */}
-                                        <div className="text-sm">
-                                            <div className="text-gray-500">签到时间</div>
-                                            <div className="font-mono text-xs mt-1">{task.sign_at}</div>
-                                        </div>
-
-                                        <div className="text-sm">
-                                            <div className="text-gray-500">Chat 数量</div>
-                                            <div className="mt-1">{task.chats.length} 个</div>
-                                        </div>
-
-                                        {task.random_seconds > 0 && (
-                                            <div className="text-sm">
-                                                <div className="text-gray-500">随机延迟</div>
-                                                <div className="mt-1">{task.random_seconds} 秒</div>
+                                <CardContent className="p-6">
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
+                                                <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Time</div>
+                                                <div className="font-mono text-sm text-indigo-300">{task.sign_at}</div>
                                             </div>
-                                        )}
+                                            <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
+                                                <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Chats</div>
+                                                <div className="font-mono text-sm text-purple-300">{task.chats.length}</div>
+                                            </div>
+                                        </div>
 
-                                        {/* 操作按钮 */}
-                                        <div className="flex gap-2 pt-2">
-                                            <Link href={`/dashboard/sign-tasks/${task.name}`} className="flex-1">
-                                                <Button variant="secondary" size="sm" className="w-full">
-                                                    编辑
+                                        <div className="flex items-center gap-2">
+                                            <Link href={`/dashboard/account-tasks/AccountTasksContent?name=${task.name}`} className="flex-1">
+                                                <Button className="w-full glass-button text-xs py-2 bg-white/5 hover:bg-white/10">
+                                                    {t("edit")}
                                                 </Button>
                                             </Link>
                                             <Button
-                                                variant="secondary"
-                                                size="sm"
                                                 onClick={() => handleRun(task.name)}
                                                 disabled={loading}
+                                                className="glass-button bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20 text-xs py-2"
                                             >
-                                                运行
+                                                {t("run")}
                                             </Button>
                                             <Button
-                                                variant="destructive"
-                                                size="sm"
                                                 onClick={() => handleDelete(task.name)}
                                                 disabled={loading}
+                                                className="glass-button bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/20 text-xs py-2"
                                             >
-                                                删除
+                                                {t("delete")}
                                             </Button>
                                         </div>
                                     </div>
@@ -197,16 +207,8 @@ export default function SignTasksPage() {
                         ))
                     )}
                 </div>
-
-                {/* 返回按钮 */}
-                <div className="mt-6">
-                    <Link href="/dashboard">
-                        <Button variant="secondary">← 返回主页</Button>
-                    </Link>
-                </div>
             </div>
 
-            {/* Toast 通知容器 */}
             <ToastContainer toasts={toasts} removeToast={removeToast} />
         </div>
     );

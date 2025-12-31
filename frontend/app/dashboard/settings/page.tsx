@@ -644,12 +644,13 @@ export default function SettingsPage() {
                         <CardContent className="space-y-5">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>签到间隔 (cron 表达式，可选)</Label>
+                                    <Label>全局签到间隔 (秒，可选)</Label>
                                     <Input
-                                        value={globalSettings.sign_interval || ""}
-                                        onChange={(e) => setGlobalSettings({ ...globalSettings, sign_interval: e.target.value || null })}
+                                        type="number"
+                                        value={globalSettings.sign_interval === null ? "" : globalSettings.sign_interval}
+                                        onChange={(e) => setGlobalSettings({ ...globalSettings, sign_interval: e.target.value ? parseInt(e.target.value) : null })}
                                         className="glass-input"
-                                        placeholder="例如: 0 9 * * *"
+                                        placeholder="例如: 60 (为空则随机 1-120 秒)"
                                     />
                                     <p className="text-[10px] text-white/30">设置将应用于所有启用全局间隔的任务</p>
                                 </div>

@@ -427,13 +427,13 @@ export default function Dashboard() {
                   {accountLogs.map((log, i) => (
                     <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
                       <div className="flex justify-between items-center mb-3 text-xs">
-                        <span className="text-white/30">{new Date(log.time).toLocaleString()}</span>
+                        <span className="text-white/30">{new Date(log.created_at).toLocaleString()}</span>
                         <span className={`px-2 py-0.5 rounded-full ${log.success ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                           {log.success ? 'SUCCESS' : 'FAILURE'}
                         </span>
                       </div>
                       <pre className="whitespace-pre-wrap text-white/70 leading-relaxed overflow-x-auto max-h-[200px] scrollbar-thin">
-                        {log.output}
+                        {log.message}
                       </pre>
                     </div>
                   ))}

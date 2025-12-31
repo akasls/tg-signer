@@ -54,27 +54,19 @@ export default function Dashboard() {
 
 
 
-  const [mounted, setMounted] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
     const t = getToken();
     if (!t) {
-      // 只有当前不在登录页面时才跳转
-      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-        setRedirecting(true);
-        window.location.href = "/";
-      }
+      // 如果没有 token，重定向到登录页
+      window.location.replace("/");
       return;
     }
     setLocalToken(t);
+    setChecking(false);
     loadData(t);
-  }, [mounted]);
+  }, []);
 
   const loadData = async (t: string) => {
     try {
@@ -205,7 +197,7 @@ export default function Dashboard() {
     }
   };
 
-  if (!token || redirecting) {
+  if (!token || checking) {
     return null;
   }
 

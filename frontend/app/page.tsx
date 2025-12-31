@@ -5,21 +5,23 @@ import LoginForm from "../components/login-form";
 import { getToken } from "../lib/auth";
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    // 检查是否有 token
     const token = getToken();
-    // 只有当有 token 且当前不在 dashboard 页面时才跳转
-    if (token && typeof window !== 'undefined' && window.location.pathname === '/') {
-      setRedirecting(true);
-      window.location.href = "/dashboard";
+    setHasToken(!!token);
+    setChecking(false);
+
+    // 如果有 token，使用 replace 跳转（不添加历史记录）
+    if (token) {
+      window.location.replace("/dashboard");
     }
   }, []);
 
-  // 在挂载前或跳转中不渲染任何内容
-  if (!mounted || redirecting) {
+  // 正在检查或有 token 时不显示登录表单
+  if (checking || hasToken) {
     return null;
   }
 
@@ -29,5 +31,4 @@ export default function Home() {
     </div>
   );
 }
-
 

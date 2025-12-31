@@ -88,17 +88,17 @@ export default function SettingsPage() {
     const [checking, setChecking] = useState(true);
 
     useEffect(() => {
-        const t = getToken();
-        if (!t) {
+        const tokenStr = getToken();
+        if (!tokenStr) {
             window.location.replace("/");
             return;
         }
-        setLocalToken(t);
+        setLocalToken(tokenStr);
         setChecking(false);
-        loadTOTPStatus(t);
-        loadAIConfig(t);
-        loadGlobalSettings(t);
-        loadTelegramConfig(t);
+        loadTOTPStatus(tokenStr);
+        loadAIConfig(tokenStr);
+        loadGlobalSettings(tokenStr);
+        loadTelegramConfig(tokenStr);
     }, []);
 
     const loadTOTPStatus = async (tokenStr: string) => {

@@ -71,16 +71,17 @@ export default function AccountTasksContent() {
 
         const t = getToken();
         if (!t) {
-            router.replace("/");
+            // 使用硬跳转确保在静态导出模式下正常工作
+            window.location.href = "/";
             return;
         }
         if (!accountName) {
-            router.replace("/dashboard");
+            window.location.href = "/dashboard";
             return;
         }
         setLocalToken(t);
         loadData(t);
-    }, [mounted, router, accountName]);
+    }, [mounted, accountName]);
 
     const loadData = async (t: string) => {
         try {

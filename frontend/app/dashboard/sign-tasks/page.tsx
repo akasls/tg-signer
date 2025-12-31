@@ -33,12 +33,13 @@ export default function SignTasksPage() {
         if (!mounted) return;
         const t = getToken();
         if (!t) {
-            router.replace("/");
+            // 使用硬跳转确保在静态导出模式下正常工作
+            window.location.href = "/";
             return;
         }
         setLocalToken(t);
         loadData(t);
-    }, [mounted, router]);
+    }, [mounted]);
 
     const loadData = async (t: string) => {
         try {

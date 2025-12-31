@@ -91,7 +91,8 @@ export default function SettingsPage() {
         if (!mounted) return;
         const t = getToken();
         if (!t) {
-            router.replace("/");
+            // 使用硬跳转确保在静态导出模式下正常工作
+            window.location.href = "/";
             return;
         }
         setLocalToken(t);
@@ -99,7 +100,7 @@ export default function SettingsPage() {
         loadAIConfig(t);
         loadGlobalSettings(t);
         loadTelegramConfig(t);
-    }, [mounted, router]);
+    }, [mounted]);
 
     const loadTOTPStatus = async (t: string) => {
         try {

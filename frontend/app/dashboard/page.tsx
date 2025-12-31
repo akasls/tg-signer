@@ -287,7 +287,6 @@ export default function Dashboard() {
                     </div>
                     <div className="mb-6">
                       <h3 className="text-xl font-bold text-white mb-1">{acc.name}</h3>
-                      <p className="text-sm font-mono text-white/40">{acc.phone}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-3 bg-white/5 rounded-xl border border-white/5">

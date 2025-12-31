@@ -6,18 +6,20 @@ import { getToken } from "../lib/auth";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const token = getToken();
-    if (token) {
-      // 使用硬跳转确保在静态导出模式下正常工作
+    // 只有当有 token 且当前不在 dashboard 页面时才跳转
+    if (token && typeof window !== 'undefined' && window.location.pathname === '/') {
+      setRedirecting(true);
       window.location.href = "/dashboard";
     }
   }, []);
 
-  // 在挂载前不渲染任何内容，避免闪烁
-  if (!mounted) {
+  // 在挂载前或跳转中不渲染任何内容
+  if (!mounted || redirecting) {
     return null;
   }
 

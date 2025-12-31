@@ -55,6 +55,7 @@ export default function Dashboard() {
 
 
   const [mounted, setMounted] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -64,8 +65,11 @@ export default function Dashboard() {
     if (!mounted) return;
     const t = getToken();
     if (!t) {
-      // 使用硬跳转确保在静态导出模式下正常工作
-      window.location.href = "/";
+      // 只有当前不在登录页面时才跳转
+      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+        setRedirecting(true);
+        window.location.href = "/";
+      }
       return;
     }
     setLocalToken(t);
@@ -201,7 +205,7 @@ export default function Dashboard() {
     }
   };
 
-  if (!token) {
+  if (!token || redirecting) {
     return null;
   }
 

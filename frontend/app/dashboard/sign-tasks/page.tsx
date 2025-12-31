@@ -23,27 +23,18 @@ export default function SignTasksPage() {
     const [tasks, setTasks] = useState<SignTask[]>([]);
     const [accounts, setAccounts] = useState<AccountInfo[]>([]);
     const [loading, setLoading] = useState(false);
-    const [mounted, setMounted] = useState(false);
-    const [redirecting, setRedirecting] = useState(false);
+    const [checking, setChecking] = useState(true);
 
     useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (!mounted) return;
         const t = getToken();
         if (!t) {
-            // 只有当前不在登录页面时才跳转
-            if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-                setRedirecting(true);
-                window.location.href = "/";
-            }
+            window.location.replace("/");
             return;
         }
         setLocalToken(t);
+        setChecking(false);
         loadData(t);
-    }, [mounted]);
+    }, []);
 
     const loadData = async (t: string) => {
         try {
@@ -104,7 +95,7 @@ export default function SignTasksPage() {
         }
     };
 
-    if (!token || redirecting) {
+    if (!token || checking) {
         return null;
     }
 

@@ -60,36 +60,22 @@ export default function AccountTasksContent() {
         action_interval: 1,
     });
 
-    const [mounted, setMounted] = useState(false);
-    const [redirecting, setRedirecting] = useState(false);
+    const [checking, setChecking] = useState(true);
 
     useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (!mounted) return;
-
         const t = getToken();
         if (!t) {
-            // 只有当前不在登录页面时才跳转
-            if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-                setRedirecting(true);
-                window.location.href = "/";
-            }
+            window.location.replace("/");
             return;
         }
         if (!accountName) {
-            // 只有当前不在 dashboard 时才跳转
-            if (typeof window !== 'undefined' && window.location.pathname !== '/dashboard') {
-                setRedirecting(true);
-                window.location.href = "/dashboard";
-            }
+            window.location.replace("/dashboard");
             return;
         }
         setLocalToken(t);
+        setChecking(false);
         loadData(t);
-    }, [mounted, accountName]);
+    }, [accountName]);
 
     const loadData = async (t: string) => {
         try {
@@ -323,7 +309,7 @@ export default function AccountTasksContent() {
         });
     };
 
-    if (!token || redirecting) {
+    if (!token || checking) {
         return null;
     }
 

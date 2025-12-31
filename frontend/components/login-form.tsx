@@ -71,9 +71,9 @@ export default function LoginForm() {
         <CardContent className="p-8 sm:p-12">
           {/* Logo 和标题 */}
           <div className="text-center mb-8">
-            <div className="text-5xl mb-4 animate-pulse-glow inline-block rounded-full p-2">⚡</div>
+            <div className="text-5xl mb-4 animate-pulse-glow inline-block">⚡</div>
             <h1 className="text-2xl font-bold aurora-text mb-2">TG SignPulse</h1>
-            <p className="text-white/50 text-sm">Telegram 自动签到控制台</p>
+            <p className="text-muted text-sm">Telegram 自动签到控制台</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>

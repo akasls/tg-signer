@@ -10,21 +10,36 @@
   --border: rgba(255, 255, 255, 0.1);
   --primary: #4f46e5;
   --primary-foreground: #ffffff;
-  color-scheme: dark;
   --aurora-1: #00d4ff;
   --aurora-2: #7c3aed;
   --aurora-3: #ec4899;
   --glow-color: rgba(0, 212, 255, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-input-bg: rgba(255, 255, 255, 0.05);
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-dim: rgba(255, 255, 255, 0.3);
+  --label: rgba(255, 255, 255, 0.8);
 }
 
 .light {
   --background: #f8fafc;
   --foreground: #0f172a;
-  --card: rgba(255, 255, 255, 0.8);
+  --card: rgba(0, 0, 0, 0.02);
   --card-foreground: #0f172a;
   --border: rgba(0, 0, 0, 0.1);
   --primary: #4f46e5;
   --primary-foreground: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-input-bg: #ffffff;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.1);
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --label: #334155;
 }
 
 body {
@@ -37,13 +52,29 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+.text-main {
+  color: var(--foreground);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-dim {
+  color: var(--text-dim);
+}
+
+.label {
+  color: var(--label);
+}
+
 /* ========== Glassmorphism 核心样式 ========== */
 
 .glass {
-  background: var(--card);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
 }
 
 /* 导航栏固定时确保宽度正确 */
@@ -78,10 +109,10 @@ nav.glass {
 }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-input-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  border: 1px solid var(--glass-border);
+  color: var(--foreground);
   transition: all 0.3s ease;
 }
 
@@ -98,10 +129,10 @@ nav.glass {
 /* ========== Select 下拉组件样式 ========== */
 
 select {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-input-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  border: 1px solid var(--glass-border);
+  color: var(--foreground);
   border-radius: 12px;
   padding: 0.5rem 2rem 0.5rem 1rem;
   font-size: 0.875rem;
@@ -129,10 +160,10 @@ select option {
 /* ========== File Input 文件选择样式 ========== */
 
 input[type="file"] {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass-input-bg);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: #e2e8f0;
+  color: var(--foreground);
   padding: 0.75rem;
   font-size: 0.875rem;
   cursor: pointer;
@@ -166,10 +197,10 @@ input[type="file"]::file-selector-button:hover {
 /* ========== Textarea 文本域样式 ========== */
 
 textarea {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-input-bg);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  border: 1px solid var(--glass-border);
+  color: var(--foreground);
   border-radius: 12px;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -215,9 +246,9 @@ textarea::placeholder {
 
 .card-hover {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card-bg);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--card-border);
 }
 
 .card-hover:hover {

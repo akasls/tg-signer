@@ -385,7 +385,7 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/dashboard"
-                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-white/70 hover:text-white"
+                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-main/70 hover:text-main"
                                 title={t("cancel")}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,15 +393,29 @@ export default function SettingsPage() {
                                 </svg>
                             </Link>
                             <div className="flex items-center gap-2 text-sm">
-                                <Link href="/dashboard" className="text-white/50 hover:text-white transition-colors">
+                                <Link href="/dashboard" className="text-main/50 hover:text-main transition-colors">
                                     {t("sidebar_home")}
                                 </Link>
-                                <span className="text-white/30">/</span>
-                                <span className="text-white font-medium">{t("sidebar_settings")}</span>
+                                <span className="text-main/30">/</span>
+                                <span className="text-main font-medium">{t("sidebar_settings")}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <ThemeLanguageToggle />
+                            <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
+                            <button
+                                onClick={() => {
+                                    const { logout } = require("../../../lib/auth");
+                                    logout();
+                                    router.push("/");
+                                }}
+                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-rose-400 hover:text-rose-300"
+                                title={t("logout")}
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -409,8 +423,8 @@ export default function SettingsPage() {
 
             <div className="max-w-4xl mx-auto px-6 py-8 relative z-0">
                 <header className="mb-10">
-                    <h1 className="text-3xl font-bold text-white mb-2">{t("settings_title")}</h1>
-                    <p className="text-white/50">管理您的账户安全、AI 配置及系统偏好设置</p>
+                    <h1 className="text-3xl font-bold text-main mb-2">{t("settings_title")}</h1>
+                    <p className="text-muted">管理您的账户安全、AI 配置及系统偏好设置</p>
                 </header>
 
                 <div className="grid gap-8 pb-20">
@@ -512,7 +526,7 @@ export default function SettingsPage() {
                                 <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 flex gap-4 items-start">
                                     <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400 text-xl">💡</div>
                                     <div>
-                                        <p className="text-sm text-white/70 leading-relaxed">
+                                        <p className="text-sm text-main/70 leading-relaxed">
                                             启用两步验证将显著提升您的账户安全性。启用后，登录时除了密码外，还需要输入由身份验证器生成的动态代码。
                                         </p>
                                         <Button onClick={handleSetupTOTP} variant="outline" className="mt-4" disabled={loading}>
@@ -534,11 +548,11 @@ export default function SettingsPage() {
                                         </div>
                                         <div className="flex-1 space-y-4">
                                             <div>
-                                                <h4 className="font-bold text-white mb-2">1. 扫描二维码</h4>
-                                                <p className="text-sm text-white/50">使用 Google Authenticator 或其他身份验证器扫描左侧二维码</p>
+                                                <h4 className="font-bold text-main mb-2">1. 扫描二维码</h4>
+                                                <p className="text-sm text-muted">使用 Google Authenticator 或其他身份验证器扫描左侧二维码</p>
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-white mb-2">2. 备份密钥</h4>
+                                                <h4 className="font-bold text-main mb-2">2. 备份密钥</h4>
                                                 <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-sm break-all font-mono text-cyan-300">
                                                     {totpSecret}
                                                 </div>
@@ -652,7 +666,7 @@ export default function SettingsPage() {
                                         className="glass-input"
                                         placeholder="例如: 60 (为空则随机 1-120 秒)"
                                     />
-                                    <p className="text-[10px] text-white/30">设置将应用于所有启用全局间隔的任务</p>
+                                    <p className="text-[10px] text-dim">设置将应用于所有启用全局间隔的任务</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>日志保留天数</Label>
@@ -707,7 +721,7 @@ export default function SettingsPage() {
                                     恢复默认
                                 </Button>
                             </div>
-                            <p className="text-[10px] text-white/30">
+                            <p className="text-[10px] text-dim">
                                 注意：修改此配置可能导致现有登录会话失效，建议在添加账号出现问题时才自定义。
                             </p>
                         </CardContent>
@@ -735,7 +749,7 @@ export default function SettingsPage() {
                                 <div className="flex-1 space-y-2">
                                     <Label>导入配置内容</Label>
                                     <textarea
-                                        className="w-full h-24 glass rounded-xl p-3 text-sm font-mono text-white/70 border border-white/10 focus:border-white/20 outline-none transition-all placeholder:text-white/20"
+                                        className="w-full h-24 glass rounded-xl p-3 text-sm font-mono text-main/70 border border-white/10 focus:border-white/20 outline-none transition-all placeholder:text-muted"
                                         placeholder="在此粘贴导出的 JSON 文本..."
                                         value={importConfig}
                                         onChange={(e) => setImportConfig(e.target.value)}
@@ -748,7 +762,7 @@ export default function SettingsPage() {
                                             onChange={(e) => setOverwriteConfig(e.target.checked)}
                                             className="rounded border-white/10 bg-white/5"
                                         />
-                                        <Label htmlFor="overwrite" className="text-white/50 cursor-pointer">覆盖现有重复任务</Label>
+                                        <Label htmlFor="overwrite" className="text-main/50 cursor-pointer">覆盖现有重复任务</Label>
                                     </div>
                                     <Button onClick={handleImport} className="w-full mt-2" disabled={loading}>
                                         执行导入

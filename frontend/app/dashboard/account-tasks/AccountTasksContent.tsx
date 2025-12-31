@@ -36,21 +36,21 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
             <CardContent className="p-4">
                 <div className="grid grid-cols-[1fr_auto] lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 lg:gap-4 items-start lg:items-center">
                     <div>
-                        <div className="text-xs text-white/50 mb-1">任务名称</div>
-                        <div className="font-medium truncate text-white">{task.name}</div>
+                        <div className="text-xs text-muted mb-1">任务名称</div>
+                        <div className="font-medium truncate text-main">{task.name}</div>
                     </div>
 
                     <div className="flex items-start gap-2">
                         <div className="flex-1">
-                            <div className="text-xs text-white/50 mb-1">Chat ID</div>
-                            <div className="font-mono text-sm truncate text-white/80">
+                            <div className="text-xs text-muted mb-1">Chat ID</div>
+                            <div className="font-mono text-sm truncate text-main/80">
                                 {task.chats[0]?.chat_id || "-"}
                             </div>
                         </div>
                         <button
                             onClick={() => onEdit(task)}
                             disabled={loading}
-                            className="lg:hidden p-2 text-white/60 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition-all"
+                            className="lg:hidden p-2 text-main/60 hover:text-cyan-400 hover:bg-white/5 rounded-lg transition-all"
                             title="编辑"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,16 +61,16 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
 
                     <div className="flex items-start gap-2">
                         <div className="flex-1">
-                            <div className="text-xs text-white/50 mb-1">签到时间</div>
-                            <div className="font-mono text-sm text-white/80">{task.sign_at}</div>
+                            <div className="text-xs text-muted mb-1">签到时间</div>
+                            <div className="font-mono text-sm text-main/80">{task.sign_at}</div>
                             {task.random_seconds > 0 && (
-                                <div className="text-xs text-white/40">+随机{Math.round(task.random_seconds / 60)}分钟</div>
+                                <div className="text-xs text-dim">+随机{Math.round(task.random_seconds / 60)}分钟</div>
                             )}
                         </div>
                         <button
                             onClick={() => onRun(task.name)}
                             disabled={loading}
-                            className="lg:hidden p-2 text-white/60 hover:text-emerald-400 hover:bg-white/5 rounded-lg transition-all"
+                            className="lg:hidden p-2 text-main/60 hover:text-emerald-400 hover:bg-white/5 rounded-lg transition-all"
                             title="运行"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,13 +82,13 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
 
                     <div className="flex items-start gap-2">
                         <div className="flex-1">
-                            <div className="text-xs text-white/50 mb-1">最后执行</div>
+                            <div className="text-xs text-muted mb-1">最后执行</div>
                             {task.last_run ? (
                                 <div>
-                                    <div className={`text-sm ${task.last_run.success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                    <div className={`text-sm ${task.last_run.success ? 'text-emerald-500' : 'text-rose-500'}`}>
                                         {task.last_run.success ? '✓ 成功' : '✗ 失败'}
                                     </div>
-                                    <div className="text-xs text-white/40">
+                                    <div className="text-xs text-dim">
                                         {new Date(task.last_run.time).toLocaleString('zh-CN', {
                                             month: '2-digit',
                                             day: '2-digit',
@@ -98,13 +98,13 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="text-sm text-white/40">从未执行</div>
+                                <div className="text-sm text-dim">从未执行</div>
                             )}
                         </div>
                         <button
                             onClick={() => onDelete(task.name)}
                             disabled={loading}
-                            className="lg:hidden p-2 text-white/60 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-all"
+                            className="lg:hidden p-2 text-main/60 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-all"
                             title="删除"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,7 +117,7 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
                         <button
                             onClick={() => onEdit(task)}
                             disabled={loading}
-                            className="p-2 text-white/60 hover:text-cyan-400 hover:bg-white/10 rounded-lg transition-all"
+                            className="p-2 text-main/60 hover:text-cyan-400 hover:bg-white/10 rounded-lg transition-all"
                             title="编辑"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +127,7 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
                         <button
                             onClick={() => onRun(task.name)}
                             disabled={loading}
-                            className="p-2 text-white/60 hover:text-emerald-400 hover:bg-white/10 rounded-lg transition-all"
+                            className="p-2 text-main/60 hover:text-emerald-400 hover:bg-white/10 rounded-lg transition-all"
                             title="运行"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +138,7 @@ const TaskItem = memo(({ task, loading, onEdit, onRun, onDelete }: {
                         <button
                             onClick={() => onDelete(task.name)}
                             disabled={loading}
-                            className="p-2 text-white/60 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-all"
+                            className="p-2 text-main/60 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-all"
                             title="删除"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -465,7 +465,7 @@ export default function AccountTasksContent() {
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/dashboard"
-                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-white/70 hover:text-white"
+                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-main/70 hover:text-main"
                                 title={t("cancel")}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,11 +473,11 @@ export default function AccountTasksContent() {
                                 </svg>
                             </Link>
                             <div className="flex items-center gap-2 text-sm">
-                                <Link href="/dashboard" className="text-white/50 hover:text-white transition-colors">
+                                <Link href="/dashboard" className="text-muted hover:text-main transition-colors">
                                     {t("sidebar_home")}
                                 </Link>
-                                <span className="text-white/30">/</span>
-                                <span className="text-white font-medium">{accountName}</span>
+                                <span className="text-dim">/</span>
+                                <span className="text-main font-medium">{accountName}</span>
                             </div>
                         </div>
 
@@ -487,7 +487,7 @@ export default function AccountTasksContent() {
                             <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
                             <button
                                 onClick={() => setShowCreateDialog(true)}
-                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-white/70 hover:text-white"
+                                className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-main/70 hover:text-main"
                                 title={t("add_task")}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -505,11 +505,11 @@ export default function AccountTasksContent() {
                 {loading && tasks.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
                         <div className="loading-spinner mb-4"></div>
-                        <span className="text-white/50">加载中...</span>
+                        <span className="text-muted">加载中...</span>
                     </div>
                 ) : tasks.length === 0 ? (
                     <Card>
-                        <CardContent className="py-16 text-center text-white/50">
+                        <CardContent className="py-16 text-center text-muted">
                             <div className="text-5xl mb-4">📋</div>
                             <p className="mb-6 text-lg">暂无任务</p>
                             <Button onClick={() => setShowCreateDialog(true)}>
@@ -691,7 +691,7 @@ export default function AccountTasksContent() {
                                                     />
                                                 )}
                                                 {(action.action === 4 || action.action === 5) && (
-                                                    <div className="flex-1 text-sm text-white/50 py-2">
+                                                    <div className="flex-1 text-sm text-main/50 py-2">
                                                         {action.action === 4 ? "AI 将自动识别图片选项" : "AI 将自动计算答案"}
                                                     </div>
                                                 )}
@@ -887,7 +887,7 @@ export default function AccountTasksContent() {
                                                     />
                                                 )}
                                                 {(action.action === 4 || action.action === 5) && (
-                                                    <div className="flex-1 text-sm text-white/50 py-2">
+                                                    <div className="flex-1 text-sm text-main/50 py-2">
                                                         {action.action === 4 ? "AI 将自动识别图片选项" : "AI 将自动计算答案"}
                                                     </div>
                                                 )}

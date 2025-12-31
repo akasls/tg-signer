@@ -123,3 +123,8 @@ _test*.json
 .nicegui
 
 .agent
+
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/tsconfig.tsbuildinfo

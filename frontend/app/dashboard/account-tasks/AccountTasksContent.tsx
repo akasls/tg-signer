@@ -420,9 +420,9 @@ export default function AccountTasksContent() {
     }
 
     return (
-        <div id="account-tasks-view" className="w-full h-full flex flex-col pt-[72px]">
-            <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
-                <div className="flex items-center gap-4">
+        <div id="account-tasks-view" className="w-full h-full flex flex-col">
+            <nav className="navbar">
+                <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Link href="/dashboard" className="action-btn" title={t("sidebar_home")}>
                         <CaretLeft weight="bold" />
                     </Link>
@@ -432,7 +432,7 @@ export default function AccountTasksContent() {
                         <span className="text-main uppercase tracking-widest text-[10px]">{accountName}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="top-right-actions">
                     <button onClick={() => setShowCreateDialog(true)} className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg flex items-center gap-2">
                         <Plus weight="bold" />
                         {t("add_task")}
@@ -442,7 +442,7 @@ export default function AccountTasksContent() {
                 </div>
             </nav>
 
-            <main className="flex-1 p-5 md:p-10 w-full max-w-[1200px] mx-auto overflow-y-auto animate-float-up pb-20">
+            <main className="main-content">
                 <header className="mb-10 flex justify-between items-end">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight mb-2">任务详情</h1>
@@ -489,21 +489,21 @@ export default function AccountTasksContent() {
 
             {/* 创建/编辑对话框通用的渲染逻辑 */}
             {(showCreateDialog || showEditDialog) && (
-                <div className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="glass-panel modal-content w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
-                        <header className="p-6 border-b border-white/5 flex justify-between items-center shrink-0">
-                            <h2 className="text-xl font-bold flex items-center gap-3">
+                <div className="modal-overlay active" onClick={() => { setShowCreateDialog(false); setShowEditDialog(false); }}>
+                    <div className="glass-panel modal-content !max-w-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+                        <header className="modal-header border-b border-white/5 pb-4 mb-6">
+                            <div className="modal-title flex items-center gap-3">
                                 <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#b57dff]">
                                     <Lightning weight="fill" size={20} />
                                 </div>
                                 {showCreateDialog ? "创建签到任务" : `编辑任务: ${editingTaskName}`}
-                            </h2>
-                            <button
+                            </div>
+                            <div
                                 onClick={() => { setShowCreateDialog(false); setShowEditDialog(false); }}
-                                className="action-btn !w-8 !h-8"
+                                className="modal-close"
                             >
                                 <X weight="bold" />
-                            </button>
+                            </div>
                         </header>
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
@@ -724,7 +724,7 @@ export default function AccountTasksContent() {
                             </div>
                         </div>
 
-                        <footer className="p-6 border-t border-white/5 flex gap-4 shrink-0 bg-black/10">
+                        <footer className="mt-8 flex gap-3">
                             <button
                                 className="btn-secondary flex-1"
                                 onClick={() => { setShowCreateDialog(false); setShowEditDialog(false); }}
@@ -736,7 +736,7 @@ export default function AccountTasksContent() {
                                 onClick={showCreateDialog ? handleCreateTask : handleSaveEdit}
                                 disabled={loading}
                             >
-                                {loading ? <Spinner className="animate-spin mx-auto" weight="bold" /> : (showCreateDialog ? "立即部署" : "保存修改")}
+                                {loading ? <Spinner className="animate-spin" /> : (showCreateDialog ? "立即部署" : "保存修改")}
                             </button>
                         </footer>
                     </div>

@@ -21,6 +21,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             setTheme(savedTheme);
             if (savedTheme === 'light') {
                 document.documentElement.classList.add('light');
+                document.body.setAttribute('data-theme', 'light');
             }
         } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
             // Default to light if system prefers it, but the app default is dark
@@ -35,8 +36,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('tg-signer-theme', newTheme);
         if (newTheme === 'light') {
             document.documentElement.classList.add('light');
+            document.body.setAttribute('data-theme', 'light');
         } else {
             document.documentElement.classList.remove('light');
+            document.body.removeAttribute('data-theme');
         }
     };
 

@@ -4,21 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login, resetTOTP } from "../lib/api";
 import { setToken } from "../lib/auth";
-import { 
-  Lightning, 
-  Spinner, 
-  Translate, 
-  Sun, 
-  Moon, 
-  GithubLogo, 
-  PaperPlaneRight 
+import {
+  Lightning,
+  Spinner,
+  Translate,
+  Sun,
+  Moon,
+  GithubLogo,
+  PaperPlaneRight
 } from "@phosphor-icons/react";
 import { useTheme } from "../context/ThemeContext";
 
 export default function LoginForm() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  
+
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin123");
   const [totp, setTotp] = useState("");
@@ -51,10 +51,10 @@ export default function LoginForm() {
     <div id="login-view" className="w-full h-full flex justify-center items-center relative p-5 animate-float-up">
       <div className="glass-panel w-full max-w-[400px] p-12 text-center">
         <div className="mb-8">
-          <Lightning 
-            weight="fill" 
-            className="inline-block" 
-            style={{ fontSize: '56px', color: '#fcd34d', filter: 'drop-shadow(0 0 10px rgba(252, 211, 77, 0.4))' }} 
+          <Lightning
+            weight="fill"
+            className="inline-block"
+            style={{ fontSize: '56px', color: '#fcd34d', filter: 'drop-shadow(0 0 10px rgba(252, 211, 77, 0.4))' }}
           />
           <div className="brand-text-grad mt-3">TG SignPulse</div>
           <p className="text-[#9496a1] text-xs mt-2">Telegram 自动签到控制台</p>
@@ -108,7 +108,7 @@ export default function LoginForm() {
           </button>
         </form>
 
-        <div className="flex justify-center gap-5 mt-8 pt-6 border-t border-white/10">
+        <div className="login-footer-icons">
           <div className="action-btn" title="Language"><Translate weight="bold" /></div>
           <div className="action-btn" title="Theme" onClick={toggleTheme}>
             {theme === 'dark' ? <Sun weight="bold" /> : <Moon weight="bold" />}

@@ -391,9 +391,9 @@ export default function SettingsPage() {
     }
 
     return (
-        <div id="settings-view" className="w-full h-full flex flex-col pt-[72px]">
-            <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
-                <div className="flex items-center gap-4">
+        <div id="settings-view" className="w-full h-full flex flex-col">
+            <nav className="navbar">
+                <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Link href="/dashboard" className="action-btn" title={t("sidebar_home")}>
                         <CaretLeft weight="bold" />
                     </Link>
@@ -403,7 +403,7 @@ export default function SettingsPage() {
                         <span className="text-main uppercase tracking-widest text-[10px]">{t("sidebar_settings")}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="top-right-actions">
                     <ThemeLanguageToggle />
                     <div
                         className="action-btn !text-rose-400 hover:bg-rose-500/10"
@@ -419,7 +419,7 @@ export default function SettingsPage() {
                 </div>
             </nav>
 
-            <main className="flex-1 p-5 md:p-10 w-full max-w-[1000px] mx-auto overflow-y-auto animate-float-up pb-20">
+            <main className="main-content">
                 <header className="mb-10">
                     <h1 className="text-3xl font-bold tracking-tight mb-2">{t("settings_title")}</h1>
                     <p className="text-[#9496a1] text-sm">管理您的账户安全、AI 配置及系统偏好设置</p>

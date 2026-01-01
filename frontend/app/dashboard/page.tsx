@@ -182,13 +182,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div id="dashboard-view" className="w-full h-full flex flex-col pt-[72px]">
-      <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
-        <div className="flex items-center gap-3">
+    <div id="dashboard-view" className="w-full h-full flex flex-col">
+      <nav className="navbar">
+        <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Lightning weight="fill" style={{ fontSize: '28px', color: '#fcd34d' }} />
-          <span className="nav-title font-bold text-lg tracking-tight">TG SignPulse</span>
+          <span className="nav-title">TG SignPulse</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="top-right-actions">
           <ThemeLanguageToggle />
           <a href="https://github.com" target="_blank" rel="noreferrer" className="action-btn" title="GitHub">
             <GithubLogo weight="bold" />
@@ -199,50 +199,49 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="flex-1 p-5 md:p-10 w-full max-w-[1400px] mx-auto overflow-y-auto animate-float-up">
+      <main className="main-content">
         {loading && accounts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Spinner className="animate-spin mb-4" size={40} weight="bold" />
             <span className="text-main/50">加载中...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6 pb-10">
+          <div className="card-grid">
             {accounts.map((acc) => {
               const initial = acc.name.charAt(0).toUpperCase();
               return (
                 <div
                   key={acc.name}
-                  className="glass-panel h-[190px] p-6 flex flex-col justify-between transition-all hover:-translate-y-1 hover:border-[#8a3ffc] hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] relative group cursor-pointer"
+                  className="glass-panel card"
                   onClick={() => router.push(`/dashboard/account-tasks?name=${acc.name}`)}
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2.5 font-semibold text-base truncate pr-20">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3c40c6] to-[#8a3ffc] flex items-center justify-center text-xs font-bold text-white shrink-0">
-                        {initial}
-                      </div>
-                      <span className="truncate">{acc.name}</span>
+                  <div className="card-top">
+                    <div className="account-name">
+                      <div className="account-avatar">{initial}</div>
+                      {acc.name}
                     </div>
-                    <div className="shrink-0 bg-[#8a3ffc]/10 border border-[#8a3ffc]/20 text-[#b57dff] px-3 py-1 rounded-full text-xs font-semibold">
+                    <div className="task-badge">
                       {getAccountTaskCount(acc.name)} {t("sidebar_tasks")}
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center pt-4 border-t border-white/8">
-                    <div className="text-[13px] text-[#9496a1] font-mono flex items-center gap-1.5">
+                  <div style={{ flex: 1 }}></div>
+
+                  <div className="card-bottom">
+                    <div className="create-time">
                       <Clock weight="bold" />
-                      {/* 如果有创建时间显示时间，否则显示占位 */}
                       <span>Connected</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="card-actions">
                       <div
-                        className="action-btn !w-8 !h-8 !text-base bg-white/10 hover:bg-white/20 transition-all rounded-md"
+                        className="action-icon"
                         title="日志"
                         onClick={(e) => { e.stopPropagation(); handleShowLogs(acc.name); }}
                       >
                         <ListDashes weight="bold" />
                       </div>
                       <div
-                        className="action-btn !w-8 !h-8 !text-base bg-white/10 hover:bg-rose-500/10 hover:text-[#ff4757] transition-all rounded-md"
+                        className="action-icon delete"
                         title="移除"
                         onClick={(e) => { e.stopPropagation(); handleDeleteAccount(acc.name); }}
                       >
@@ -256,13 +255,13 @@ export default function Dashboard() {
 
             {/* 添加新账号卡片 */}
             <div
-              className="h-[190px] border-2 border-dashed border-white/10 rounded-[20px] flex flex-col justify-center items-center gap-4 cursor-pointer transition-all hover:border-[#8a3ffc] hover:bg-[#8a3ffc]/3 hover:-translate-y-1 group"
+              className="card card-add"
               onClick={() => { setLoginStep("input"); setShowAddDialog(true); }}
             >
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-2xl text-[#9496a1] transition-all group-hover:bg-[#8a3ffc] group-hover:text-white">
+              <div className="add-icon-circle">
                 <Plus weight="bold" />
               </div>
-              <span className="font-semibold text-[#9496a1]">{t("add_account")}</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-sub)' }}>{t("add_account")}</span>
             </div>
           </div>
         )}
@@ -360,11 +359,11 @@ export default function Dashboard() {
         <div className="modal-overlay active" onClick={() => setShowLogsDialog(false)}>
           <div className="glass-panel modal-content !max-w-4xl max-h-[85vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="modal-header border-b border-white/10 pb-4 mb-0">
-              <div className="flex items-center gap-3">
+              <div className="modal-title flex items-center gap-3">
                 <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#8a3ffc]">
                   <ListDashes weight="bold" size={20} />
                 </div>
-                <div className="modal-title font-bold text-xl">{logsAccountName} 运行日志</div>
+                <div className="font-bold text-xl">{logsAccountName} 运行日志</div>
               </div>
               <div className="modal-close" onClick={() => setShowLogsDialog(false)}><X weight="bold" /></div>
             </div>

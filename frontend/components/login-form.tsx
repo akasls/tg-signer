@@ -2,22 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, resetTOTP } from "../lib/api";
+import { login } from "../lib/api";
 import { setToken } from "../lib/auth";
 import {
   Lightning,
   Spinner,
-  Translate,
-  Sun,
-  Moon,
-  GithubLogo,
-  PaperPlaneRight
 } from "@phosphor-icons/react";
-import { useTheme } from "../context/ThemeContext";
+import { ThemeLanguageToggle } from "./ThemeLanguageToggle";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
+  const { t, language } = useLanguage();
 
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("admin123");
@@ -34,12 +30,12 @@ export default function LoginForm() {
       setToken(res.access_token);
       router.push("/dashboard");
     } catch (err: any) {
-      const msg = err?.message || "登录失败";
+      const msg = err?.message || t("login_failed");
       let displayMsg = msg;
       if (msg.includes("Invalid credentials") || msg.includes("Invalid username or password")) {
-        displayMsg = "用户名或密码错误";
+        displayMsg = t("user_or_pass_error");
       } else if (msg.includes("TOTP code required") || msg.includes("Invalid TOTP code")) {
-        displayMsg = "两步验证码错误或已过期";
+        displayMsg = t("totp_error");
       }
       setErrorMsg(displayMsg);
     } finally {
@@ -57,35 +53,35 @@ export default function LoginForm() {
             style={{ fontSize: '56px', color: '#fcd34d', filter: 'drop-shadow(0 0 10px rgba(252, 211, 77, 0.4))' }}
           />
           <div className="brand-text-grad mt-3">TG SignPulse</div>
-          <p className="text-[#9496a1] text-xs mt-2">Telegram 自动签到控制台</p>
+          <p className="text-[#9496a1] text-xs mt-2">{language === "zh" ? "Telegram 自动签到控制台" : "Telegram Auto Sign-in Dashboard"}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="text-left">
           <div className="mb-5">
-            <label>用户名</label>
+            <label>{t("username")}</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="请输入用户名"
+              placeholder={language === "zh" ? "请输入用户名" : "Enter username"}
             />
           </div>
           <div className="mb-5">
-            <label>密码</label>
+            <label>{t("password")}</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="请输入密码"
+              placeholder={language === "zh" ? "请输入密码" : "Enter password"}
             />
           </div>
           <div className="mb-5">
-            <label>2FA 动态码 (可选)</label>
+            <label>{t("totp")}</label>
             <input
               type="text"
               value={totp}
               onChange={(e) => setTotp(e.target.value)}
-              placeholder="如未启用请留空"
+              placeholder={language === "zh" ? "如未启用请留空" : "Leave blank if disabled"}
               className="text-center tracking-[2px]"
             />
           </div>
@@ -100,22 +96,16 @@ export default function LoginForm() {
             {loading ? (
               <>
                 <Spinner className="animate-spin" size={20} />
-                正在安全验证...
+                {language === "zh" ? "正在安全验证..." : "Verifying..."}
               </>
             ) : (
-              "进入控制台"
+              language === "zh" ? "进入控制台" : "Access Console"
             )}
           </button>
         </form>
 
         <div className="login-footer-icons">
-          <div className="action-btn" title="Language"><Translate weight="bold" /></div>
-          <div className="action-btn" title="Theme" onClick={toggleTheme}>
-            {theme === 'dark' ? <Sun weight="bold" /> : <Moon weight="bold" />}
-          </div>
-          <a href="https://github.com" target="_blank" rel="noreferrer" className="action-btn" title="GitHub">
-            <GithubLogo weight="bold" />
-          </a>
+          <ThemeLanguageToggle />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../context/ThemeContext";
@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   title: "TG SignPulse - Telegram 自动签到控制台",
   description: "现代化、高效的 Telegram 自动签到管理工具",
 };
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
 
 export default function RootLayout({
   children,

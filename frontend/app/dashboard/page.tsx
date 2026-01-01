@@ -33,15 +33,12 @@ import { useLanguage } from "../../context/LanguageContext";
 
 export default function Dashboard() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toasts, addToast, removeToast } = useToast();
   const [token, setLocalToken] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<AccountInfo[]>([]);
   const [tasks, setTasks] = useState<SignTask[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // 设置菜单
-  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
   // 日志弹窗
   const [showLogsDialog, setShowLogsDialog] = useState(false);
@@ -51,7 +48,6 @@ export default function Dashboard() {
 
   // 添加账号对话框
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [loginStep, setLoginStep] = useState<"input" | "verify">("input");
   const [loginData, setLoginData] = useState({
     account_name: "",
     phone_number: "",
@@ -97,7 +93,7 @@ export default function Dashboard() {
   const handleStartLogin = async () => {
     if (!token) return;
     if (!loginData.account_name || !loginData.phone_number) {
-      addToast("请填写账号名称和手机号", "error");
+      addToast(language === "zh" ? "请填写账号名称和手机号" : "Please fill in account name and phone number", "error");
       return;
     }
     try {
@@ -108,10 +104,9 @@ export default function Dashboard() {
         proxy: loginData.proxy || undefined,
       });
       setLoginData({ ...loginData, phone_code_hash: res.phone_code_hash });
-      setLoginStep("verify");
-      addToast("验证码已发送", "success");
+      addToast(t("code_sent"), "success");
     } catch (err: any) {
-      addToast(err.message || "发送失败", "error");
+      addToast(err.message || (language === "zh" ? "发送失败" : "Failed to send"), "error");
     } finally {
       setLoading(false);
     }
@@ -120,7 +115,7 @@ export default function Dashboard() {
   const handleVerifyLogin = async () => {
     if (!token) return;
     if (!loginData.phone_code) {
-      addToast("请输入验证码", "error");
+      addToast(language === "zh" ? "请输入验证码" : "Please enter code", "error");
       return;
     }
     try {
@@ -132,11 +127,11 @@ export default function Dashboard() {
         phone_code_hash: loginData.phone_code_hash,
         password: loginData.password || undefined,
       });
-      addToast("登录成功", "success");
+      addToast(t("login_success"), "success");
       setShowAddDialog(false);
       loadData(token);
     } catch (err: any) {
-      addToast(err.message || "验证失败", "error");
+      addToast(err.message || (language === "zh" ? "验证失败" : "Verification failed"), "error");
     } finally {
       setLoading(false);
     }
@@ -148,10 +143,10 @@ export default function Dashboard() {
     try {
       setLoading(true);
       await deleteAccount(token, name);
-      addToast("账号已删除", "success");
+      addToast(language === "zh" ? "账号已删除" : "Account deleted", "success");
       loadData(token);
     } catch (err: any) {
-      addToast(err.message || "删除失败", "error");
+      addToast(err.message || (language === "zh" ? "删除失败" : "Failed to delete"), "error");
     } finally {
       setLoading(false);
     }
@@ -166,15 +161,10 @@ export default function Dashboard() {
       const logs = await getAccountLogs(token, name);
       setAccountLogs(logs);
     } catch (err: any) {
-      addToast(err.message || "获取日志失败", "error");
+      addToast(err.message || (language === "zh" ? "获取日志失败" : "Failed to get logs"), "error");
     } finally {
       setLogsLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    router.push("/");
   };
 
   if (!token || checking) {
@@ -203,7 +193,7 @@ export default function Dashboard() {
         {loading && accounts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Spinner className="animate-spin mb-4" size={40} weight="bold" />
-            <span className="text-main/50">加载中...</span>
+            <span className="text-main/50">{t("loading")}</span>
           </div>
         ) : (
           <div className="card-grid">
@@ -230,19 +220,19 @@ export default function Dashboard() {
                   <div className="card-bottom">
                     <div className="create-time">
                       <Clock weight="bold" />
-                      <span>Connected</span>
+                      <span>{t("connected")}</span>
                     </div>
                     <div className="card-actions">
                       <div
                         className="action-icon"
-                        title="日志"
+                        title={t("logs")}
                         onClick={(e) => { e.stopPropagation(); handleShowLogs(acc.name); }}
                       >
                         <ListDashes weight="bold" />
                       </div>
                       <div
                         className="action-icon delete"
-                        title="移除"
+                        title={t("remove")}
                         onClick={(e) => { e.stopPropagation(); handleDeleteAccount(acc.name); }}
                       >
                         <Trash weight="bold" />
@@ -256,7 +246,7 @@ export default function Dashboard() {
             {/* 添加新账号卡片 */}
             <div
               className="card card-add"
-              onClick={() => { setLoginStep("input"); setShowAddDialog(true); }}
+              onClick={() => { setShowAddDialog(true); }}
             >
               <div className="add-icon-circle">
                 <Plus weight="bold" />
@@ -271,86 +261,66 @@ export default function Dashboard() {
         <div className="modal-overlay active" onClick={() => setShowAddDialog(false)}>
           <div className="glass-panel modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <div className="modal-title">{loginStep === "input" ? t("add_account") : "安全验证"}</div>
+              <div className="modal-title">{t("add_account")}</div>
               <div className="modal-close" onClick={() => setShowAddDialog(false)}><X weight="bold" /></div>
             </div>
 
-            {loginStep === "input" ? (
-              <div className="animate-float-up">
-                <div className="mb-5">
-                  <label>{t("username")} (唯一标识)</label>
+            <div className="animate-float-up">
+              <div>
+                <label>{t("session_name")}</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Work_Account_01"
+                  value={loginData.account_name}
+                  onChange={(e) => setLoginData({ ...loginData, account_name: e.target.value })}
+                />
+
+                <label>{t("phone_number")}</label>
+                <input
+                  type="text"
+                  placeholder="+86 138 0000 0000"
+                  value={loginData.phone_number}
+                  onChange={(e) => setLoginData({ ...loginData, phone_number: e.target.value })}
+                />
+
+                <label>{t("login_code")}</label>
+                <div className="input-group">
                   <input
                     type="text"
-                    placeholder="e.g. Work_Account_01"
-                    value={loginData.account_name}
-                    onChange={(e) => setLoginData({ ...loginData, account_name: e.target.value })}
+                    placeholder={t("login_code_placeholder")}
+                    value={loginData.phone_code}
+                    onChange={(e) => setLoginData({ ...loginData, phone_code: e.target.value })}
                   />
-                </div>
-
-                <div className="mb-5">
-                  <label>手机号码 (带国家码)</label>
-                  <input
-                    type="text"
-                    placeholder="+86 138 0000 0000"
-                    value={loginData.phone_number}
-                    onChange={(e) => setLoginData({ ...loginData, phone_number: e.target.value })}
-                  />
-                </div>
-
-                <div className="mb-5">
-                  <label>SOCKS5 代理 (可选)</label>
-                  <input
-                    type="text"
-                    placeholder="socks5://user:pass@host:port"
-                    value={loginData.proxy}
-                    onChange={(e) => setLoginData({ ...loginData, proxy: e.target.value })}
-                  />
-                </div>
-
-                <div className="flex gap-3 mt-8">
-                  <button className="btn-secondary flex-1" onClick={() => setShowAddDialog(false)}>取消</button>
-                  <button className="btn-gradient flex-1" onClick={handleStartLogin} disabled={loading}>
-                    {loading ? <Spinner className="animate-spin" /> : "下一步"}
+                  <button className="btn-code" onClick={handleStartLogin} disabled={loading} title={t("send_code")}>
+                    {loading ? <Spinner className="animate-spin" size={18} /> : <PaperPlaneRight weight="bold" />}
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="animate-float-up text-center">
-                <div className="w-20 h-20 bg-[#8a3ffc]/10 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
-                  <PaperPlaneRight weight="fill" className="text-[#8a3ffc]" />
-                </div>
-                <p className="text-main/60 text-sm mb-6">验证码已发送至您的手机/Telegram 客户端</p>
 
-                <div className="text-left">
-                  <div className="mb-5">
-                    <label>5 位数验证码</label>
-                    <input
-                      type="text"
-                      placeholder="XXXXX"
-                      className="text-center text-xl tracking-[1em]"
-                      value={loginData.phone_code}
-                      onChange={(e) => setLoginData({ ...loginData, phone_code: e.target.value })}
-                    />
-                  </div>
-                  <div className="mb-5">
-                    <label>两步验证密码 (如未开启请留空)</label>
-                    <input
-                      type="password"
-                      placeholder="Cloud Password"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    />
-                  </div>
-                </div>
+                <label>{t("two_step_pass")}</label>
+                <input
+                  type="password"
+                  placeholder={t("two_step_placeholder")}
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                />
 
-                <div className="flex gap-3 mt-8">
-                  <button className="btn-secondary flex-1" onClick={() => setLoginStep("input")}>返回</button>
-                  <button className="btn-gradient flex-1" onClick={handleVerifyLogin} disabled={loading}>
-                    {loading ? <Spinner className="animate-spin" /> : "确认连接"}
-                  </button>
-                </div>
+                <label>{t("proxy")}</label>
+                <input
+                  type="text"
+                  placeholder={t("proxy_placeholder")}
+                  style={{ marginBottom: 0 }}
+                  value={loginData.proxy}
+                  onChange={(e) => setLoginData({ ...loginData, proxy: e.target.value })}
+                />
               </div>
-            )}
+
+              <div className="flex gap-3 mt-8">
+                <button className="btn-secondary flex-1" onClick={() => setShowAddDialog(false)}>{t("cancel")}</button>
+                <button className="btn-gradient flex-1" onClick={handleVerifyLogin} disabled={loading}>
+                  {loading ? <Spinner className="animate-spin" /> : t("confirm_connect")}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -363,7 +333,7 @@ export default function Dashboard() {
                 <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#8a3ffc]">
                   <ListDashes weight="bold" size={20} />
                 </div>
-                <div className="font-bold text-xl">{logsAccountName} 运行日志</div>
+                <div className="font-bold text-xl">{logsAccountName} {t("running_logs")}</div>
               </div>
               <div className="modal-close" onClick={() => setShowLogsDialog(false)}><X weight="bold" /></div>
             </div>
@@ -372,10 +342,10 @@ export default function Dashboard() {
               {logsLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-main/30">
                   <Spinner className="animate-spin mb-4" size={32} />
-                  读取中...
+                  {t("loading")}
                 </div>
               ) : accountLogs.length === 0 ? (
-                <div className="text-center py-20 text-main/20">暂无运行日志</div>
+                <div className="text-center py-20 text-main/20">{t("no_logs")}</div>
               ) : (
                 <div className="space-y-4">
                   {accountLogs.map((log, i) => (
@@ -383,7 +353,7 @@ export default function Dashboard() {
                       <div className="flex justify-between items-center mb-3 text-xs">
                         <span className="text-main/30">{new Date(log.created_at).toLocaleString()}</span>
                         <span className={`px-2 py-0.5 rounded-full ${log.success ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                          {log.success ? 'SUCCESS' : 'FAILURE'}
+                          {log.success ? t("success") : t("failure")}
                         </span>
                       </div>
                       <pre className="whitespace-pre-wrap text-main/70 leading-relaxed overflow-x-auto max-h-[200px] scrollbar-thin">
@@ -397,7 +367,7 @@ export default function Dashboard() {
 
             <div className="p-4 border-t border-white/10 text-center bg-white/5 mt-4">
               <button className="btn-secondary px-10 mx-auto" onClick={() => setShowLogsDialog(false)}>
-                关闭
+                {t("close")}
               </button>
             </div>
           </div>

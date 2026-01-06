@@ -165,6 +165,11 @@ label {
   font-weight: 500;
 }
 
+select option {
+  background-color: var(--glass-bg);
+  color: var(--text-main);
+}
+
 .hidden {
   display: none !important;
 }

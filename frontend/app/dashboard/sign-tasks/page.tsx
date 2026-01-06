@@ -21,7 +21,8 @@ import {
     Spinner,
     Lightning,
     Clock,
-    ChatCircleText
+    ChatCircleText,
+    ArrowClockwise,
 } from "@phosphor-icons/react";
 import { ToastContainer, useToast } from "../../../components/ui/toast";
 import { ThemeLanguageToggle } from "../../../components/ThemeLanguageToggle";
@@ -111,33 +112,32 @@ export default function SignTasksPage() {
     }
 
     return (
-        <div id="tasks-view" className="w-full h-full flex flex-col pt-[72px]">
-            <nav className="navbar fixed top-0 left-0 right-0 z-50 h-[72px] px-5 md:px-10 flex justify-between items-center glass-panel rounded-none border-x-0 border-t-0 bg-white/2 dark:bg-black/5">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard" className="action-btn" title={t("sidebar_home")}>
-                        <CaretLeft weight="bold" />
-                    </Link>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                        <span className="text-main/40 uppercase tracking-widest text-[10px]">{t("sidebar_home")}</span>
-                        <span className="text-main/20">/</span>
-                        <span className="text-main uppercase tracking-widest text-[10px]">{t("sidebar_tasks")}</span>
+        <div id="tasks-view" className="w-full h-full flex flex-col">
+            <nav className="navbar">
+                <div className="nav-brand">
+                    <div className="flex items-center gap-4">
+                        <Link href="/dashboard" className="action-btn !w-8 !h-8" title={t("sidebar_home")}>
+                            <CaretLeft weight="bold" size={18} />
+                        </Link>
+                        <h1 className="text-lg font-bold tracking-tight">{t("sidebar_tasks")}</h1>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/sign-tasks/create" className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg flex items-center gap-2">
-                        <Plus weight="bold" />
-                        {t("add_task")}
+                <div className="top-right-actions">
+                    <button
+                        onClick={() => loadData(token)}
+                        disabled={loading}
+                        className="action-btn !w-8 !h-8"
+                        title={t("refresh")}
+                    >
+                        <ArrowClockwise weight="bold" size={18} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                    <Link href="/dashboard/sign-tasks/create" className="action-btn !w-8 !h-8 !text-[#8a3ffc] hover:bg-[#8a3ffc]/10" title={t("add_task")}>
+                        <Plus weight="bold" size={18} />
                     </Link>
-                    <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
-                    <ThemeLanguageToggle />
                 </div>
             </nav>
 
-            <main className="flex-1 p-5 md:p-10 w-full max-w-[1400px] mx-auto overflow-y-auto animate-float-up pb-20">
-                <header className="mb-10">
-                    <h1 className="text-3xl font-bold tracking-tight mb-2">{t("sidebar_tasks")}</h1>
-                    <p className="text-[#9496a1] text-sm">配置自动签到任务的时间、渠道与账号</p>
-                </header>
+            <main className="main-content !pt-6">
 
                 {loading && tasks.length === 0 ? (
                     <div className="w-full py-20 flex flex-col items-center justify-center text-main/20">

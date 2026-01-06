@@ -225,10 +225,15 @@ export default function AccountTasksContent() {
         try {
             setLoading(true);
             await deleteSignTask(token, taskName);
-            addToast(language === "zh" ? `任务 ${taskName} 已删除` : `Task ${taskName} deleted`, "success");
+            // addToast(language === "zh" ? `任务 ${taskName} 已删除` : `Task ${taskName} deleted`, "success"); // Removed toast as per user request to just refresh
             await loadData(token);
         } catch (err: any) {
-            addToast(err.message || (language === "zh" ? "删除任务失败" : "Delete failed"), "error");
+            // Only show error if it's NOT a 404 (already deleted/doesn't exist)
+            if (err.status !== 404 && !err.message?.includes("not exist")) {
+                addToast(err.message || (language === "zh" ? "删除任务失败" : "Delete failed"), "error");
+            } else {
+                await loadData(token); // Refresh anyway if it doesn't exist
+            }
         } finally {
             setLoading(false);
         }
@@ -416,41 +421,30 @@ export default function AccountTasksContent() {
     return (
         <div id="account-tasks-view" className="w-full h-full flex flex-col">
             <nav className="navbar">
-                <div className="nav-brand" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Link href="/dashboard" className="action-btn" title={t("sidebar_home")}>
-                        <CaretLeft weight="bold" />
-                    </Link>
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                        <span className="text-main/40 uppercase tracking-widest text-[10px]">{t("sidebar_home")}</span>
-                        <span className="text-main/20">/</span>
-                        <span className="text-main uppercase tracking-widest text-[10px]">{accountName}</span>
+                <div className="nav-brand">
+                    <div className="flex items-center gap-4">
+                        <Link href="/dashboard" className="action-btn !w-8 !h-8" title={t("sidebar_home")}>
+                            <CaretLeft weight="bold" size={18} />
+                        </Link>
+                        <h1 className="text-lg font-bold tracking-tight">{accountName}</h1>
                     </div>
                 </div>
                 <div className="top-right-actions">
-                    <button onClick={() => setShowCreateDialog(true)} className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg flex items-center gap-2">
-                        <Plus weight="bold" />
-                        {t("add_task")}
-                    </button>
-                    <div className="w-px h-6 bg-white/10 mx-2 hidden sm:block"></div>
-                    <ThemeLanguageToggle />
-                </div>
-            </nav>
-
-            <main className="main-content">
-                <header className="mb-10 flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight mb-2">{t("task_details")}</h1>
-                        <p className="text-[#9496a1] text-sm">{t("manage_tasks_for")} <span className="text-main font-bold">{accountName}</span></p>
-                    </div>
                     <button
                         onClick={refreshChats}
                         disabled={loading}
-                        className="action-btn"
+                        className="action-btn !w-8 !h-8"
                         title={t("refresh_chats")}
                     >
-                        <ArrowClockwise weight="bold" className={loading ? 'animate-spin' : ''} />
+                        <ArrowClockwise weight="bold" size={18} className={loading ? 'animate-spin' : ''} />
                     </button>
-                </header>
+                    <button onClick={() => setShowCreateDialog(true)} className="action-btn !w-8 !h-8 !text-[#8a3ffc] hover:bg-[#8a3ffc]/10" title={t("add_task")}>
+                        <Plus weight="bold" size={18} />
+                    </button>
+                </div>
+            </nav>
+
+            <main className="main-content !pt-6">
 
                 {loading && tasks.length === 0 ? (
                     <div className="w-full py-20 flex flex-col items-center justify-center text-main/20">
@@ -486,9 +480,9 @@ export default function AccountTasksContent() {
             {/* 创建/编辑对话框通用的渲染逻辑 */}
             {(showCreateDialog || showEditDialog) && (
                 <div className="modal-overlay active" onClick={() => { setShowCreateDialog(false); setShowEditDialog(false); }}>
-                    <div className="glass-panel modal-content !max-w-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-                        <header className="modal-header border-b border-white/5 pb-4 mb-6">
-                            <div className="modal-title flex items-center gap-3">
+                    <div className="glass-panel modal-content !max-w-xl flex flex-col" onClick={e => e.stopPropagation()}>
+                        <header className="modal-header border-b border-white/5 pb-3 mb-2">
+                            <div className="modal-title flex items-center gap-2 !text-base">
                                 <div className="p-2 bg-[#8a3ffc]/10 rounded-lg text-[#b57dff]">
                                     <Lightning weight="fill" size={20} />
                                 </div>
@@ -502,12 +496,13 @@ export default function AccountTasksContent() {
                             </div>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {showCreateDialog && (
-                                    <div>
-                                        <label>{t("task_name")}</label>
+                                    <div className="mb-2">
+                                        <label className="!mb-1">{t("task_name")}</label>
                                         <input
+                                            className="!mb-0"
                                             placeholder="linuxdo_sign"
                                             value={newTask.name}
                                             onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
@@ -539,10 +534,11 @@ export default function AccountTasksContent() {
                                         }}
                                     />
                                 </div>
-                                <div>
-                                    <label>{t("action_interval")}</label>
+                                <div className="mb-2">
+                                    <label className="!mb-1">{t("action_interval")}</label>
                                     <input
                                         type="number"
+                                        className="!mb-0"
                                         value={showCreateDialog ? newTask.action_interval : editTask.action_interval}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 1;
@@ -554,11 +550,12 @@ export default function AccountTasksContent() {
                                 </div>
                             </div>
 
-                            <div className="glass-panel !bg-black/5 p-5 space-y-6 border-white/5">
-                                <div className="flex flex-col md:flex-row gap-6">
+                            <div className="glass-panel !bg-black/5 p-4 space-y-4 border-white/5">
+                                <div className="flex flex-col md:flex-row gap-4">
                                     <div className="flex-1">
-                                        <label className="mb-2 block">{t("select_chat")}</label>
+                                        <label className="mb-1 block">{t("select_chat")}</label>
                                         <select
+                                            className="!mb-0"
                                             value={showCreateDialog ? newTask.chat_id : editTask.chat_id}
                                             onChange={(e) => {
                                                 const id = parseInt(e.target.value);
@@ -589,9 +586,10 @@ export default function AccountTasksContent() {
                                         </select>
                                     </div>
                                     <div className="flex-1">
-                                        <label className="mb-2 block">{t("manual_chat_id")}</label>
+                                        <label className="mb-1 block">{t("manual_chat_id")}</label>
                                         <input
                                             placeholder={t("manual_id_placeholder")}
+                                            className="!mb-0"
                                             value={showCreateDialog ? newTask.chat_id_manual : editTask.chat_id_manual}
                                             onChange={(e) => {
                                                 if (showCreateDialog) {
@@ -603,11 +601,12 @@ export default function AccountTasksContent() {
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label>{t("delete_after")}</label>
+                                <div className="mt-2">
+                                    <label className="!mb-1">{t("delete_after")}</label>
                                     <input
                                         type="number"
                                         placeholder={t("delete_after_placeholder")}
+                                        className="!mb-0"
                                         value={(showCreateDialog ? newTask.delete_after : editTask.delete_after) || ""}
                                         onChange={(e) => {
                                             const val = e.target.value ? parseInt(e.target.value) : undefined;
@@ -627,7 +626,7 @@ export default function AccountTasksContent() {
                                     </h3>
                                     <button
                                         onClick={showCreateDialog ? handleAddAction : handleEditAddAction}
-                                        className="btn-secondary !h-8 !px-3 !text-[10px]"
+                                        className="btn-secondary !h-7 !px-3 !text-[10px]"
                                     >
                                         + {t("add_action")}
                                     </button>
@@ -640,7 +639,7 @@ export default function AccountTasksContent() {
                                                 {index + 1}
                                             </div>
                                             <select
-                                                className="!w-[140px]"
+                                                className="!w-[140px] !mb-0"
                                                 value={action.action}
                                                 onChange={(e) => {
                                                     const val = parseInt(e.target.value);
@@ -663,6 +662,7 @@ export default function AccountTasksContent() {
                                                 {(action.action === 1 || action.action === 3) && (
                                                     <input
                                                         placeholder={action.action === 1 ? t("placeholder_msg") : t("placeholder_btn")}
+                                                        className="!mb-0"
                                                         value={action.text || ""}
                                                         onChange={(e) => {
                                                             if (showCreateDialog) handleUpdateAction(index, "text", e.target.value);
@@ -732,7 +732,7 @@ export default function AccountTasksContent() {
                                 onClick={showCreateDialog ? handleCreateTask : handleSaveEdit}
                                 disabled={loading}
                             >
-                                {loading ? <Spinner className="animate-spin" /> : (showCreateDialog ? t("deploy_now") : t("save_changes"))}
+                                {loading ? <Spinner className="animate-spin" /> : (showCreateDialog ? (language === "zh" ? "添加任务" : t("add_task")) : t("save_changes"))}
                             </button>
                         </footer>
                     </div>

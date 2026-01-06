@@ -54,7 +54,11 @@ export default function SettingsPage() {
     const { t, language } = useLanguage();
     const { toasts, addToast, removeToast } = useToast();
     const [token, setLocalToken] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [userLoading, setUserLoading] = useState(false);
+    const [pwdLoading, setPwdLoading] = useState(false);
+    const [totpLoading, setTotpLoading] = useState(false);
+    const [configLoading, setConfigLoading] = useState(false);
+    const [telegramLoading, setTelegramLoading] = useState(false);
 
     // 用户名修改
     const [usernameForm, setUsernameForm] = useState({
@@ -163,7 +167,7 @@ export default function SettingsPage() {
             return;
         }
         try {
-            setLoading(true);
+            setUserLoading(true);
             const res = await changeUsername(token, usernameForm.newUsername, usernameForm.password);
             addToast(language === "zh" ? "用户名修改成功" : "Username changed successfully", "success");
             if (res.access_token) {
@@ -174,7 +178,7 @@ export default function SettingsPage() {
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "修改失败" : "Failed to change"), "error");
         } finally {
-            setLoading(false);
+            setUserLoading(false);
         }
     };
 
@@ -189,28 +193,28 @@ export default function SettingsPage() {
             return;
         }
         try {
-            setLoading(true);
+            setPwdLoading(true);
             await changePassword(token, passwordForm.oldPassword, passwordForm.newPassword);
             addToast(language === "zh" ? "密码修改成功" : "Password changed successfully", "success");
             setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "修改失败" : "Failed to change"), "error");
         } finally {
-            setLoading(false);
+            setPwdLoading(false);
         }
     };
 
     const handleSetupTOTP = async () => {
         if (!token) return;
         try {
-            setLoading(true);
+            setTotpLoading(true);
             const res = await setupTOTP(token);
             setTotpSecret(res.secret);
             setShowTotpSetup(true);
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "准备失败" : "Setup failed"), "error");
         } finally {
-            setLoading(false);
+            setTotpLoading(false);
         }
     };
 
@@ -221,7 +225,7 @@ export default function SettingsPage() {
             return;
         }
         try {
-            setLoading(true);
+            setTotpLoading(true);
             await enableTOTP(token, totpCode);
             addToast(language === "zh" ? "两步验证已启用" : "2FA enabled", "success");
             setTotpEnabled(true);
@@ -230,7 +234,7 @@ export default function SettingsPage() {
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "启用失败" : "Enable failed"), "error");
         } finally {
-            setLoading(false);
+            setTotpLoading(false);
         }
     };
 
@@ -240,21 +244,21 @@ export default function SettingsPage() {
         const code = prompt(msg);
         if (!code) return;
         try {
-            setLoading(true);
+            setTotpLoading(true);
             await disableTOTP(token, code);
             addToast(language === "zh" ? "两步验证已停用" : "2FA disabled", "success");
             setTotpEnabled(false);
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "停用失败" : "Disable failed"), "error");
         } finally {
-            setLoading(false);
+            setTotpLoading(false);
         }
     };
 
     const handleExport = async () => {
         if (!token) return;
         try {
-            setLoading(true);
+            setConfigLoading(true);
             const config = await exportAllConfigs(token);
             const blob = new Blob([config], { type: "application/json" });
             const url = URL.createObjectURL(blob);
@@ -266,7 +270,7 @@ export default function SettingsPage() {
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "导出失败" : "Export failed"), "error");
         } finally {
-            setLoading(false);
+            setConfigLoading(false);
         }
     };
 
@@ -277,7 +281,7 @@ export default function SettingsPage() {
             return;
         }
         try {
-            setLoading(true);
+            setConfigLoading(true);
             await importAllConfigs(token, importConfig, overwriteConfig);
             addToast(language === "zh" ? "配置导入成功" : "Config imported", "success");
             setImportConfig("");
@@ -287,21 +291,21 @@ export default function SettingsPage() {
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "导入失败" : "Import failed"), "error");
         } finally {
-            setLoading(false);
+            setConfigLoading(false);
         }
     };
 
     const handleSaveAI = async () => {
         if (!token) return;
         try {
-            setLoading(true);
+            setConfigLoading(true);
             await saveAIConfig(token, aiForm);
             addToast(language === "zh" ? "AI 配置保存成功" : "AI config saved", "success");
             loadAIConfig(token);
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "保存失败" : "Save failed"), "error");
         } finally {
-            setLoading(false);
+            setConfigLoading(false);
         }
     };
 
@@ -327,7 +331,7 @@ export default function SettingsPage() {
         if (!token) return;
         if (!confirm(language === "zh" ? "确定要删除 AI 配置吗？" : "Are you sure you want to delete AI config?")) return;
         try {
-            setLoading(true);
+            setConfigLoading(true);
             await deleteAIConfig(token);
             addToast(language === "zh" ? "AI 配置已删除" : "AI config deleted", "success");
             setAIConfigState(null);
@@ -335,20 +339,20 @@ export default function SettingsPage() {
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "删除失败" : "Delete failed"), "error");
         } finally {
-            setLoading(false);
+            setConfigLoading(false);
         }
     };
 
     const handleSaveGlobal = async () => {
         if (!token) return;
         try {
-            setLoading(true);
+            setConfigLoading(true);
             await saveGlobalSettings(token, globalSettings);
             addToast(language === "zh" ? "全局设置保存成功" : "Global settings saved", "success");
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "保存失败" : "Save failed"), "error");
         } finally {
-            setLoading(false);
+            setConfigLoading(false);
         }
     };
 
@@ -359,7 +363,7 @@ export default function SettingsPage() {
             return;
         }
         try {
-            setLoading(true);
+            setTelegramLoading(true);
             await saveTelegramConfig(token, {
                 api_id: telegramForm.api_id,
                 api_hash: telegramForm.api_hash,
@@ -369,7 +373,7 @@ export default function SettingsPage() {
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "保存失败" : "Save failed"), "error");
         } finally {
-            setLoading(false);
+            setTelegramLoading(false);
         }
     };
 
@@ -377,14 +381,14 @@ export default function SettingsPage() {
         if (!token) return;
         if (!confirm(language === "zh" ? "确定要重置 Telegram 配置为默认值吗？" : "Are you sure you want to reset Telegram config to default?")) return;
         try {
-            setLoading(true);
+            setTelegramLoading(true);
             await resetTelegramConfig(token);
             addToast(language === "zh" ? "配置已重置" : "Config reset", "success");
             loadTelegramConfig(token);
         } catch (err: any) {
             addToast(err.message || (language === "zh" ? "操作失败" : "Operation failed"), "error");
         } finally {
-            setLoading(false);
+            setTelegramLoading(false);
         }
     };
 
@@ -460,8 +464,8 @@ export default function SettingsPage() {
                                 />
                             </div>
                         </div>
-                        <button className="btn-gradient w-fit px-6 !py-2.5 !text-xs" onClick={handleChangeUsername} disabled={loading}>
-                            {loading ? <Spinner className="animate-spin" /> : t("change_username")}
+                        <button className="btn-gradient w-fit px-6 !py-2.5 !text-xs" onClick={handleChangeUsername} disabled={userLoading}>
+                            {userLoading ? <Spinner className="animate-spin" /> : t("change_username")}
                         </button>
                     </div>
 
@@ -503,8 +507,8 @@ export default function SettingsPage() {
                                 />
                             </div>
                         </div>
-                        <button className="btn-gradient w-fit px-6 !py-2.5 !text-xs" onClick={handleChangePassword} disabled={loading}>
-                            {loading ? <Spinner className="animate-spin" /> : t("change_password")}
+                        <button className="btn-gradient w-fit px-6 !py-2.5 !text-xs" onClick={handleChangePassword} disabled={pwdLoading}>
+                            {pwdLoading ? <Spinner className="animate-spin" /> : t("change_password")}
                         </button>
                     </div>
 
@@ -531,8 +535,8 @@ export default function SettingsPage() {
                                     <p className="text-[11px] text-main/70 leading-relaxed max-w-2xl">
                                         {t("2fa_enable_desc")}
                                     </p>
-                                    <button onClick={handleSetupTOTP} className="btn-secondary mt-3 w-fit h-8 px-4 text-[11px]" disabled={loading}>
-                                        {t("start_setup")}
+                                    <button onClick={handleSetupTOTP} className="btn-secondary mt-3 w-fit h-8 px-4 text-[11px]" disabled={totpLoading}>
+                                        {totpLoading ? <Spinner className="animate-spin" /> : t("start_setup")}
                                     </button>
                                 </div>
                             </div>
@@ -555,9 +559,12 @@ export default function SettingsPage() {
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-xs text-main mb-1">{t("backup_secret")}</h4>
-                                            <div className="p-2.5 bg-white/2 border border-white/8 rounded-lg text-[10px] break-all font-mono text-[#b57dff]">
-                                                {totpSecret}
-                                            </div>
+                                            <input
+                                                readOnly
+                                                value={totpSecret}
+                                                className="!p-2.5 !bg-white/2 !border-white/8 !rounded-lg !text-[10px] break-all !font-mono !text-[#b57dff] !mb-0 cursor-text"
+                                                onClick={(e) => (e.target as HTMLInputElement).select()}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -570,8 +577,8 @@ export default function SettingsPage() {
                                             placeholder="6 digits"
                                             className="text-center text-3xl tracking-[0.8em] h-14 !py-0 w-full min-w-0 flex-[2] border-2 border-black/10 dark:border-white/10 focus:border-[#8a3ffc]/50 bg-white/5 dark:bg-white/5 rounded-2xl font-bold transition-all shadow-inner"
                                         />
-                                        <button onClick={handleEnableTOTP} className="btn-gradient px-8 shrink-0 h-14 !text-sm font-bold shadow-lg flex-1" disabled={loading}>
-                                            {t("verify")}
+                                        <button onClick={handleEnableTOTP} className="btn-gradient px-8 shrink-0 h-14 !text-sm font-bold shadow-lg flex-1" disabled={totpLoading}>
+                                            {totpLoading ? <Spinner className="animate-spin" /> : t("verify")}
                                         </button>
                                     </div>
                                 </div>
@@ -579,8 +586,8 @@ export default function SettingsPage() {
                         )}
 
                         {totpEnabled && (
-                            <button onClick={handleDisableTOTP} className="btn-secondary !text-rose-400 hover:bg-rose-500/10 w-fit px-6 !py-2.5 !text-xs" disabled={loading}>
-                                {t("disable_2fa")}
+                            <button onClick={handleDisableTOTP} className="btn-secondary !text-rose-400 hover:bg-rose-500/10 w-fit px-6 !py-2.5 !text-xs" disabled={totpLoading}>
+                                {totpLoading ? <Spinner className="animate-spin" /> : t("disable_2fa")}
                             </button>
                         )}
                     </div>
@@ -632,10 +639,10 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="flex gap-3">
-                            <button onClick={handleSaveAI} className="btn-gradient w-fit px-5 !py-2 !text-[11px]" disabled={loading}>
-                                {loading ? <Spinner className="animate-spin" /> : t("save")}
+                            <button onClick={handleSaveAI} className="btn-gradient w-fit px-5 !py-2 !text-[11px]" disabled={configLoading}>
+                                {configLoading ? <Spinner className="animate-spin" /> : t("save")}
                             </button>
-                            <button onClick={handleTestAI} className="btn-secondary w-fit px-5 !py-2 !text-[11px]" disabled={aiTesting || !aiConfig}>
+                            <button onClick={handleTestAI} className="btn-secondary w-fit px-5 !py-2 !text-[11px]" disabled={aiTesting || configLoading}>
                                 {aiTesting ? <Spinner className="animate-spin" /> : t("test_connection")}
                             </button>
                         </div>
@@ -681,8 +688,8 @@ export default function SettingsPage() {
                                 />
                             </div>
                         </div>
-                        <button className="btn-gradient w-fit px-5 !py-2 !text-[11px]" onClick={handleSaveGlobal} disabled={loading}>
-                            {loading ? <Spinner className="animate-spin" /> : t("save_global_params")}
+                        <button className="btn-gradient w-fit px-5 !py-2 !text-[11px]" onClick={handleSaveGlobal} disabled={configLoading}>
+                            {configLoading ? <Spinner className="animate-spin" /> : t("save_global_params")}
                         </button>
                     </div>
 
@@ -695,8 +702,8 @@ export default function SettingsPage() {
                                 </div>
                                 <h2 className="text-lg font-bold">{t("tg_api_config")}</h2>
                             </div>
-                            <button onClick={handleResetTelegram} className="action-btn !w-8 !h-8" title={t("restore_default")}>
-                                <ArrowUDownLeft weight="bold" size={16} />
+                            <button onClick={handleResetTelegram} className="action-btn !w-8 !h-8" title={t("restore_default")} disabled={telegramLoading}>
+                                {telegramLoading ? <Spinner className="animate-spin" size={14} /> : <ArrowUDownLeft weight="bold" size={16} />}
                             </button>
                         </div>
 
@@ -720,8 +727,8 @@ export default function SettingsPage() {
                                 />
                             </div>
                         </div>
-                        <button className="btn-gradient w-fit px-5 !py-2 !text-[11px]" onClick={handleSaveTelegram} disabled={loading}>
-                            {loading ? <Spinner className="animate-spin" /> : t("apply_api_config")}
+                        <button className="btn-gradient w-fit px-5 !py-2 !text-[11px]" onClick={handleSaveTelegram} disabled={telegramLoading}>
+                            {telegramLoading ? <Spinner className="animate-spin" /> : t("apply_api_config")}
                         </button>
                         <div className="mt-4 p-3.5 rounded-xl bg-amber-500/10 dark:bg-amber-500/10 border border-amber-500/30 dark:border-amber-500/20 text-[10px] text-amber-700 dark:text-amber-200/60 leading-relaxed shadow-sm font-medium">
                             <div className="flex items-center gap-2 mb-1.5">
@@ -745,8 +752,8 @@ export default function SettingsPage() {
                             <div className="flex-1">
                                 <label className="mb-2 text-[11px]">{t("export_config")}</label>
                                 <p className="text-[10px] text-[#9496a1] mb-3 leading-relaxed">{t("export_desc")}</p>
-                                <button onClick={handleExport} className="btn-secondary w-full flex items-center justify-center gap-2 h-9 !text-[11px]" disabled={loading}>
-                                    <FloppyDisk weight="bold" />
+                                <button onClick={handleExport} className="btn-secondary w-full flex items-center justify-center gap-2 h-9 !text-[11px]" disabled={configLoading}>
+                                    {configLoading ? <Spinner className="animate-spin" /> : <FloppyDisk weight="bold" />}
                                     {t("download_json")}
                                 </button>
                             </div>
@@ -794,8 +801,8 @@ export default function SettingsPage() {
                                     </span>
                                 </div>
 
-                                <button onClick={handleImport} className="btn-gradient w-full h-10 !text-xs" disabled={loading}>
-                                    {loading ? <Spinner className="animate-spin" /> : t("execute_import")}
+                                <button onClick={handleImport} className="btn-gradient w-full h-10 !text-xs" disabled={configLoading}>
+                                    {configLoading ? <Spinner className="animate-spin" /> : t("execute_import")}
                                 </button>
                             </div>
                         </div>

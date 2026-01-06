@@ -561,16 +561,16 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="space-y-4 w-full">
+                                <div className="space-y-3 w-full max-w-2xl">
                                     <label className="text-[12px] font-bold text-main/60 uppercase tracking-widest">{t("verify_code")}</label>
-                                    <div className="flex gap-5">
+                                    <div className="flex gap-4">
                                         <input
                                             value={totpCode}
                                             onChange={(e) => setTotpCode(e.target.value)}
                                             placeholder="6 digits"
-                                            className="text-center text-4xl tracking-[1.2em] h-20 !py-0 flex-1 border-2 border-black/10 dark:border-white/10 focus:border-[#8a3ffc]/50 bg-white/5 dark:bg-white/5 rounded-2xl font-bold transition-all shadow-inner"
+                                            className="text-center text-3xl tracking-[0.8em] h-14 !py-0 w-full min-w-0 flex-[2] border-2 border-black/10 dark:border-white/10 focus:border-[#8a3ffc]/50 bg-white/5 dark:bg-white/5 rounded-2xl font-bold transition-all shadow-inner"
                                         />
-                                        <button onClick={handleEnableTOTP} className="btn-gradient px-14 shrink-0 h-20 !text-lg font-bold shadow-lg" disabled={loading}>
+                                        <button onClick={handleEnableTOTP} className="btn-gradient px-8 shrink-0 h-14 !text-sm font-bold shadow-lg flex-1" disabled={loading}>
                                             {t("verify")}
                                         </button>
                                     </div>

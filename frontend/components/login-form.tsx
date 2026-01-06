@@ -33,10 +33,12 @@ export default function LoginForm() {
     } catch (err: any) {
       const msg = err?.message || t("login_failed");
       let displayMsg = msg;
-      if (msg.includes("Invalid credentials") || msg.includes("Invalid username or password")) {
-        displayMsg = t("user_or_pass_error");
-      } else if (msg.includes("TOTP code required") || msg.includes("Invalid TOTP code")) {
+      const lowerMsg = msg.toLowerCase();
+      
+      if (lowerMsg.includes("totp")) {
         displayMsg = t("totp_error");
+      } else if (lowerMsg.includes("invalid") || lowerMsg.includes("credentials") || lowerMsg.includes("password")) {
+        displayMsg = t("user_or_pass_error");
       }
       setErrorMsg(displayMsg);
     } finally {

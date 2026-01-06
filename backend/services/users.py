@@ -8,12 +8,15 @@ from backend.models.user import User
 
 def ensure_admin(db: Session, username: str = "admin", password: str = "admin123"):
     """
-    Create a default admin user if none exists.
-    In production, override via env/DB migration and rotate password.
+    仅在用户表为空时创建一个默认管理员。
+    防止用户修改用户名后，系统又自动创建一个默认的 admin 账号。
     """
-    user = db.query(User).filter(User.username == username).first()
-    if user:
-        return user
+    # 检查是否已有任何用户存在
+    first_user = db.query(User).first()
+    if first_user:
+        return first_user
+        
+    # 如果没有任何用户，则创建默认管理员
     new_user = User(username=username, password_hash=hash_password(password))
     db.add(new_user)
     db.commit()

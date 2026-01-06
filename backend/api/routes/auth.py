@@ -32,17 +32,16 @@ class ResetTOTPResponse(BaseModel):
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    ensure_admin(db)  # make sure admin exists
     user = authenticate_user(db, payload.username, payload.password)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password"
         )
     if user.totp_secret:
         if not payload.totp_code or not verify_totp(user.totp_secret, payload.totp_code):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or missing TOTP code",
+                detail="TOTP_REQUIRED_OR_INVALID",
             )
     access_token = create_access_token(
         data={"sub": user.username},

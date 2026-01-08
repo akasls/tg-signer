@@ -810,6 +810,11 @@ class UserSigner(BaseUserWorker[SignConfigV3]):
                     now_date_str = str(now.date())
                     self.context = self.ensure_ctx()
                     if need_sign(now_date_str):
+                        if only_once and config.random_seconds > 0:
+                            delay = random.randint(0, int(config.random_seconds))
+                            if delay > 0:
+                                self.log(f"单次执行随机延迟: {delay} 秒")
+                                await asyncio.sleep(delay)
                         await sign_once()
 
             except (OSError, errors.Unauthorized) as e:

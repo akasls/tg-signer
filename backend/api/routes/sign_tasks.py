@@ -223,7 +223,7 @@ def update_sign_task(
         raise HTTPException(status_code=500, detail=f"更新任务失败: {str(e)}")
 
 
-@router.delete("/{task_name}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{task_name}", status_code=status.HTTP_200_OK)
 def delete_sign_task(
     task_name: str,
     current_user=Depends(get_current_user),
@@ -241,7 +241,7 @@ def delete_sign_task(
 
 
 @router.post("/{task_name}/run", response_model=RunTaskResult)
-def run_sign_task(
+async def run_sign_task(
     task_name: str,
     account_name: str,
     current_user=Depends(get_current_user),
@@ -252,8 +252,18 @@ def run_sign_task(
     if not task:
         raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
     
-    result = sign_task_service.run_task(account_name, task_name)
+    result = await sign_task_service.run_task_with_logs(account_name, task_name)
     return result
+
+
+@router.get("/{task_name}/logs", response_model=List[str])
+def get_sign_task_logs(
+    task_name: str,
+    current_user=Depends(get_current_user),
+):
+    """获取正在运行任务的实时日志"""
+    logs = sign_task_service.get_active_logs(task_name)
+    return logs
 
 
 @router.get("/chats/{account_name}", response_model=List[ChatOut])

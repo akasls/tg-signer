@@ -24,6 +24,8 @@ class SignTaskService:
         self.run_history_dir = self.workdir / ".run_history"
         self.run_history_dir.mkdir(parents=True, exist_ok=True)
         print(f"DEBUG: 初始化 SignTaskService, signs_dir={self.signs_dir}, exists={self.signs_dir.exists()}")
+        self._active_logs: Dict[str, List[str]] = {}  # 存储正在运行任务的实时日志
+        self._active_tasks: Dict[str, bool] = {}     # 记录正在运行的任务
 
     def _get_last_run_info(self, task_dir: Path) -> Optional[Dict[str, Any]]:
         """
@@ -407,6 +409,90 @@ class SignTaskService:
                 "output": "",
                 "error": str(e),
             }
+
+    def get_active_logs(self, task_name: str) -> List[str]:
+        """获取正在运行任务的日志"""
+        return self._active_logs.get(task_name, [])
+
+    def is_task_running(self, task_name: str) -> bool:
+        """检查任务是否正在运行"""
+        return self._active_tasks.get(task_name, False)
+
+    async def run_task_with_logs(self, account_name: str, task_name: str) -> Dict[str, Any]:
+        """运行任务并实时捕获日志"""
+        import asyncio
+        
+        if self.is_task_running(task_name):
+            return {"success": False, "error": "任务已经在运行中", "output": ""}
+
+        self._active_tasks[task_name] = True
+        self._active_logs[task_name] = []
+        
+        session_dir = str(Path(settings.data_dir) / "sessions")
+        cmd = [
+            "tg-signer",
+            "--workdir", str(self.workdir),
+            "--session_dir", session_dir,
+            "--account", account_name,
+            "run-once",
+            task_name,
+        ]
+
+        env = os.environ.copy()
+        from backend.services.config import config_service
+        tg_config = config_service.get_telegram_config()
+        if tg_config.get("api_id"):
+            env["TG_API_ID"] = str(tg_config["api_id"])
+        if tg_config.get("api_hash"):
+            env["TG_API_HASH"] = tg_config["api_hash"]
+
+        try:
+            # 使用 asyncio 创建子进程
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+                env=env
+            )
+
+            full_output = []
+            while True:
+                line = await process.stdout.readline()
+                if not line:
+                    break
+                decoded_line = line.decode('utf-8', errors='replace').strip()
+                if decoded_line:
+                    self._active_logs[task_name].append(decoded_line)
+                    full_output.append(decoded_line)
+                    # 保持日志长度，避免内存占用过大
+                    if len(self._active_logs[task_name]) > 500:
+                        self._active_logs[task_name].pop(0)
+
+            await process.wait()
+            success = process.returncode == 0
+            output_str = "\n".join(full_output)
+            
+            self._save_run_info(task_name, success, "" if success else "执行失败")
+            
+            return {
+                "success": success,
+                "output": output_str,
+                "error": "" if success else "Exit code " + str(process.returncode),
+            }
+        except Exception as e:
+            msg = f"运行时发生异常: {str(e)}"
+            self._active_logs[task_name].append(msg)
+            self._save_run_info(task_name, False, msg)
+            return {"success": False, "output": "", "error": msg}
+        finally:
+            self._active_tasks[task_name] = False
+            # 注意：不立即删除日志，让前端有最后一次机会读取
+            # 我们可以在下一次任务开始时清理，或者设置一个延时清理
+            async def cleanup():
+                await asyncio.sleep(60) # 60秒后清理
+                if not self._active_tasks.get(task_name):
+                    self._active_logs.pop(task_name, None)
+            asyncio.create_task(cleanup())
 
 
 # 创建全局实例

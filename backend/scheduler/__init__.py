@@ -111,7 +111,9 @@ def sync_jobs() -> None:
 def init_scheduler() -> BackgroundScheduler:
     global scheduler
     if scheduler is None:
-        scheduler = BackgroundScheduler()
+        from backend.core.config import get_settings
+        settings = get_settings()
+        scheduler = BackgroundScheduler(timezone=settings.timezone)
         scheduler.start()
         sync_jobs()
     return scheduler

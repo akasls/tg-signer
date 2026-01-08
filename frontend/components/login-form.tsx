@@ -34,7 +34,7 @@ export default function LoginForm() {
       const msg = err?.message || t("login_failed");
       let displayMsg = msg;
       const lowerMsg = msg.toLowerCase();
-      
+
       if (lowerMsg.includes("totp")) {
         displayMsg = t("totp_error");
       } else if (lowerMsg.includes("invalid") || lowerMsg.includes("credentials") || lowerMsg.includes("password")) {
@@ -47,16 +47,16 @@ export default function LoginForm() {
   };
 
   return (
-    <div id="login-view" className="w-full min-h-screen flex flex-col justify-center items-center relative p-6 md:p-10 overflow-x-hidden bg-black/5 dark:bg-black/20">
-      <div className="glass-panel w-full max-w-[420px] p-6 md:p-10 text-center animate-float-up border border-black/5 dark:border-white/5 shadow-2xl my-auto">
-        <div className="mb-6">
+    <div id="login-view" className="w-full min-h-screen flex flex-col justify-center items-center relative p-4 overflow-x-hidden bg-black/5 dark:bg-black/20">
+      <div className="glass-panel w-full max-w-[420px] p-6 md:p-8 text-center animate-float-up border border-black/5 dark:border-white/5 shadow-2xl">
+        <div className="mb-4">
           <Lightning
             weight="fill"
             className="inline-block"
             style={{ fontSize: '48px', color: '#fcd34d', filter: 'drop-shadow(0 0 12px rgba(252, 211, 77, 0.4))' }}
           />
-          <div className="brand-text-grad mt-2 text-xl">TG SignPulse</div>
-          <p className="text-[#9496a1] text-[11px] mt-2 leading-relaxed px-4 font-medium">{t("settings_desc")}</p>
+          <div className="brand-text-grad mt-1 text-xl">TG SignPulse</div>
+          <p className="text-[#9496a1] text-[11px] mt-1 leading-relaxed px-4 font-medium">{t("settings_desc")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="text-left" autoComplete="off">
@@ -115,7 +115,7 @@ export default function LoginForm() {
           </button>
         </form>
 
-        <div className="login-footer-icons !mt-8 !pt-6 border-t border-black/5 dark:border-white/5 flex items-center justify-center gap-6">
+        <div className="login-footer-icons !mt-6 !pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-center gap-6">
           <ThemeLanguageToggle />
           <a
             href="https://github.com/akasls/TG-SignPulse"

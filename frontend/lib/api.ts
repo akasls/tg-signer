@@ -56,6 +56,9 @@ async function request<T>(
 
     throw new Error(errorMessage);
   }
+  if (res.status === 204) {
+    return {} as T;
+  }
   return res.json();
 }
 
@@ -443,4 +446,7 @@ export const runSignTask = (token: string, name: string, accountName: string) =>
 
 export const getAccountChats = (token: string, accountName: string) =>
   request<ChatInfo[]>(`/sign-tasks/chats/${accountName}`, {}, token);
+
+export const getSignTaskLogs = (token: string, name: string) =>
+  request<string[]>(`/sign-tasks/${name}/logs`, {}, token);
 

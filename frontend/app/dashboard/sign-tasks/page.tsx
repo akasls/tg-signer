@@ -8,6 +8,7 @@ import {
     listSignTasks,
     deleteSignTask,
     runSignTask,
+    getSignTaskLogs,
     listAccounts,
     SignTask,
     AccountInfo,
@@ -23,6 +24,7 @@ import {
     Clock,
     ChatCircleText,
     ArrowClockwise,
+    X,
 } from "@phosphor-icons/react";
 import { ToastContainer, useToast } from "../../../components/ui/toast";
 import { ThemeLanguageToggle } from "../../../components/ThemeLanguageToggle";
@@ -37,6 +39,9 @@ export default function SignTasksPage() {
     const [accounts, setAccounts] = useState<AccountInfo[]>([]);
     const [loading, setLoading] = useState(false);
     const [checking, setChecking] = useState(true);
+    const [runningTask, setRunningTask] = useState<string | null>(null);
+    const [runLogs, setRunLogs] = useState<string[]>([]);
+    const [isDone, setIsDone] = useState(false);
 
     useEffect(() => {
         const tokenStr = getToken();
@@ -87,21 +92,46 @@ export default function SignTasksPage() {
     const handleRun = async (taskName: string) => {
         if (!token) return;
 
-        // 选择账号 (Simplified for multi-language, usually this would be a select dialog)
         const accountName = prompt(t("username"));
         if (!accountName) return;
 
         try {
             setLoading(true);
+            setRunningTask(taskName);
+            setRunLogs([]);
+            setIsDone(false);
+
+            // 启动轮询日志
+            const pollInterval = setInterval(async () => {
+                try {
+                    const logs = await getSignTaskLogs(token, taskName);
+                    if (logs && logs.length > 0) {
+                        setRunLogs(logs);
+                    }
+                } catch (e) {
+                    console.error("Poll logs error", e);
+                }
+            }, 1000);
+
             const result = await runSignTask(token, taskName, accountName);
 
-            if (result.success) {
-                addToast(taskName + " " + t("run") + " " + t("login_success"), "success");
-            } else {
+            clearInterval(pollInterval);
+
+            // 获取最后一次日志
+            try {
+                const finalLogs = await getSignTaskLogs(token, taskName);
+                if (finalLogs) setRunLogs(finalLogs);
+            } catch { }
+
+            setIsDone(true);
+            if (!result.success) {
                 addToast(t("login_failed") + ": " + result.error, "error");
+            } else {
+                addToast(taskName + " " + t("run") + " " + t("login_success"), "success");
             }
         } catch (err: any) {
             addToast(err.message || t("login_failed"), "error");
+            setRunningTask(null);
         } finally {
             setLoading(false);
         }
@@ -217,6 +247,68 @@ export default function SignTasksPage() {
             </main>
 
             <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+            {/* 运行日志 Modal */}
+            {runningTask && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="glass-panel w-full max-w-2xl h-[500px] flex flex-col shadow-2xl border border-white/10 overflow-hidden animate-zoom-in">
+                        <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/2">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-[#8a3ffc]/20 flex items-center justify-center text-[#b57dff]">
+                                    <Lightning weight="fill" size={18} />
+                                </div>
+                                <h3 className="font-bold tracking-tight">任务运行日志: {runningTask}</h3>
+                            </div>
+                            {isDone && (
+                                <button
+                                    onClick={() => setRunningTask(null)}
+                                    className="action-btn !w-8 !h-8 hover:bg-white/10"
+                                >
+                                    <X weight="bold" />
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] leading-relaxed bg-black/20">
+                            {runLogs.length === 0 ? (
+                                <div className="flex items-center gap-2 text-main/30 italic">
+                                    <Spinner className="animate-spin" size={12} />
+                                    等待日志输出...
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {runLogs.map((log, i) => (
+                                        <div key={i} className="text-main/80 flex gap-2">
+                                            <span className="text-main/20 select-none w-6 text-right">{(i + 1).toString().padStart(2, '0')}</span>
+                                            <span className="break-all">{log}</span>
+                                        </div>
+                                    ))}
+                                    {!isDone && (
+                                        <div className="flex items-center gap-2 text-[#8a3ffc] mt-2 italic animate-pulse">
+                                            <Spinner className="animate-spin" size={12} />
+                                            正在运行中...
+                                        </div>
+                                    )}
+                                    {isDone && (
+                                        <div className="text-emerald-400 mt-4 font-bold border-t border-emerald-500/20 pt-4 flex items-center gap-2">
+                                            <Lightning weight="fill" />
+                                            任务执行完成
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-white/5 bg-white/2 flex justify-end">
+                            <button
+                                onClick={() => setRunningTask(null)}
+                                disabled={!isDone}
+                                className={`px-6 py-2 rounded-xl font-bold text-xs transition-all ${isDone ? 'btn-gradient shadow-lg' : 'bg-white/5 text-main/20 cursor-not-allowed'}`}
+                            >
+                                {isDone ? '关闭' : '正在执行...'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

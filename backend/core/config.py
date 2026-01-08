@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     secret_key: str = get_default_secret_key()
     access_token_expire_hours: int = 12
 
+    timezone: str = os.getenv("TZ", "Asia/Hong_Kong")
     data_dir: Path = Path("/data")
     db_path: Optional[Path] = None
     signer_workdir: Optional[Path] = None

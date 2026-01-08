@@ -1,6 +1,6 @@
-# 🚀 TG SignPulse
+# 🚀 TG-SignPulse
 
-**TG SignPulse** 是一款基于 `tg-signer` 核心开发的、拥有现代化 Web 界面的 Telegram 自动化任务管理系统。它不仅支持每日定时签到，还提供了实时监控、自动回复、多账号管理以及精美的可视化运行报告。
+**TG-SignPulse** 是一款基于 `tg-signer` 核心开发的、拥有现代化 Web 界面的 Telegram 自动化任务管理系统。它不仅支持每日定时签到，还提供了实时监控、自动回复、多账号管理以及精美的可视化运行报告。
 
 ---
 
@@ -48,20 +48,19 @@ Zeabur 是一个非常友好的云端部署平台，本项目已针对 Zeabur �
 
 ```bash
 # 1. 创建数据存储目录
-mkdir -p /opt/tg-signer/data
+mkdir -p /opt/tg-signpulse/data
 
 # 2. 拉取并启动镜像
-# 注意替换 <YOUR_USERNAME> 为您的 GitHub 用户名
 docker run -d \
-  --name tg-signer \
+  --name tg-signpulse \
   -p 8080:8080 \
   -e TZ=Asia/Hong_Kong \
   -e SECRET_KEY=your_secret_key \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=admin_pass \
-  -v /opt/tg-signer/data:/data \
+  -v /opt/tg-signpulse/data:/data \
   --restart always \
-  ghcr.io/<YOUR_USERNAME>/tg-signer:latest
+  ghcr.io/akasls/tg-signpulse:latest
 ```
 
 > **注意**: 初次部署后，请及时在 Web 端修改初始密码并配置 Telegram API ID/Hash。

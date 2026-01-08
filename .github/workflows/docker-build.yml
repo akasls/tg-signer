@@ -37,6 +37,8 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=sha
+          flavor: |
+            latest=true
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

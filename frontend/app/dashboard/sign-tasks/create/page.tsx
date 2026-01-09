@@ -188,41 +188,81 @@ export default function CreateSignTaskPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label>任务名称</label>
+                                <label className="text-xs font-bold text-main/40 uppercase tracking-wider">{language === "zh" ? "任务名称" : "Task Name"}</label>
                                 <input
+                                    className="!mb-0"
                                     value={taskName}
                                     onChange={(e) => setTaskName(e.target.value)}
-                                    placeholder="例如: linuxdo_sign"
+                                    placeholder={language === "zh" ? "例如: linuxdo_sign" : "e.g. linuxdo_sign"}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label>签到时间 (CRON)</label>
-                                <input
-                                    className="font-mono"
-                                    value={signAt}
-                                    onChange={(e) => setSignAt(e.target.value)}
-                                    placeholder="0 6 * * *"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label>关联账号</label>
+                                <label className="text-xs font-bold text-main/40 uppercase tracking-wider">{language === "zh" ? "关联账号" : "Associated Account"}</label>
                                 <select
+                                    className="!mb-0"
                                     value={selectedAccount}
                                     onChange={(e) => handleAccountChange(e.target.value)}
                                 >
                                     {accounts.map(acc => <option key={acc.name} value={acc.name}>{acc.name}</option>)}
                                 </select>
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label>随机延迟 (秒)</label>
+                                <label className="text-xs font-bold text-main/40 uppercase tracking-wider">{language === "zh" ? "签到周期 (CRON)" : "Sign-in Schedule (CRON)"}</label>
                                 <input
-                                    type="number"
-                                    value={randomSeconds}
-                                    onChange={(e) => setRandomSeconds(parseInt(e.target.value) || 0)}
+                                    placeholder="0 6 * * *"
+                                    className="!mb-0"
+                                    value={signAt}
+                                    onChange={(e) => setSignAt(e.target.value)}
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-main/40 uppercase tracking-wider">{language === "zh" ? "随机延迟 (分钟)" : "Random Delay (Minutes)"}</label>
+                                <input
+                                    type="text"
+                                    className="!mb-0"
+                                    placeholder="0"
+                                    value={randomMinutes}
+                                    onChange={(e) => setRandomMinutes(parseInt(e.target.value) || 0)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-5 glass-panel !bg-black/5 space-y-4 border-white/5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-main/40 uppercase tracking-wider">{language === "zh" ? "选择会话" : "Select Chat"}</label>
+                                    <select
+                                        className="!mb-0 w-full"
+                                        value={chatId}
+                                        onChange={(e) => {
+                                            const id = parseInt(e.target.value);
+                                            const chat = accountChats.find(c => c.id === id);
+                                            const chatName = chat?.title || chat?.username || "";
+                                            setChatId(id);
+                                            if (!taskName) setTaskName(chatName);
+                                        }}
+                                    >
+                                        <option value={0}>{language === "zh" ? "请选择..." : "Select..."}</option>
+                                        {accountChats.map(chat => (
+                                            <option key={chat.id} value={chat.id}>
+                                                {chat.title || chat.username || chat.id}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-main/40 uppercase tracking-wider">{language === "zh" ? "手动输入 Chat ID" : "Manual Chat ID"}</label>
+                                    <input
+                                        placeholder={language === "zh" ? "例如: -10012345678" : "e.g. -10012345678"}
+                                        className="!mb-0"
+                                        value={chatId === 0 ? "" : chatId}
+                                        readOnly
+                                    />
+                                    <p className="text-[10px] text-main/30 mt-1">{language === "zh" ? "从上方选择后自动填充" : "Auto-filled after selecting above"}</p>
+                                </div>
                             </div>
                         </div>
                     </section>

@@ -93,12 +93,12 @@ async def serve_spa(full_path: str):
 
 
 @app.on_event("startup")
-def on_startup() -> None:
+async def on_startup() -> None:
     ensure_data_dirs(settings)
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         ensure_admin(db)
-    init_scheduler()
+    await init_scheduler()
 
 
 @app.on_event("shutdown")

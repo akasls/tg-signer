@@ -20,25 +20,47 @@ def _base_args(account_name: str) -> list[str]:
     ]
 
 
-def run_task_cli(
+async def async_run_task_cli(
     account_name: str,
     task_name: str,
     num_of_dialogs: int = 50,
-) -> subprocess.CompletedProcess:
+    callback: Optional[Callable[[str], None]] = None,
+) -> tuple[int, str, str]:
     """
-    Run a tg-signer sign task using CLI:
-    tg-signer --workdir ... --session_dir ... --account <account_name> run <task_name>
+    Asynchronously run a tg-signer sign task using CLI.
+    Returns (returncode, stdout, stderr)
     """
+    import asyncio
     args = _base_args(account_name) + [
         "run",
         task_name,
         "--num-of-dialogs",
         str(num_of_dialogs),
     ]
-    return subprocess.run(
-        args,
-        capture_output=True,
-        text=True,
+    
+    process = await asyncio.create_subprocess_exec(
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT, # 合并 stdout 和 stderr 以便于即时按顺序捕获日志
+    )
+    
+    full_output = []
+    while True:
+        line = await process.stdout.readline()
+        if not line:
+            break
+        decoded_line = line.decode('utf-8', errors='replace').rstrip()
+        if decoded_line:
+            full_output.append(decoded_line)
+            if callback:
+                callback(decoded_line)
+    
+    await process.wait()
+    
+    return (
+        process.returncode or 0,
+        "\n".join(full_output),
+        "" # stderr 已经由于合并捕获到了 stdout 中
     )
 
 

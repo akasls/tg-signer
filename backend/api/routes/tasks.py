@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -22,7 +23,7 @@ def list_tasks(db: Session = Depends(get_db), current_user=Depends(get_current_u
 
 
 @router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
-def create_task(
+async def create_task(
     payload: TaskCreate,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -37,7 +38,7 @@ def create_task(
         enabled=payload.enabled,
         account_id=payload.account_id,
     )
-    sync_jobs()
+    await sync_jobs()
     return task
 
 
@@ -54,7 +55,7 @@ def get_task(
 
 
 @router.put("/{task_id}", response_model=TaskOut)
-def update_task(
+async def update_task(
     task_id: int,
     payload: TaskUpdate,
     db: Session = Depends(get_db),
@@ -75,12 +76,12 @@ def update_task(
         enabled=payload.enabled,
         account_id=payload.account_id,
     )
-    sync_jobs()
+    await sync_jobs()
     return updated
 
 
 @router.delete("/{task_id}", status_code=status.HTTP_200_OK)
-def delete_task(
+async def delete_task(
     task_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -89,12 +90,12 @@ def delete_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     task_service.delete_task(db, task)
-    sync_jobs()
+    await sync_jobs()
     return {"ok": True}
 
 
 @router.post("/{task_id}/run", response_model=TaskLogOut)
-def run_task(
+async def run_task(
     task_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -102,7 +103,7 @@ def run_task(
     task = task_service.get_task(db, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    log = task_service.run_task_once(db, task)
+    log = await task_service.run_task_once(db, task)
     return log
 
 
@@ -121,3 +122,82 @@ def list_logs(
 
 
 
+from fastapi import WebSocket, WebSocketDisconnect, Query
+from backend.core.auth import verify_token
+import asyncio
+
+@router.websocket("/ws/{task_id}")
+async def task_logs_ws(
+    websocket: WebSocket,
+    task_id: int,
+    token: str = Query(...),
+):
+    """
+    WebSocket 实时推送数据库任务日志
+    """
+    # 验证 Token
+    try:
+        user = verify_token(token)
+        if not user:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+    except Exception:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    await websocket.accept()
+    
+    last_idx = 0
+    try:
+        while True:
+            # 获取当前所有日志
+            active_logs = task_service.get_active_logs(task_id)
+            
+            # 如果有新内容，则推送
+            if len(active_logs) > last_idx:
+                new_logs = active_logs[last_idx:]
+                await websocket.send_json({
+                    "type": "logs",
+                    "data": new_logs,
+                    "is_running": task_service.is_task_running(task_id)
+                })
+                last_idx = len(active_logs)
+            
+            # 如果任务已结束且日志已推完
+            if not task_service.is_task_running(task_id) and last_idx >= len(active_logs):
+                await websocket.send_json({
+                    "type": "done",
+                    "is_running": False
+                })
+                break
+                
+            await asyncio.sleep(0.5)
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"WS Error for Task {task_id}: {e}")
+    finally:
+        try:
+            await websocket.close()
+        except:
+            pass
+@router.get("/logs/{log_id}/output")
+def get_log_output(
+    log_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """获取任务日志的完整输出文件内容"""
+    log = db.query(TaskLog).filter(TaskLog.id == log_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    
+    if not log.log_path or not Path(log.log_path).exists():
+        return {"output": log.output or "No detailed log file available."}
+    
+    try:
+        with open(log.log_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return {"output": content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read log file: {str(e)}")

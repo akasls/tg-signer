@@ -138,6 +138,7 @@ export default function AccountTasksContent() {
     const [tasks, setTasks] = useState<SignTask[]>([]);
     const [chats, setChats] = useState<ChatInfo[]>([]);
     const [loading, setLoading] = useState(false);
+    const [refreshingChats, setRefreshingChats] = useState(false);
 
     // 创建任务对话框
     const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -195,9 +196,23 @@ export default function AccountTasksContent() {
             setTasks(tasksData);
             setChats(chatsData);
         } catch (err: any) {
-            addToast(err.message || t("failure"), "error");
+            addToast(err.message || (language === "zh" ? "加载数据失败" : "Load failed"), "error");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRefreshChats = async () => {
+        if (!token || !accountName) return;
+        try {
+            setRefreshingChats(true);
+            const chatsData = await getAccountChats(token, accountName, true);
+            setChats(chatsData);
+            addToast(language === "zh" ? "对话列表已刷新" : "Chat list refreshed", "success");
+        } catch (err: any) {
+            addToast(err.message || (language === "zh" ? "刷新失败" : "Refresh failed"), "error");
+        } finally {
+            setRefreshingChats(false);
         }
     };
 
@@ -479,7 +494,7 @@ export default function AccountTasksContent() {
 
             {/* 创建/编辑对话框通用的渲染逻辑 */}
             {(showCreateDialog || showEditDialog) && (
-                <div className="modal-overlay active" onClick={() => { setShowCreateDialog(false); setShowEditDialog(false); }}>
+                <div className="modal-overlay active">
                     <div className="glass-panel modal-content !max-w-xl flex flex-col" onClick={e => e.stopPropagation()}>
                         <header className="modal-header border-b border-white/5 pb-3 mb-2">
                             <div className="modal-title flex items-center gap-2 !text-base">
@@ -500,7 +515,7 @@ export default function AccountTasksContent() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {showCreateDialog && (
                                     <div className="mb-2">
-                                        <label className="!mb-1">{t("task_name")}</label>
+                                        <label>{t("task_name")}</label>
                                         <input
                                             className="!mb-0"
                                             placeholder="linuxdo_sign"
@@ -520,10 +535,11 @@ export default function AccountTasksContent() {
                                         }
                                     />
                                 </div>
-                                <div>
+                                <div className="mb-2">
                                     <label>{t("random_delay")}</label>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        className="!mb-0"
                                         placeholder="0"
                                         value={showCreateDialog ? newTask.random_minutes : editTask.random_minutes}
                                         onChange={(e) => {
@@ -535,9 +551,9 @@ export default function AccountTasksContent() {
                                     />
                                 </div>
                                 <div className="mb-2">
-                                    <label className="!mb-1">{t("action_interval")}</label>
+                                    <label>{t("action_interval")}</label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         className="!mb-0"
                                         value={showCreateDialog ? newTask.action_interval : editTask.action_interval}
                                         onChange={(e) => {
@@ -553,26 +569,41 @@ export default function AccountTasksContent() {
                             <div className="glass-panel !bg-black/5 p-4 space-y-4 border-white/5">
                                 <div className="flex flex-col md:flex-row gap-4">
                                     <div className="flex-1">
-                                        <label className="mb-1 block">{t("select_chat")}</label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="!mb-0">{t("select_chat")}</label>
+                                            <button
+                                                onClick={handleRefreshChats}
+                                                disabled={refreshingChats}
+                                                className="text-[10px] text-[#8a3ffc] hover:text-[#8a3ffc]/80 transition-colors uppercase font-bold tracking-tighter flex items-center gap-1"
+                                                title={language === "zh" ? "从 Telegram 重新获取对话" : "Re-fetch chats from Telegram"}
+                                            >
+                                                {refreshingChats ? (
+                                                    <div className="w-3 h-3 border-2 border-[#8a3ffc] border-t-transparent rounded-full animate-spin"></div>
+                                                ) : <ArrowClockwise weight="bold" size={12} />}
+                                                {language === "zh" ? "刷新列表" : "Refresh"}
+                                            </button>
+                                        </div>
                                         <select
                                             className="!mb-0"
                                             value={showCreateDialog ? newTask.chat_id : editTask.chat_id}
                                             onChange={(e) => {
                                                 const id = parseInt(e.target.value);
                                                 const chat = chats.find(c => c.id === id);
+                                                const chatName = chat?.title || chat?.username || "";
                                                 if (showCreateDialog) {
                                                     setNewTask({
                                                         ...newTask,
+                                                        name: newTask.name || chatName,
                                                         chat_id: id,
-                                                        chat_id_manual: "",
-                                                        chat_name: chat?.title || chat?.username || "",
+                                                        chat_id_manual: id !== 0 ? id.toString() : "",
+                                                        chat_name: chatName,
                                                     });
                                                 } else {
                                                     setEditTask({
                                                         ...editTask,
                                                         chat_id: id,
-                                                        chat_id_manual: "",
-                                                        chat_name: chat?.title || "",
+                                                        chat_id_manual: id !== 0 ? id.toString() : "",
+                                                        chat_name: chatName,
                                                     });
                                                 }
                                             }}
@@ -602,9 +633,9 @@ export default function AccountTasksContent() {
                                     </div>
                                 </div>
                                 <div className="mt-2">
-                                    <label className="!mb-1">{t("delete_after")}</label>
+                                    <label>{t("delete_after")}</label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         placeholder={t("delete_after_placeholder")}
                                         className="!mb-0"
                                         value={(showCreateDialog ? newTask.delete_after : editTask.delete_after) || ""}

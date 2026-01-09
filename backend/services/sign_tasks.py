@@ -18,44 +18,48 @@ class SignTaskService:
     """签到任务服务类"""
 
     def __init__(self):
+        from backend.core.config import get_settings
+        settings = get_settings()
         self.workdir = Path(settings.data_dir) / ".signer"
         self.signs_dir = self.workdir / "signs"
+        self.run_history_dir = self.workdir / "history"
         self.signs_dir.mkdir(parents=True, exist_ok=True)
-        self.run_history_dir = self.workdir / ".run_history"
         self.run_history_dir.mkdir(parents=True, exist_ok=True)
         print(f"DEBUG: 初始化 SignTaskService, signs_dir={self.signs_dir}, exists={self.signs_dir.exists()}")
         self._active_logs: Dict[str, List[str]] = {}  # 存储正在运行任务的实时日志
         self._active_tasks: Dict[str, bool] = {}     # 记录正在运行的任务
+        self._tasks_cache = None  # 内存缓存
         self._cleanup_old_logs()
 
     def _cleanup_old_logs(self):
         """清理超过 3 天的日志"""
         from datetime import datetime, timedelta
-        import time
         
-        cutoff = time.time() - (3 * 24 * 3600)
-        try:
-            for log_file in self.run_history_dir.glob("*.json"):
-                if log_file.stat().st_mtime < cutoff:
+        if not self.run_history_dir.exists():
+            return
+        
+        limit = datetime.now() - timedelta(days=3)
+        for log_file in self.run_history_dir.glob("*.json"):
+            if log_file.stat().st_mtime < limit.timestamp():
+                try:
                     log_file.unlink()
-        except Exception:
-            pass
+                except Exception:
+                    continue
 
     def get_account_history_logs(self, account_name: str) -> List[Dict[str, Any]]:
         """获取某账号下所有任务的最近历史日志"""
         all_history = []
+        if not self.run_history_dir.exists():
+            return []
+            
         for history_file in self.run_history_dir.glob("*.json"):
             try:
                 with open(history_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    # data 现在是一个列表
-                    if isinstance(data, list):
-                        for item in data:
-                            if item.get("account_name") == account_name:
-                                item["task_name"] = history_file.stem
-                                all_history.append(item)
-                    elif isinstance(data, dict):
-                        # 兼容旧格式
+                    data_list = json.load(f)
+                    if not isinstance(data_list, list):
+                        data_list = [data_list]
+                    
+                    for data in data_list:
                         if data.get("account_name") == account_name:
                             data["task_name"] = history_file.stem
                             all_history.append(data)
@@ -112,90 +116,116 @@ class SignTaskService:
                 history = []
         
         history.insert(0, new_entry)
-        # 只保留最近 100 条或最近 3 天的 (此处简单保留数量)
+        # 只保留最近 100 条
         history = history[:100]
         
         try:
             with open(history_file, "w", encoding="utf-8") as f:
                 json.dump(history, f, ensure_ascii=False, indent=2)
-        except OSError:
-            pass
+            
+            # 同时更新任务配置中的 last_run，减少 list_tasks 时的 I/O
+            task = self.get_task(task_name, account_name)
+            if task:
+                 task_dir = self.signs_dir / account_name / task_name
+                 config_file = task_dir / "config.json"
+                 if config_file.exists():
+                     with open(config_file, "r", encoding="utf-8") as f:
+                         config = json.load(f)
+                     config["last_run"] = new_entry
+                     with open(config_file, "w", encoding="utf-8") as f:
+                         json.dump(config, f, ensure_ascii=False, indent=2)
+            # 清除缓存
+            self._tasks_cache = None
+        except Exception as e:
+            print(f"DEBUG: 保存运行信息失败: {str(e)}")
 
-    def list_tasks(self, account_name: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_tasks(self, account_name: Optional[str] = None, force_refresh: bool = False) -> List[Dict[str, Any]]:
         """
-        获取所有签到任务列表
-        
-        Args:
-            account_name: 可选，按账号名筛选任务
+        获取所有签到任务列表 (支持内存缓存)
         """
+        if self._tasks_cache is not None and not force_refresh:
+            if account_name:
+                return [t for t in self._tasks_cache if t.get("account_name") == account_name]
+            return self._tasks_cache
+
         tasks = []
+        base_dir = self.signs_dir
         
-        print(f"DEBUG: 开始扫描任务目录: {self.signs_dir}, account_name={account_name}")
+        print(f"DEBUG: 扫描任务目录: {base_dir}")
         try:
-            # 扫描 signs 目录
-            for task_dir in self.signs_dir.iterdir():
-                print(f"DEBUG: 发现路径: {task_dir}, is_dir={task_dir.is_dir()}")
-                if not task_dir.is_dir():
+            # 扫描所有子目录 (账号名)
+            for account_path in base_dir.iterdir():
+                if not account_path.is_dir():
+                    # 兼容旧路径：直接在 signs 目录下的任务
+                    if (account_path / "config.json").exists():
+                        task_info = self._load_task_config(account_path)
+                        if task_info:
+                            tasks.append(task_info)
                     continue
                 
-                config_file = task_dir / "config.json"
-                if not config_file.exists():
-                    print(f"DEBUG: 配置文件不存在: {config_file}")
-                    continue
-                
-                try:
-                    with open(config_file, "r", encoding="utf-8") as f:
-                        config = json.load(f)
-                    
-                    # 如果指定了账号，只返回该账号的任务
-                    task_account = config.get("account_name", "")
-                    if account_name and task_account != account_name:
+                # 扫描账号目录下的任务
+                for task_dir in account_path.iterdir():
+                    if not task_dir.is_dir():
                         continue
                     
-                    # 读取最后执行记录
-                    last_run = self._get_last_run_info(task_dir)
-                    
-                    # 基本信息
-                    task_info = {
-                        "name": task_dir.name,
-                        "account_name": task_account,
-                        "sign_at": config.get("sign_at", ""),
-                        "random_seconds": config.get("random_seconds", 0),
-                        "sign_interval": config.get("sign_interval", 1),
-                        "chats": config.get("chats", []),
-                        "enabled": True,  # 默认启用
-                        "last_run": last_run,
-                    }
-                    
-                    tasks.append(task_info)
-                    print(f"DEBUG: 成功加载任务: {task_dir.name}")
-                except Exception as e:
-                    import traceback
-                    print(f"加载任务 {task_dir.name} 失败: {str(e)}")
-                    traceback.print_exc()
-                    # 跳过无效的配置
-                    continue
-        except Exception as e:
-            print(f"DEBUG: 扫描目录出错: {str(e)}")
-            import traceback
-            traceback.print_exc()
-        
-        print(f"DEBUG: 扫描结束，共找到 {len(tasks)} 个任务")
-        if len(tasks) > 0:
-            print(f"DEBUG: 任务数据示例: {tasks[0]}")
-        return sorted(tasks, key=lambda x: x["name"])
+                    task_info = self._load_task_config(task_dir)
+                    if task_info:
+                        tasks.append(task_info)
 
-    def get_task(self, task_name: str) -> Optional[Dict[str, Any]]:
+            self._tasks_cache = sorted(tasks, key=lambda x: (x["account_name"], x["name"]))
+            
+            if account_name:
+                return [t for t in self._tasks_cache if t.get("account_name") == account_name]
+            return self._tasks_cache
+
+        except Exception as e:
+            print(f"DEBUG: 扫描任务出错: {str(e)}")
+            return []
+
+    def _load_task_config(self, task_dir: Path) -> Optional[Dict[str, Any]]:
+        """加载单个任务配置，优先使用 config.json 中的 last_run"""
+        config_file = task_dir / "config.json"
+        if not config_file.exists():
+            return None
+        
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            
+            # 优先从 config 读取 last_run
+            last_run = config.get("last_run")
+            if not last_run:
+                last_run = self._get_last_run_info(task_dir)
+                
+            return {
+                "name": task_dir.name,
+                "account_name": config.get("account_name", ""),
+                "sign_at": config.get("sign_at", ""),
+                "random_seconds": config.get("random_seconds", 0),
+                "sign_interval": config.get("sign_interval", 1),
+                "chats": config.get("chats", []),
+                "enabled": True,
+                "last_run": last_run,
+            }
+        except Exception:
+            return None
+
+    def get_task(self, task_name: str, account_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         获取单个任务的详细信息
-        
-        Args:
-            task_name: 任务名称
-            
-        Returns:
-            任务信息，如果不存在返回 None
         """
-        task_dir = self.signs_dir / task_name
+        if account_name:
+            task_dir = self.signs_dir / account_name / task_name
+        else:
+            # 搜索模式 (兼容旧版或未传 account_name 的情况)
+            task_dir = self.signs_dir / task_name
+            if not (task_dir / "config.json").exists():
+                # 在所有账号目录下搜
+                for acc_dir in self.signs_dir.iterdir():
+                    if acc_dir.is_dir() and (acc_dir / task_name / "config.json").exists():
+                        task_dir = acc_dir / task_name
+                        break
+        
         config_file = task_dir / "config.json"
         
         if not config_file.exists():
@@ -228,14 +258,17 @@ class SignTaskService:
     ) -> Dict[str, Any]:
         """
         创建新的签到任务
-        
-        Args:
-            sign_interval: 签到间隔，None 表示使用全局配置或随机 1-120 秒
         """
         import random
         from backend.services.config import config_service
         
-        task_dir = self.signs_dir / task_name
+        if not account_name:
+             raise ValueError("必须指定账号名称")
+
+        account_dir = self.signs_dir / account_name
+        account_dir.mkdir(parents=True, exist_ok=True)
+        
+        task_dir = account_dir / task_name
         task_dir.mkdir(parents=True, exist_ok=True)
         
         # 获取 sign_interval
@@ -243,7 +276,6 @@ class SignTaskService:
             global_settings = config_service.get_global_settings()
             sign_interval = global_settings.get("sign_interval")
         
-        # 如果仍然是 None，使用随机值 1-120
         if sign_interval is None:
             sign_interval = random.randint(1, 120)
         
@@ -258,11 +290,9 @@ class SignTaskService:
         
         config_file = task_dir / "config.json"
         
-        print(f"DEBUG: 正在创建任务, file={config_file}, account={account_name}, sign_interval={sign_interval}")
         try:
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
-            print(f"DEBUG: 任务配置文件写如成功")
         except Exception as e:
             print(f"DEBUG: 写入配置文件失败: {str(e)}")
             raise
@@ -284,29 +314,22 @@ class SignTaskService:
         chats: Optional[List[Dict[str, Any]]] = None,
         random_seconds: Optional[int] = None,
         sign_interval: Optional[int] = None,
+        account_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         更新签到任务
-        
-        Args:
-            task_name: 任务名称
-            sign_at: 签到时间（可选）
-            chats: Chat 配置列表（可选）
-            random_seconds: 随机延迟秒数（可选）
-            sign_interval: 签到间隔秒数（可选）
-            
-        Returns:
-            更新后的任务信息
         """
         # 获取现有配置
-        existing = self.get_task(task_name)
+        existing = self.get_task(task_name, account_name)
         if not existing:
             raise ValueError(f"任务 {task_name} 不存在")
         
-        # 更新配置（保留 account_name）
+        acc_name = account_name or existing.get("account_name", "")
+        
+        # 更新配置
         config = {
             "_version": 3,
-            "account_name": existing.get("account_name", ""),
+            "account_name": acc_name,
             "sign_at": sign_at if sign_at is not None else existing["sign_at"],
             "random_seconds": random_seconds if random_seconds is not None else existing["random_seconds"],
             "sign_interval": sign_interval if sign_interval is not None else existing["sign_interval"],
@@ -314,7 +337,11 @@ class SignTaskService:
         }
         
         # 保存配置
-        task_dir = self.signs_dir / task_name
+        task_dir = self.signs_dir / acc_name / task_name
+        if not task_dir.exists():
+            # 兼容旧路径
+            task_dir = self.signs_dir / task_name
+            
         config_file = task_dir / "config.json"
         with open(config_file, "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
@@ -329,63 +356,117 @@ class SignTaskService:
             "enabled": True,
         }
 
-    def delete_task(self, task_name: str) -> bool:
+    def delete_task(self, task_name: str, account_name: Optional[str] = None) -> bool:
         """
         删除签到任务
-        
-        Args:
-            task_name: 任务名称
-            
-        Returns:
-            是否成功删除
         """
-        task_dir = self.signs_dir / task_name
+        task_dir = None
+        if account_name:
+            task_dir = self.signs_dir / account_name / task_name
         
-        if not task_dir.exists():
+        if not task_dir or not task_dir.exists():
+            # 搜一下
+            task_dir = self.signs_dir / task_name
+            if not task_dir.exists():
+                for acc_dir in self.signs_dir.iterdir():
+                    if acc_dir.is_dir() and (acc_dir / task_name).exists():
+                        task_dir = acc_dir / task_name
+                        break
+        
+        if not task_dir or not task_dir.exists():
             return False
         
         try:
-            # 删除配置文件
-            config_file = task_dir / "config.json"
-            if config_file.exists():
-                config_file.unlink()
-            
-            # 删除目录
-            task_dir.rmdir()
+            import shutil
+            shutil.rmtree(task_dir)
             return True
         except Exception:
             return False
 
-    def get_account_chats(self, account_name: str) -> List[Dict[str, Any]]:
+    async def get_account_chats(self, account_name: str, force_refresh: bool = False) -> List[Dict[str, Any]]:
         """
-        获取账号的 Chat 列表
+        获取账号的 Chat 列表 (带缓存)
+        """
+        cache_file = self.signs_dir / account_name / "chats_cache.json"
         
-        Args:
-            account_name: 账号名称
-            
-        Returns:
-            Chat 列表
+        if not force_refresh and cache_file.exists():
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        
+        # 如果没有缓存或强制刷新，执行刷新逻辑
+        return await self.refresh_account_chats(account_name)
+
+    async def refresh_account_chats(self, account_name: str) -> List[Dict[str, Any]]:
         """
-        # 从用户目录读取 latest_chats.json
-        users_dir = self.workdir / "users"
+        连接 Telegram 并刷新 Chat 列表
+        """
+        from pyrogram import Client
+        from pyrogram.enums import ChatType
+        from backend.services.config import config_service
+        
+        # 获取 session 文件路径
+        from backend.core.config import get_settings
+        settings = get_settings()
+        session_dir = Path(settings.data_dir) / "sessions"
+        session_path = str(session_dir / account_name)
+        
+        if not (session_dir / f"{account_name}.session").exists():
+            raise ValueError(f"账号 {account_name} 的 Session 文件不存在")
+            
+        tg_config = config_service.get_telegram_config()
+        api_id = os.getenv("TG_API_ID", tg_config.get("api_id"))
+        api_hash = os.getenv("TG_API_HASH", tg_config.get("api_hash"))
+        
+        if not api_id or not api_hash:
+            raise ValueError("未配置 Telegram API ID 或 API Hash")
+
+        client = Client(
+            name=session_path,
+            api_id=int(api_id),
+            api_hash=api_hash,
+            in_memory=True, # 使用内存会话，避免锁定文件
+        )
         
         chats = []
-        for user_dir in users_dir.iterdir():
-            if not user_dir.is_dir():
-                continue
+        try:
+            await client.start()
+            async for dialog in client.get_dialogs():
+                chat = dialog.chat
+                
+                chat_info = {
+                    "id": chat.id,
+                    "title": chat.title or chat.first_name or chat.username or str(chat.id),
+                    "username": chat.username,
+                    "type": chat.type.name.lower(),
+                }
+                
+                # 特殊处理机器人和私聊
+                if chat.type == ChatType.BOT:
+                    chat_info["title"] = f"🤖 {chat_info['title']}"
+                
+                chats.append(chat_info)
             
-            chats_file = user_dir / "latest_chats.json"
-            if not chats_file.exists():
-                continue
+            await client.stop()
             
+            # 保存到缓存
+            account_dir = self.signs_dir / account_name
+            account_dir.mkdir(parents=True, exist_ok=True)
+            cache_file = account_dir / "chats_cache.json"
+            
+            with open(cache_file, "w", encoding="utf-8") as f:
+                json.dump(chats, f, ensure_ascii=False, indent=2)
+                
+            return chats
+            
+        except Exception as e:
             try:
-                with open(chats_file, "r", encoding="utf-8") as f:
-                    user_chats = json.load(f)
-                    chats.extend(user_chats)
-            except Exception:
-                continue
-        
-        return chats
+                await client.stop()
+            except:
+                pass
+            raise e
 
     def run_task(self, account_name: str, task_name: str) -> Dict[str, Any]:
         """

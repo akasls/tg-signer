@@ -270,7 +270,7 @@ export default function Dashboard() {
       </main>
 
       {showAddDialog && (
-        <div className="modal-overlay active" onClick={() => setShowAddDialog(false)}>
+        <div className="modal-overlay active">
           <div className="glass-panel modal-content !max-w-[420px] !p-6" onClick={e => e.stopPropagation()}>
             <div className="modal-header !mb-5">
               <div className="modal-title !text-lg">{t("add_account")}</div>
@@ -343,7 +343,7 @@ export default function Dashboard() {
       )}
 
       {showLogsDialog && (
-        <div className="modal-overlay active" onClick={() => setShowLogsDialog(false)}>
+        <div className="modal-overlay active">
           <div className="glass-panel modal-content !max-w-4xl max-h-[90vh] flex flex-col overflow-hidden !p-0" onClick={e => e.stopPropagation()}>
             <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/2">
               <div className="flex items-center gap-3">

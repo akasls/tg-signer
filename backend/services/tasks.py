@@ -17,6 +17,16 @@ import os
 
 settings = get_settings()
 
+# 用于实时日志推送的状态跟踪
+_active_tasks: dict[int, bool] = {}
+_active_logs: dict[int, list[str]] = {}
+
+def get_active_logs(task_id: int) -> list[str]:
+    return _active_logs.get(task_id, [])
+
+def is_task_running(task_id: int) -> bool:
+    return _active_tasks.get(task_id, False)
+
 
 def list_tasks(db: Session) -> List[Task]:
     return db.query(Task).order_by(Task.id.desc()).all()
@@ -102,9 +112,20 @@ def _create_log_file(task: Task) -> Path:
     return logs_dir / f"task_{task.id}_{ts}.log"
 
 
-def run_task_once(db: Session, task: Task) -> TaskLog:
+from backend.cli.tasks import async_run_task_cli
+
+async def run_task_once(db: Session, task: Task) -> TaskLog:
+    if is_task_running(task.id):
+        # 如果已经在运行，返回最新的运行记录（或者抛出异常）
+        last_log = db.query(TaskLog).filter(TaskLog.task_id == task.id).order_by(TaskLog.id.desc()).first()
+        return last_log
+
     account: Account = task.account  # type: ignore[assignment]
     log_file = _create_log_file(task)
+    
+    _active_tasks[task.id] = True
+    _active_logs[task.id] = []
+
     task_log = TaskLog(
         task_id=task.id,
         status="running",
@@ -115,25 +136,53 @@ def run_task_once(db: Session, task: Task) -> TaskLog:
     db.commit()
     db.refresh(task_log)
 
-    result = run_task_cli(account_name=account.account_name, task_name=task.name)
+    def log_callback(line: str):
+        _active_logs[task.id].append(line)
+        if len(_active_logs[task.id]) > 500:
+            _active_logs[task.id].pop(0)
 
-    task_log.finished_at = datetime.utcnow()
-    task_log.output = (result.stdout or "") + "\n" + (result.stderr or "")
-    task_log.status = "success" if result.returncode == 0 else "failed"
-    db.commit()
-    db.refresh(task_log)
-
-    # write log file for long term storage
     try:
-        with open(log_file, "w", encoding="utf-8") as fp:
-            fp.write(task_log.output or "")
-    except OSError:
-        # best-effort, keep DB output at least
-        pass
+        # 使用异步执行调用，并注入回调
+        returncode, stdout, stderr = await async_run_task_cli(
+            account_name=account.account_name, 
+            task_name=task.name,
+            callback=log_callback
+        )
 
-    task.last_run_at = task_log.finished_at
-    db.commit()
-    db.refresh(task)
+        full_output = (stdout or "") + "\n" + (stderr or "")
+        
+        # 写入日志文件（完整内容）
+        with open(log_file, "w", encoding="utf-8") as fp:
+            fp.write(full_output)
+
+        # 更新数据库记录
+        task_log.finished_at = datetime.utcnow()
+        task_log.status = "success" if returncode == 0 else "failed"
+        if returncode != 0:
+            task_log.output = stderr[-1000:] if stderr else "Failed with exit code " + str(returncode)
+        else:
+            task_log.output = "Success"
+            
+        db.commit()
+        db.refresh(task_log)
+
+        task.last_run_at = task_log.finished_at
+        db.commit()
+    except Exception as e:
+        msg = f"Error running task: {e}"
+        _active_logs[task.id].append(msg)
+        task_log.status = "failed"
+        task_log.output = msg[-1000:]
+        db.commit()
+    finally:
+        _active_tasks[task.id] = False
+        # 延迟清理日志
+        import asyncio
+        async def cleanup():
+            await asyncio.sleep(60)
+            if not is_task_running(task.id):
+                _active_logs.pop(task.id, None)
+        asyncio.create_task(cleanup())
 
     return task_log
 

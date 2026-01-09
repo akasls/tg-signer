@@ -432,10 +432,13 @@ export interface ChatInfo {
   first_name?: string;
 }
 
-export const listSignTasks = (token: string, accountName?: string) => {
-  const params = accountName ? `?account_name=${encodeURIComponent(accountName)}` : "";
-  return request<SignTask[]>(`/sign-tasks${params}`, {}, token);
-};
+export async function listSignTasks(token: string, accountName?: string, forceRefresh?: boolean): Promise<SignTask[]> {
+  const params = new URLSearchParams();
+  if (accountName) params.append('account_name', accountName);
+  if (forceRefresh) params.append('force_refresh', 'true');
+  const url = `/sign-tasks${params.toString() ? `?${params.toString()}` : ''}`;
+  return request<SignTask[]>(url, {}, token);
+}
 
 export const getSignTask = (token: string, name: string) =>
   request<SignTask>(`/sign-tasks/${name}`, {}, token);
@@ -462,8 +465,8 @@ export const runSignTask = (token: string, name: string, accountName: string) =>
     method: "POST",
   }, token);
 
-export const getAccountChats = (token: string, accountName: string) =>
-  request<ChatInfo[]>(`/sign-tasks/chats/${accountName}`, {}, token);
+export const getAccountChats = (token: string, accountName: string, forceRefresh?: boolean) =>
+  request<ChatInfo[]>(`/sign-tasks/chats/${accountName}${forceRefresh ? '?force_refresh=true' : ''}`, {}, token);
 
 export const getSignTaskLogs = (token: string, name: string) =>
   request<string[]>(`/sign-tasks/${name}/logs`, {}, token);

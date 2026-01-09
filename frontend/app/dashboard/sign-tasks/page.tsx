@@ -101,31 +101,31 @@ export default function SignTasksPage() {
             setRunLogs([]);
             setIsDone(false);
 
-            // 启动轮询日志
-            const pollInterval = setInterval(async () => {
-                try {
-                    const logs = await getSignTaskLogs(token, taskName);
-                    if (logs && logs.length > 0) {
-                        setRunLogs(logs);
-                    }
-                } catch (e) {
-                    console.error("Poll logs error", e);
+            // 建立 WebSocket 连接
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const host = window.location.host;
+            // 注意：这里需要确保后端地址正确，如果是在开发环境（localhost:3000 -> localhost:8000）可能需要处理
+            const wsUrl = `${protocol}//${host}/api/sign-tasks/ws/${taskName}?token=${token}`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "logs") {
+                    setRunLogs(prev => [...prev, ...data.data]);
+                } else if (data.type === "done") {
+                    setIsDone(true);
                 }
-            }, 1000);
+            };
+
+            ws.onerror = (err) => {
+                console.error("WebSocket error:", err);
+            };
 
             const result = await runSignTask(token, taskName, accountName);
 
-            clearInterval(pollInterval);
-
-            // 获取最后一次日志
-            try {
-                const finalLogs = await getSignTaskLogs(token, taskName);
-                if (finalLogs) setRunLogs(finalLogs);
-            } catch { }
-
-            setIsDone(true);
             if (!result.success) {
                 addToast(t("login_failed") + ": " + result.error, "error");
+                setIsDone(true);
             } else {
                 addToast(taskName + " " + t("run") + " " + t("login_success"), "success");
             }

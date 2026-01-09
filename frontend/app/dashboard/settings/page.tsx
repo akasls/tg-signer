@@ -546,6 +546,7 @@ export default function SettingsPage() {
                             <div className="animate-float-up space-y-4">
                                 <div className="flex flex-col md:flex-row gap-4 items-center md:items-start p-4 bg-white/2 rounded-xl border border-white/5 shadow-inner">
                                     <div className="bg-white p-2 rounded-lg shrink-0">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={`/api/user/totp/qrcode?token=${token}`}
                                             alt="QR Code"

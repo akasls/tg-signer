@@ -32,7 +32,7 @@ import { ToastContainer, useToast } from "../../../../components/ui/toast";
 
 export default function CreateSignTaskPage() {
     const router = useRouter();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { toasts, addToast, removeToast } = useToast();
     const [token, setLocalToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -41,6 +41,7 @@ export default function CreateSignTaskPage() {
     const [taskName, setTaskName] = useState("");
     const [signAt, setSignAt] = useState("0 6 * * *");
     const [randomSeconds, setRandomSeconds] = useState(0);
+    const [chatId, setChatId] = useState(0);
     const [signInterval, setSignInterval] = useState(1);
     const [chats, setChats] = useState<SignTaskChat[]>([]);
 
@@ -224,8 +225,8 @@ export default function CreateSignTaskPage() {
                                     type="text"
                                     className="!mb-0"
                                     placeholder="0"
-                                    value={randomMinutes}
-                                    onChange={(e) => setRandomMinutes(parseInt(e.target.value) || 0)}
+                                    value={randomSeconds}
+                                    onChange={(e) => setRandomSeconds(parseInt(e.target.value) || 0)}
                                 />
                             </div>
                         </div>
@@ -239,14 +240,14 @@ export default function CreateSignTaskPage() {
                                         value={chatId}
                                         onChange={(e) => {
                                             const id = parseInt(e.target.value);
-                                            const chat = accountChats.find(c => c.id === id);
+                                            const chat = availableChats.find(c => c.id === id);
                                             const chatName = chat?.title || chat?.username || "";
                                             setChatId(id);
                                             if (!taskName) setTaskName(chatName);
                                         }}
                                     >
                                         <option value={0}>{language === "zh" ? "请选择..." : "Select..."}</option>
-                                        {accountChats.map(chat => (
+                                        {availableChats.map(chat => (
                                             <option key={chat.id} value={chat.id}>
                                                 {chat.title || chat.username || chat.id}
                                             </option>
@@ -392,7 +393,7 @@ export default function CreateSignTaskPage() {
                                     ))}
                                     {editingChat.actions.length === 0 && (
                                         <div className="text-center py-4 text-xs text-main/20 italic">
-                                            点击上方按钮添加第一个动作，如发送 "/checkin"
+                                            点击上方按钮添加第一个动作，如发送 &quot;/checkin&quot;
                                         </div>
                                     )}
                                 </div>

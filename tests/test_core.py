@@ -72,6 +72,8 @@ async def test_client_context_manager_reference_counting_and_start_stop(
 
     monkeypatch.setattr(core.Client, "start", fake_start)
     monkeypatch.setattr(core.Client, "stop", fake_stop)
+    monkeypatch.setattr(core.Client, "connect", fake_start)  # Reuse fake_start or simple pass
+    monkeypatch.setattr(core.Client, "get_me", fake_start)   # Reuse fake_start ensures it is awaitable
 
     name = "acct"
     client = get_client(

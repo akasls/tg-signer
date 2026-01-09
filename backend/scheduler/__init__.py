@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy.orm import Session
@@ -52,13 +50,13 @@ async def _job_maintenance() -> None:
     """每日维护任务：清理旧日志等"""
     db: Session = SessionLocal()
     try:
-        from backend.services.tasks import cleanup_old_logs
         from backend.services.sign_tasks import sign_task_service
-        
+        from backend.services.tasks import cleanup_old_logs
+
         # 清理数据库任务日志
         count = cleanup_old_logs(db, days=3)
         print(f"Maintenance: 已清理 {count} 条数据库任务日志")
-        
+
         # 清理签到任务日志
         sign_task_service._cleanup_old_logs()
     finally:
@@ -71,20 +69,20 @@ async def sync_jobs() -> None:
     """
     if scheduler is None:
         return
-    
+
     from backend.services.sign_tasks import sign_task_service
-    
+
     db: Session = SessionLocal()
     try:
         # 1. 同步数据库任务
-        tasks = db.query(Task).filter(Task.enabled == True).all()
+        tasks = db.query(Task).filter(Task.enabled).all()
         existing_ids = {job.id for job in scheduler.get_jobs() if job.id.startswith("db-") or job.id.startswith("sign-")}
         desired_ids = set()
-        
+
         for task in tasks:
             job_id = f"db-{task.id}"
             desired_ids.add(job_id)
-            
+
             try:
                 trigger = CronTrigger.from_crontab(task.cron)
                 if job_id in existing_ids:
@@ -106,13 +104,13 @@ async def sync_jobs() -> None:
         for st in sign_tasks:
             job_id = f"sign-{st['name']}"
             desired_ids.add(job_id)
-            
+
             # SignTask 目前默认都是启用的，或者根据 st['enabled']
             if not st.get('enabled', True):
                 if job_id in existing_ids:
                     scheduler.remove_job(job_id)
                 continue
-            
+
             try:
                 cron = time_to_cron(st['sign_at'])
                 trigger = CronTrigger.from_crontab(cron)
@@ -144,7 +142,7 @@ async def init_scheduler() -> AsyncIOScheduler:
         settings = get_settings()
         scheduler = AsyncIOScheduler(timezone=settings.timezone)
         scheduler.start()
-        
+
         # 添加每日凌晨 3 点执行的维护任务
         scheduler.add_job(
             _job_maintenance,
@@ -152,7 +150,7 @@ async def init_scheduler() -> AsyncIOScheduler:
             id="system-maintenance",
             replace_existing=True
         )
-        
+
         await sync_jobs()
     return scheduler
 

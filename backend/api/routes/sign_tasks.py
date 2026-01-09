@@ -7,9 +7,17 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query
-from sqlalchemy.orm import Session
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from pydantic import BaseModel, Field, validator
+from sqlalchemy.orm import Session
 
 from backend.core.auth import get_current_user, verify_token
 from backend.core.database import get_db
@@ -135,7 +143,7 @@ def list_sign_tasks(
 ):
     """
     获取所有签到任务列表
-    
+
     Args:
         account_name: 可选，按账号名筛选任务
     """
@@ -153,7 +161,7 @@ async def create_sign_task(
     try:
         # 转换 chats 为字典列表
         chats_dict = [chat.dict() for chat in payload.chats]
-        
+
         task = sign_task_service.create_task(
             task_name=payload.name,
             account_name=payload.account_name,
@@ -162,11 +170,11 @@ async def create_sign_task(
             random_seconds=payload.random_seconds,
             sign_interval=payload.sign_interval,
         )
-        
+
         # 同步调度器
         from backend.scheduler import sync_jobs
         await sync_jobs()
-        
+
         return task
     except Exception as e:
         print(f"创建任务失败: {str(e)}")
@@ -200,12 +208,12 @@ async def update_sign_task(
         existing = sign_task_service.get_task(task_name, account_name=account_name)
         if not existing:
             raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
-        
+
         # 转换 chats 为字典列表
         chats_dict = None
         if payload.chats is not None:
             chats_dict = [chat.dict() for chat in payload.chats]
-        
+
         task = sign_task_service.update_task(
             task_name=task_name,
             sign_at=payload.sign_at,
@@ -214,11 +222,11 @@ async def update_sign_task(
             sign_interval=payload.sign_interval,
             account_name=account_name or existing.get("account_name"),
         )
-        
+
         # 同步调度器
         from backend.scheduler import sync_jobs
         await sync_jobs()
-        
+
         return task
     except HTTPException:
         raise
@@ -239,11 +247,11 @@ async def delete_sign_task(
     success = sign_task_service.delete_task(task_name, account_name=account_name)
     if not success:
         raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
-    
+
     # 同步调度器
     from backend.scheduler import sync_jobs
     await sync_jobs()
-    
+
     return {"ok": True}
 
 
@@ -258,7 +266,7 @@ async def run_sign_task(
     task = sign_task_service.get_task(task_name)
     if not task:
         raise HTTPException(status_code=404, detail=f"任务 {task_name} 不存在")
-    
+
     result = await sign_task_service.run_task_with_logs(account_name, task_name)
     return result
 
@@ -309,13 +317,13 @@ async def sign_task_logs_ws(
         return
 
     await websocket.accept()
-    
+
     last_idx = 0
     try:
         while True:
             # 获取当前所有日志
             active_logs = sign_task_service._active_logs.get(task_name, [])
-            
+
             # 如果有新内容，则推送
             if len(active_logs) > last_idx:
                 new_logs = active_logs[last_idx:]
@@ -325,7 +333,7 @@ async def sign_task_logs_ws(
                     "is_running": sign_task_service.is_task_running(task_name)
                 })
                 last_idx = len(active_logs)
-            
+
             # 如果任务已结束且日志已推完
             if not sign_task_service.is_task_running(task_name) and last_idx >= len(active_logs):
                 await websocket.send_json({
@@ -333,7 +341,7 @@ async def sign_task_logs_ws(
                     "is_running": False
                 })
                 break
-                
+
             await asyncio.sleep(0.5)
     except WebSocketDisconnect:
         pass
@@ -342,5 +350,5 @@ async def sign_task_logs_ws(
     finally:
         try:
             await websocket.close()
-        except:
+        except Exception:
             pass

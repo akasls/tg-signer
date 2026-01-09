@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import secrets
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -18,7 +17,7 @@ def get_default_secret_key() -> str:
     # 如果设置了环境变量，使用环境变量
     if os.getenv("APP_SECRET_KEY"):
         return os.getenv("APP_SECRET_KEY", "")
-    
+
     # 否则使用固定的默认值（生产环境应该设置环境变量）
     # 这个默认值确保应用能启动，但不够安全
     return "tg-signer-default-secret-key-please-change-in-production-2024"

@@ -13,13 +13,13 @@ RUN npm run build
 FROM python:3.12-slim AS app
 
 ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PORT=8080
+  PIP_NO_CACHE_DIR=1 \
+  PORT=8080
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && \
-    rm -rf /var/lib/apt/lists/*
+  rm -rf /var/lib/apt/lists/*
 
 # 先复制 pyproject.toml 和相关配置文件
 COPY pyproject.toml ./
@@ -34,16 +34,16 @@ RUN pip install --no-cache-dir "bcrypt==4.0.1"
 # 安装项目及其余运行依赖
 COPY . /app
 RUN pip install --no-cache-dir . && \
-    pip install --no-cache-dir \
-      uvicorn[standard] \
-      sqlalchemy \
-      "passlib[bcrypt]==1.7.4" \
-      "python-jose[cryptography]" \
-      pyotp \
-      qrcode[pil] \
-      apscheduler \
-      python-multipart \
-      tgcrypto
+  pip install --no-cache-dir \
+  uvicorn[standard] \
+  sqlalchemy \
+  "passlib[bcrypt]==1.7.4" \
+  "python-jose[cryptography]" \
+  pyotp \
+  qrcode[pil] \
+  apscheduler \
+  python-multipart \
+  tgcrypto
 
 # 前端静态文件放在 /web，由 FastAPI StaticFiles 托管
 RUN mkdir -p /web
@@ -59,6 +59,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.getenv(\"PORT\", \"8080\")}/health').read()"
 
 # 使用环境变量 PORT 启动，Zeabur 会自动设置此变量
-CMD sh -c "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}"
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
 
 

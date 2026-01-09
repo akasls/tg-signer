@@ -1,18 +1,26 @@
 from __future__ import annotations
+
 import asyncio
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from backend.core.auth import get_current_user, verify_token
 from backend.core.database import get_db
 from backend.models.account import Account
-from backend.models.task import Task
 from backend.models.task_log import TaskLog
+from backend.scheduler import sync_jobs
 from backend.schemas.task import TaskCreate, TaskOut, TaskUpdate
 from backend.schemas.task_log import TaskLogOut
-from backend.scheduler import sync_jobs
 from backend.services import tasks as task_service
 
 router = APIRouter()
@@ -144,13 +152,13 @@ async def task_logs_ws(
         return
 
     await websocket.accept()
-    
+
     last_idx = 0
     try:
         while True:
             # 获取当前所有日志
             active_logs = task_service.get_active_logs(task_id)
-            
+
             # 如果有新内容，则推送
             if len(active_logs) > last_idx:
                 new_logs = active_logs[last_idx:]
@@ -160,7 +168,7 @@ async def task_logs_ws(
                     "is_running": task_service.is_task_running(task_id)
                 })
                 last_idx = len(active_logs)
-            
+
             # 如果任务已结束且日志已推完
             if not task_service.is_task_running(task_id) and last_idx >= len(active_logs):
                 await websocket.send_json({
@@ -168,7 +176,7 @@ async def task_logs_ws(
                     "is_running": False
                 })
                 break
-                
+
             await asyncio.sleep(0.5)
     except WebSocketDisconnect:
         pass
@@ -177,7 +185,7 @@ async def task_logs_ws(
     finally:
         try:
             await websocket.close()
-        except:
+        except Exception:
             pass
 @router.get("/logs/{log_id}/output")
 def get_log_output(
@@ -189,10 +197,10 @@ def get_log_output(
     log = db.query(TaskLog).filter(TaskLog.id == log_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="Log not found")
-    
+
     if not log.log_path or not Path(log.log_path).exists():
         return {"output": log.output or "No detailed log file available."}
-    
+
     try:
         with open(log.log_path, "r", encoding="utf-8") as f:
             content = f.read()

@@ -81,7 +81,7 @@ async def start_account_login(
 ):
     """
     开始账号登录流程（发送验证码）
-    
+
     1. 用户输入账号名和手机号
     2. 系统发送验证码到手机
     3. 返回 phone_code_hash 用于后续验证
@@ -92,9 +92,9 @@ async def start_account_login(
             phone_number=request.phone_number,
             proxy=request.proxy
         )
-        
+
         return LoginStartResponse(**result)
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -114,7 +114,7 @@ async def verify_account_login(
 ):
     """
     验证账号登录（输入验证码和可选的2FA密码）
-    
+
     1. 用户输入验证码
     2. 如果启用了2FA，还需要输入2FA密码
     3. 验证成功后，生成 session 文件
@@ -128,7 +128,7 @@ async def verify_account_login(
             password=request.password,
             proxy=request.proxy
         )
-        
+
         return LoginVerifyResponse(
             success=True,
             user_id=result.get("user_id"),
@@ -136,7 +136,7 @@ async def verify_account_login(
             username=result.get("username"),
             message="登录成功"
         )
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -153,17 +153,17 @@ async def verify_account_login(
 def list_accounts(current_user: User = Depends(get_current_user)):
     """
     获取所有账号列表
-    
+
     返回所有 session 文件对应的账号
     """
     try:
         accounts = telegram_service.list_accounts()
-        
+
         return AccountListResponse(
             accounts=[AccountInfo(**acc) for acc in accounts],
             total=len(accounts)
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -178,12 +178,12 @@ def delete_account(
 ):
     """
     删除账号（删除 session 文件）
-    
+
     注意：删除后无法恢复，需要重新登录
     """
     try:
         success = telegram_service.delete_account(account_name)
-        
+
         if success:
             return DeleteAccountResponse(
                 success=True,
@@ -194,7 +194,7 @@ def delete_account(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"账号 {account_name} 不存在"
             )
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -232,9 +232,9 @@ def get_account_logs(
 ):
     """获取账号的任务执行历史日志"""
     from backend.services.sign_tasks import sign_task_service
-    
+
     history = sign_task_service.get_account_history_logs(account_name)
-    
+
     logs = []
     for i, item in enumerate(history[:limit]):
         logs.append(AccountLogItem(
@@ -245,7 +245,7 @@ def get_account_logs(
             success=item.get("success", False),
             created_at=item.get("time", "")
         ))
-    
+
     return logs
 
 
@@ -256,13 +256,14 @@ def export_account_logs(
 ):
     """导出账号日志为 txt 文件"""
     from fastapi.responses import Response
+
     from backend.services.sign_tasks import sign_task_service
-    
+
     history = sign_task_service.get_account_history_logs(account_name)
-    
+
     content = f"Account Logs for: {account_name}\n"
     content += "="*40 + "\n\n"
-    
+
     for item in history:
         time_str = item.get("time", "").replace("T", " ")[:19]
         status = "SUCCESS" if item.get("success") else "FAILED"
@@ -270,7 +271,7 @@ def export_account_logs(
         if item.get("message"):
             content += f"Message: {item.get('message')}\n"
         content += "-"*20 + "\n"
-    
+
     return Response(
         content=content,
         media_type="text/plain",

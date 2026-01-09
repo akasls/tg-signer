@@ -1,7 +1,6 @@
 from __future__ import annotations
+
 import asyncio
-import os
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
@@ -34,12 +33,12 @@ def list_tasks(db: Session) -> List[Task]:
 def cleanup_old_logs(db: Session, days: int = 3) -> int:
     """清理超过指定天数的任务日志和文件"""
     cutoff = datetime.utcnow() - timedelta(days=days)
-    
+
     # 获取旧日志
     old_logs = db.query(TaskLog).filter(
         TaskLog.started_at < cutoff
     ).all()
-    
+
     count = 0
     for log in old_logs:
         # 删除文件
@@ -53,7 +52,7 @@ def cleanup_old_logs(db: Session, days: int = 3) -> int:
         # 从数据库删除
         db.delete(log)
         count += 1
-    
+
     if count > 0:
         db.commit()
     return count
@@ -121,7 +120,7 @@ async def run_task_once(db: Session, task: Task) -> TaskLog:
 
     account: Account = task.account  # type: ignore[assignment]
     log_file = _create_log_file(task)
-    
+
     _active_tasks[task.id] = True
     _active_logs[task.id] = []
 
@@ -143,13 +142,13 @@ async def run_task_once(db: Session, task: Task) -> TaskLog:
     try:
         # 使用异步执行调用，并注入回调
         returncode, stdout, stderr = await async_run_task_cli(
-            account_name=account.account_name, 
+            account_name=account.account_name,
             task_name=task.name,
             callback=log_callback
         )
 
         full_output = (stdout or "") + "\n" + (stderr or "")
-        
+
         # 写入日志文件（完整内容）
         with open(log_file, "w", encoding="utf-8") as fp:
             fp.write(full_output)
@@ -161,7 +160,7 @@ async def run_task_once(db: Session, task: Task) -> TaskLog:
             task_log.output = stderr[-1000:] if stderr else "Failed with exit code " + str(returncode)
         else:
             task_log.output = "Success"
-            
+
         db.commit()
         db.refresh(task_log)
 

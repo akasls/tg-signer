@@ -7,7 +7,6 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from backend.core.auth import get_current_user
@@ -72,13 +71,13 @@ def list_all_tasks(current_user: User = Depends(get_current_user)):
     try:
         sign_tasks = config_service.list_sign_tasks()
         monitor_tasks = config_service.list_monitor_tasks()
-        
+
         return TaskListResponse(
             sign_tasks=sign_tasks,
             monitor_tasks=monitor_tasks,
             total=len(sign_tasks) + len(monitor_tasks)
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -93,18 +92,18 @@ def export_sign_task(
 ):
     """
     导出单个签到任务配置
-    
+
     返回 JSON 格式的配置文件，可以保存后导入
     """
     try:
         config_json = config_service.export_sign_task(task_name)
-        
+
         if config_json is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"任务 {task_name} 不存在"
             )
-        
+
         from fastapi import Response
         # 返回 JSON 响应，设置下载文件名
         return Response(
@@ -114,7 +113,7 @@ def export_sign_task(
                 "Content-Disposition": f'attachment; filename="{task_name}_config.json"'
             }
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -131,7 +130,7 @@ def import_sign_task(
 ):
     """
     导入签到任务配置
-    
+
     可以指定新的任务名称，如果不指定则使用原名称
     """
     try:
@@ -139,28 +138,28 @@ def import_sign_task(
             request.config_json,
             request.task_name
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="导入失败，配置格式无效"
             )
-        
+
         # 确定最终的任务名称
         import json
         data = json.loads(request.config_json)
         final_task_name = request.task_name or data.get("task_name", "imported_task")
-        
+
         # 同步调度器
         from backend.scheduler import sync_jobs
         sync_jobs()
-        
+
         return ImportTaskResponse(
             success=True,
             task_name=final_task_name,
             message=f"任务 {final_task_name} 导入成功"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -174,12 +173,12 @@ def import_sign_task(
 def export_all_configs(current_user: User = Depends(get_current_user)):
     """
     导出所有配置（签到任务和监控任务）
-    
+
     返回包含所有配置的 JSON 文件
     """
     try:
         config_json = config_service.export_all_configs()
-        
+
         from fastapi import Response
         # 返回 JSON 响应，设置下载文件名
         return Response(
@@ -189,7 +188,7 @@ def export_all_configs(current_user: User = Depends(get_current_user)):
                 "Content-Disposition": 'attachment; filename="tg_signer_all_configs.json"'
             }
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -204,7 +203,7 @@ def import_all_configs(
 ):
     """
     导入所有配置
-    
+
     可以选择是否覆盖已存在的配置
     """
     try:
@@ -212,7 +211,7 @@ def import_all_configs(
             request.config_json,
             request.overwrite
         )
-        
+
         # 构建消息
         message_parts = []
         if result["signs_imported"] > 0:
@@ -223,18 +222,18 @@ def import_all_configs(
             message_parts.append(f"导入了 {result['monitors_imported']} 个监控任务")
         if result["monitors_skipped"] > 0:
             message_parts.append(f"跳过了 {result['monitors_skipped']} 个已存在的监控任务")
-        
+
         message = "，".join(message_parts) if message_parts else "没有导入任何配置"
-        
+
         # 同步调度器
         from backend.scheduler import sync_jobs
         sync_jobs()
-        
+
         return ImportAllResponse(
             **result,
             message=message
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -249,24 +248,24 @@ def delete_sign_task(
 ):
     """
     删除签到任务配置
-    
+
     注意：删除后无法恢复
     """
     try:
         success = config_service.delete_sign_config(task_name)
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"任务 {task_name} 不存在"
             )
-        
+
         # 同步调度器
         from backend.scheduler import sync_jobs
         sync_jobs()
-        
+
         return {"success": True, "message": f"任务 {task_name} 已删除"}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -314,24 +313,24 @@ def get_ai_config(current_user: User = Depends(get_current_user)):
     """
     try:
         config = config_service.get_ai_config()
-        
+
         if not config:
             return AIConfigResponse(has_config=False)
-        
+
         # 遮蔽 API Key
         api_key = config.get("api_key", "")
         if api_key:
             masked = api_key[:4] + "*" * (len(api_key) - 8) + api_key[-4:] if len(api_key) > 8 else "****"
         else:
             masked = None
-        
+
         return AIConfigResponse(
             has_config=True,
             base_url=config.get("base_url"),
             model=config.get("model"),
             api_key_masked=masked
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -353,12 +352,12 @@ def save_ai_config(
             base_url=request.base_url,
             model=request.model
         )
-        
+
         return AIConfigSaveResponse(
             success=True,
             message="AI 配置已保存"
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -374,7 +373,7 @@ async def test_ai_connection(current_user: User = Depends(get_current_user)):
     try:
         result = await config_service.test_ai_connection()
         return AITestResponse(**result)
-        
+
     except Exception as e:
         return AITestResponse(
             success=False,
@@ -389,12 +388,12 @@ def delete_ai_config(current_user: User = Depends(get_current_user)):
     """
     try:
         config_service.delete_ai_config()
-        
+
         return AIConfigSaveResponse(
             success=True,
             message="AI 配置已删除"
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -424,7 +423,7 @@ def get_global_settings(current_user: User = Depends(get_current_user)):
     try:
         settings = config_service.get_global_settings()
         return GlobalSettingsResponse(**settings)
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -446,12 +445,12 @@ def save_global_settings(
             "log_retention_days": request.log_retention_days
         }
         config_service.save_global_settings(settings)
-        
+
         return AIConfigSaveResponse(
             success=True,
             message="全局设置已保存"
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -487,12 +486,12 @@ class TelegramConfigSaveResponse(BaseModel):
 def get_telegram_config(current_user: User = Depends(get_current_user)):
     """
     获取 Telegram API 配置
-    
+
     返回当前配置（可能是默认值或自定义值）
     """
     try:
         config = config_service.get_telegram_config()
-        
+
         return TelegramConfigResponse(
             api_id=config.get("api_id", ""),
             api_hash=config.get("api_hash", ""),
@@ -500,7 +499,7 @@ def get_telegram_config(current_user: User = Depends(get_current_user)):
             default_api_id=config_service.DEFAULT_TG_API_ID,
             default_api_hash=config_service.DEFAULT_TG_API_HASH
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -515,7 +514,7 @@ def save_telegram_config(
 ):
     """
     保存 Telegram API 配置
-    
+
     设置自定义的 API ID 和 API Hash
     """
     try:
@@ -525,23 +524,23 @@ def save_telegram_config(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="API ID 和 API Hash 不能为空"
             )
-        
+
         success = config_service.save_telegram_config(
             api_id=request.api_id,
             api_hash=request.api_hash
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="保存配置失败"
             )
-        
+
         return TelegramConfigSaveResponse(
             success=True,
             message="Telegram API 配置已保存"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -557,13 +556,13 @@ def reset_telegram_config(current_user: User = Depends(get_current_user)):
     重置 Telegram API 配置（恢复默认）
     """
     try:
-        success = config_service.reset_telegram_config()
-        
+        config_service.reset_telegram_config()
+
         return TelegramConfigSaveResponse(
             success=True,
             message="Telegram API 配置已重置为默认值"
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

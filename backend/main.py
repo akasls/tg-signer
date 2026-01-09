@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
 import logging
 import sqlite3
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # Monkeypatch sqlite3.connect to increase default timeout
 _original_sqlite3_connect = sqlite3.connect
@@ -19,12 +19,13 @@ def _patched_sqlite3_connect(*args, **kwargs):
 
 sqlite3.connect = _patched_sqlite3_connect
 
-from backend.api import router as api_router
-from backend.core.config import get_settings
-from backend.core.database import Base, SessionLocal, engine
-from backend.utils.paths import ensure_data_dirs
-from backend.services.users import ensure_admin
-from backend.scheduler import init_scheduler, shutdown_scheduler
+from backend.api import router as api_router  # noqa: E402
+from backend.core.config import get_settings  # noqa: E402
+from backend.core.database import Base, SessionLocal, engine  # noqa: E402
+from backend.scheduler import init_scheduler, shutdown_scheduler  # noqa: E402
+from backend.services.users import ensure_admin  # noqa: E402
+from backend.utils.paths import ensure_data_dirs  # noqa: E402
+
 
 # Silence /health check logs
 class HealthCheckFilter(logging.Filter):
@@ -73,21 +74,21 @@ async def serve_spa(full_path: str):
     # 检查是否是静态文件请求
     web_dir = Path("/web")
     file_path = web_dir / full_path
-    
+
     # 如果文件存在且不是目录，直接返回文件
     if file_path.exists() and file_path.is_file():
         return FileResponse(file_path)
-    
+
     # 尝试添加 .html 后缀（Next.js 导出通常会生成 .html 文件）
     html_path = web_dir / f"{full_path}.html"
     if html_path.exists() and html_path.is_file():
         return FileResponse(html_path)
-    
+
     # 否则返回 index.html（SPA 路由）
     index_path = web_dir / "index.html"
     if index_path.exists():
         return FileResponse(index_path)
-    
+
     # 如果 index.html 也不存在，返回 404
     return {"detail": "Frontend not built"}
 

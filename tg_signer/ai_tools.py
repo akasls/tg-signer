@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 from tg_signer.utils import UserInput, print_to_user
 
-
 DEFAULT_MODEL = "gpt-4o"
 
 

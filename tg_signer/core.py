@@ -1,16 +1,15 @@
 import asyncio
-import sqlite3
 import json
 import logging
 import os
 import pathlib
 import random
+import sqlite3
 import time
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from datetime import time as dt_time
 from typing import (
-    Annotated,
     BinaryIO,
     Generic,
     List,
@@ -23,8 +22,7 @@ from urllib import parse
 
 import httpx
 from croniter import CroniterBadCronError, croniter
-from pydantic import BaseModel, Field, ValidationError
-
+from pydantic import BaseModel, ValidationError
 from pyrogram import Client as BaseClient
 from pyrogram import errors, filters
 from pyrogram.enums import ChatMembersFilter, ChatType
@@ -569,7 +567,7 @@ class Waiter:
 
 class UserSignerWorkerContext(BaseModel):
     """签到工作上下文"""
-    
+
     class Config:
         arbitrary_types_allowed = True
 

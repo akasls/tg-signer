@@ -2,11 +2,11 @@
 """
 本地测试脚本 - 验证后端 API 是否正常工作
 """
+import json
 import sys
 import time
-import urllib.request
 import urllib.error
-import json
+import urllib.request
 
 
 def test_health_check():
@@ -34,16 +34,16 @@ def test_api_login():
             "username": "admin",
             "password": "admin123"
         }).encode()
-        
+
         req = urllib.request.Request(
             "http://localhost:8080/api/auth/login",
             data=data,
             headers={"Content-Type": "application/json"}
         )
-        
+
         response = urllib.request.urlopen(req)
         result = json.loads(response.read().decode())
-        
+
         if "access_token" in result:
             print("✓ 登录 API 正常")
             return result["access_token"]
@@ -70,10 +70,10 @@ def test_api_accounts(token):
                 "Content-Type": "application/json"
             }
         )
-        
+
         response = urllib.request.urlopen(req)
         result = json.loads(response.read().decode())
-        
+
         print(f"✓ 账号列表 API 正常 (共 {len(result)} 个账号)")
         return True
     except urllib.error.HTTPError as e:
@@ -91,7 +91,7 @@ def test_frontend():
     try:
         response = urllib.request.urlopen("http://localhost:8080/")
         content = response.read().decode()
-        
+
         if "tg-signer" in content or "<!DOCTYPE html>" in content:
             print("✓ 前端静态文件正常")
             return True
@@ -110,37 +110,37 @@ def main():
     print("\n请确保应用已在 http://localhost:8080 运行")
     print("等待 3 秒后开始测试...\n")
     time.sleep(3)
-    
+
     results = []
-    
+
     # 测试健康检查
     results.append(("健康检查", test_health_check()))
-    
+
     # 测试登录
     token = test_api_login()
     results.append(("登录 API", token is not None))
-    
+
     # 如果登录成功，测试其他 API
     if token:
         results.append(("账号列表 API", test_api_accounts(token)))
-    
+
     # 测试前端
     results.append(("前端静态文件", test_frontend()))
-    
+
     # 输出总结
     print("\n" + "=" * 60)
     print("测试总结")
     print("=" * 60)
-    
+
     passed = sum(1 for _, result in results if result)
     total = len(results)
-    
+
     for name, result in results:
         status = "✓ 通过" if result else "✗ 失败"
         print(f"{name}: {status}")
-    
+
     print(f"\n总计: {passed}/{total} 项测试通过")
-    
+
     if passed == total:
         print("\n🎉 所有测试通过！应用运行正常。")
         return 0

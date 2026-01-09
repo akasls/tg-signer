@@ -15,7 +15,7 @@ def ensure_admin(db: Session, username: str = "admin", password: str = "admin123
     first_user = db.query(User).first()
     if first_user:
         return first_user
-        
+
     # 如果没有任何用户，则创建默认管理员
     new_user = User(username=username, password_hash=hash_password(password))
     db.add(new_user)

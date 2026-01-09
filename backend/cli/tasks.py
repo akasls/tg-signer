@@ -1,7 +1,7 @@
 from __future__ import annotations
+
 import asyncio
-import subprocess
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 from backend.core.config import get_settings
 
@@ -36,13 +36,13 @@ async def async_run_task_cli(
         "--num-of-dialogs",
         str(num_of_dialogs),
     ]
-    
+
     process = await asyncio.create_subprocess_exec(
         *args,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT, # 合并 stdout 和 stderr 以便于即时按顺序捕获日志
     )
-    
+
     full_output = []
     while True:
         line = await process.stdout.readline()
@@ -53,9 +53,9 @@ async def async_run_task_cli(
             full_output.append(decoded_line)
             if callback:
                 callback(decoded_line)
-    
+
     await process.wait()
-    
+
     return (
         process.returncode or 0,
         "\n".join(full_output),

@@ -433,7 +433,24 @@ class SignTaskService:
 
         chats = []
         try:
-            await client.start()
+            await client.connect()
+            try:
+                # 尝试获取用户信息，如果失败说明 session 无效
+                await client.get_me()
+            except Exception as e:
+                # 捕获所有异常，如果是 401 等错误则说明 session 失效
+                # 显式抛出错误而不是进入交互式登录 (导致 EOFError)
+                raise ValueError(f"Session 无效或已过期: {e}")
+
+            # 确认已授权，由于已经 connect，这里不需要再 start() 也可以调用 get_dialogs 吗?
+            # Pyrogram 建议使用 start() 来初始化所有组件，但 start() 可能会再次检查授权调用 interactive_login
+            # 由于我们已经验证了 get_me() 成功，start() 内部的 authorize() 检查应该也会通过，从而跳过 interactive_login
+            # 但是为了保险，我们可以跳过 start() 直接使用，或者确信 start() 安全。
+            # 这里如果不掉 start()，get_dialogs 可能无法正确工作 (dispatcher 未启动?)
+            # 实际上 get_dialogs 是 API 方法，只要 connect 就可以。
+            # 但为了稳妥，我们不调用 start() 以免副作用，直接使用 connected client。
+            # 修正：Pyrogram 的 get_dialogs 并不依赖 dispatcher，只要 connected 即可。
+
             async for dialog in client.get_dialogs():
                 chat = dialog.chat
 

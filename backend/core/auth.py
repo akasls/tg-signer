@@ -79,6 +79,10 @@ def get_current_user_optional(
     """获取当前用户，如果无法认证则返回 None（不抛出异常）"""
     if not token:
         return None
+    return verify_token(token, db)
+
+def verify_token(token: str, db: Session) -> Optional[User]:
+    """验证 Token 并返回用户对象"""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
         username: str = payload.get("sub")  # type: ignore[assignment]

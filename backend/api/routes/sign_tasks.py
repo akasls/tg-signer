@@ -7,9 +7,11 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, validator
 
-from backend.core.auth import get_current_user
+from backend.core.auth import get_current_user, verify_token
+from backend.core.database import get_db
 from backend.services.sign_tasks import sign_task_service
 
 router = APIRouter()
@@ -287,19 +289,21 @@ async def get_account_chats(
         raise HTTPException(status_code=500, detail=f"获取对话列表失败: {str(e)}")
 from fastapi import WebSocket, WebSocketDisconnect, Query
 from backend.core.auth import verify_token
+import asyncio
 
 @router.websocket("/ws/{task_name}")
 async def sign_task_logs_ws(
     websocket: WebSocket,
     task_name: str,
     token: str = Query(...),
+    db: Session = Depends(get_db),
 ):
     """
     WebSocket 实时推送签到任务日志
     """
     # 验证 Token
     try:
-        user = verify_token(token)
+        user = verify_token(token, db)
         if not user:
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return

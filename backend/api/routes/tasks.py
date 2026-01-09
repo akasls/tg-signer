@@ -131,13 +131,14 @@ async def task_logs_ws(
     websocket: WebSocket,
     task_id: int,
     token: str = Query(...),
+    db: Session = Depends(get_db),
 ):
     """
     WebSocket 实时推送数据库任务日志
     """
     # 验证 Token
     try:
-        user = verify_token(token)
+        user = verify_token(token, db)
         if not user:
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return

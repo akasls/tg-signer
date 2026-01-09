@@ -4,9 +4,10 @@
 """
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, validator
 
@@ -287,10 +288,6 @@ async def get_account_chats(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"获取对话列表失败: {str(e)}")
-from fastapi import WebSocket, WebSocketDisconnect, Query
-from backend.core.auth import verify_token
-import asyncio
-
 @router.websocket("/ws/{task_name}")
 async def sign_task_logs_ws(
     websocket: WebSocket,

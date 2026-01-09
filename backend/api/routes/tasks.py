@@ -1,10 +1,10 @@
-from __future__ import annotations
+import asyncio
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 
-from backend.core.auth import get_current_user
+from backend.core.auth import get_current_user, verify_token
 from backend.core.database import get_db
 from backend.models.account import Account
 from backend.models.task import Task
@@ -121,10 +121,6 @@ def list_logs(
     return logs
 
 
-
-from fastapi import WebSocket, WebSocketDisconnect, Query
-from backend.core.auth import verify_token
-import asyncio
 
 @router.websocket("/ws/{task_id}")
 async def task_logs_ws(
